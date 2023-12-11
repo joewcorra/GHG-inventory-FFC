@@ -14,10 +14,9 @@ library(readxl)
 # List of objects created in the global environment:
 
 
-# API Keys---------------------------------------------------------------
+# API Keys--------------------------------------------------------------
 
 key <- "" 
-
 
 # Extract Excel files-----------------------------------------------
 
