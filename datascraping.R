@@ -21,7 +21,6 @@ key <- ""
 
 # Extract Excel files-----------------------------------------------
 
-
 faa <- "https://www.faa.gov/headquartersoffices/apl/aee/icao-airplane-co2-certification-database"
 # Then find elements that match a css selector using html_elements()
 
