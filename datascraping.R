@@ -19,51 +19,6 @@ library(readxl)
 key <- "" 
 
 
-# Scraper----------------------------------------------------------------
-
-# Start by reading a HTML page with read_html():
-starwars <- read_html("https://rvest.tidyverse.org/articles/starwars.html")
-faa <- read_html("https://www.faa.gov/headquartersoffices/apl/aee/icao-airplane-co2-certification-database")
-
-# Then find elements that match a css selector or XPath expression
-# using html_elements(). In this example, each <section> corresponds
-# to a different film
-films <- starwars %>% html_elements("section")
-films
-d <- faa %>% html_elements("section")
-d
-
-# Then use html_element() to extract one element per film. Here
-# we the title is given by the text inside <h2>
-title <- films %>% 
-  html_element("h2") %>% 
-  html_text2()
-title
-e <- d %>% 
-  html_element("h2") %>% 
-  html_text2()
-
-# Or use html_attr() to get data out of attributes. html_attr() always
-# returns a string so we convert it to an integer using a readr function
-episode <- films %>% 
-  html_element("h2") %>% 
-  html_attr("data-id") %>% 
-  readr::parse_integer()
-episode
-f <- d %>% 
-  html_element("h2") %>% 
-  html_attr("data-id") %>% 
-  readr::parse_integer()
-f
-
-# If the page contains tabular data you can convert it directly to a data frame with html_table():
-html <- read_html("https://en.wikipedia.org/w/index.php?title=The_Lego_Movie&oldid=998422565")
-
-html %>% 
-  html_element(".tracklist") %>% 
-  html_table()
-
-
 # Extract Excel files-----------------------------------------------
 
 
