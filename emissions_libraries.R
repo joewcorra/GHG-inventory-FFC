@@ -5,12 +5,14 @@
 # Include all packages for data transformation and collection; 
 # Do not include data product stuff (Markdown, etc.) yet
 
+library(gt)
 library(httr)
 library(janitor)
 library(jsonlite)
 library(readxl)
 library(rvest)
 library(tidyverse)
+
 
 
 
