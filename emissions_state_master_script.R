@@ -1,6 +1,10 @@
 # Calculate State-Level CO2 Emissions
 # Master Script
 
+# Link to state spreadsheet
+# https://gcc02.safelinks.protection.outlook.com/ap/x-59584e83/?url=https%3A%2F%2Fusepa-my.sharepoint.com%2F%3Ax%3A%2Fg%2Fpersonal%2Fcamobreco_vincent_epa_gov%2FEVIug-LIAexMlEamBhSekvgB0MO3Ma7vR7TPsTOXGmDuSg&data=05%7C01%7CCorra.Joseph%40epa.gov%7C91d1f1e49a054b67b7a608dbf12d5163%7C88b378b367484867acf976aacbeca6a7%7C0%7C0%7C638368949162806888%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=9Vl3GVNYfybQfCJErIc2ddiIcHY96qnUcDp7ugZCJDs%3D&reserved=0
+
+
 source("emissions_libraries.R")
 # data retrieval scripts here (API, etc.)?
 source("msn_descriptions.R")
