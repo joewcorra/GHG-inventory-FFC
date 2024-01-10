@@ -6,6 +6,24 @@
 
 # List of objects created in the global environment:
 
+# seds_ind_adjusted: tibble; adjusted values for industrial sector emissions
+
+# Adjustment Factors Specific to Industrial Sources---------------------
+
+# Placeholders: set all values to '1' for now
+# These will probably be data frames or vectors. Will require a join
+
+## Coking Coal
+### ippu (IPPU correction total): from FFC CO2 file, corrections
+ippu <- 1
+### sng_factor (SNG adjustment): from FFC CO2 file, corrections; ND only
+sng_factor <- 1
+### cb_factor: From FFC CO2 file carbon black corrections;
+### Assume same percent as petrochemicals GHGRP emissions
+cb_factor <- 1
+### residual fuel national total: From FFC CO2 file input corrected
+residual_fuel_national <- 1
+
 # Industrial Adjustments-------------------------------------------------
 
 # NGICB, RFICB, DFICB, MGICB, EMICB, PCICB, 
@@ -15,13 +33,100 @@
 # CLOCB "industrial consumption, excluding coke plants"
 # See below for specifics
 
-### Coal------------------------------------------------------------------
+# Note: Unlike other scripts, all adjustments for industrial sources
+# are performed when list elements are defined (instead of mapping to 
+# the list elements). This approach was selected since many of the sources
+# have different adjustment methods. 
+
+# NOTE: Might be necessary to delete adjustment variables before list_rbind()
+
+# Break SEDS data into -element list based on MSNs
+seds_ind_adjusted <- list(
+  
+  # Coking Coal
+  coking_coal = seds %>% 
+    filter(msn == "CLKCB") %>%
+    mutate(states_sum_value = sum(value), .by = c(msn, year), 
+           # ippu percent = ippu / sum_states_value as long as ippu is greater
+           adjustment_factor = if_else(ippu > states_sum_value, 
+                                       ippu / states_sum_value, 100), 
+           coking_coal_adjusted = value - (value * adjustment_factor)),
+  
+  # Other Coal
+  # INCOMPLETE
+  # This needs a lot of work. Gotta pass coking coal values to this element
+  other_coal = seds %>%
+    filter(msn == "CLOCB") %>%
+    # coke_factor = ippu - sum_coking_coal (if < 0, = 0)
+    # other_coal_coke_adj  = (coking_coal/ sum_coking_coal) * coke_factor
+    # other_coal_sng_adj  = sng_factor * another mysterious hard-coded %
+    # other_coal_is_adj = is_coal_factor * another mysterious hard-coded %
+    # other_coal_adjusted_1 = other_coal - other_coal_coke_adj -
+    # other_coal_sng_adj - other_coal_is_adj (if negative, then 0)
+    # other_coal_ippu_total = sum(other_coal_adjusted_1)
+    # another other coal national total = From FFC CO2 file adj input
+    # other_coal_adjusted_2 (or, other_coal_adjusted??) = 
+    # this new mystery total * (other_coal_adjusted_1 / other_coal_ippu_total) 
+    mutate(value = value), 
+  
+  # Natural Gas
+  # INCOMPLETE
+  # This needs a lot of work. Many additional adjustment factors
+  natural_gas = seds %>% 
+    # Separate list element required to find net natural gas
+    filter(msn %in% c("NGICB", "SFINB")) %>%
+    # Subtract supplemental gas from total natural gas
+    mutate(value = abs(diff(value)), .by = c(state, year)) %>%
+    # Group_size shows that each group has exactly two rows. Good!
+    # Supplemental gas no longer needed (and value is now duplicative)
+    filter(msn != "SFICB") %>%
+    # Change MSN identifier. old MSN distinction no longer needed(?)
+    # However, MSN can be reconstituted from other _code fields if needed.
+    mutate(msn = "net_natural_gas"),
+  
+  # Residual Fuel
+  residual_fuel = seds %>%
+    filter(msn == "RFICB") %>%
+    # adjust for cb factor = cb_factor * mysterious hard-coded % 
+    # adjusted value = value - cb adjusted value (minimum = 0)
+  mutate(adjustment_factor = cb_factor,
+         value = if_else(value - (cb_factor * 1) < 0, 0, 
+                         value - (cb_factor * 1)), # 1 = placeholder for ? % 
+         # Get sum of all states' cb adjusted values
+         states_sum_value = sum(value), .by = c(msn, year), 
+  # now adjust by residual fuel national total
+  value = residual_fuel_national * (value / states_sum_value)),
+  
+  
+  # All other sources go in the third list element
+  other_industrial = seds %>% 
+    filter(msn %in% c("", ""))) %>%
+  
+  
+  # Map to both list elements
+  map(\(.x) filter(.x, sector_code == "IC", state %in% states_and_dc) %>%
+        # SEDS values must be corrected to match national data.
+        # Join with the adjustment factor data (from national inventory)
+        left_join(adjustments %>% 
+                    filter(sector_description == "industrial"), 
+                  by = c("source_description", "year")) %>%
+        # Get sum of all states' value for each source
+        mutate(states_sum_value = sum(value), .by = c(msn, year), 
+               # Multiply adjustment factor by states's value / the above sum
+               adjusted_value = adjustment_factor * 
+                 (value / states_sum_value))) %>%
+  
+  # Collapse list into a single data frame
+  list_rbind()
+
+# Notes from Review of Excel Workbook------------------------------------
+## Coal------------------------------------------------------------------
 
 # there are hard-coded numbers
-# ippu (IPPU correction total): from FFC CO2 file, corrections
 # sng_factor (SNG adjustment): from FFC CO2 file, corrections; assume in ND
+# ippu (IPPU correction total): from FFC CO2 file, corrections
 # is_coal_factor (i & s adjustment for coal): from FFC CO2 file, corrections; 
-# sssume distributed over percent of GHGRP I&S emissions
+# assume distributed over percent of GHGRP I&S emissions
 # other_coal_adj national total??? see below: From FFC CO2 file adj input;
 # assume same percent as IPPU adjusted
 
@@ -45,7 +150,7 @@
 # this new mystery total * (other_coal_adjusted_1 / other_coal_ippu_total)
 
 
-### Natural Gas----------------------------------------------------------
+## Natural Gas----------------------------------------------------------
 
 # there are hard-coded numbers
 # blast_furnace_gas_factor: From FFC CO2 file corrections
@@ -82,7 +187,7 @@
 # natural_gas_adjusted_2 =
 # this new mystery total * (natural_gas_adjusted_1 / natural_gas_ippu_total)
 
-### Residual Fuels-------------------------------------------------------
+## Residual Fuels-------------------------------------------------------
 
 # there are hard-coded numbers
 # cb_factor: From FFC CO2 file carbon black corrections;
@@ -105,7 +210,7 @@
 # (residual_fuel_adjusted_1 / residual_fuel_ippu_total)
 
 
-### Distillate Fuel------------------------------------------------------
+## Distillate Fuel------------------------------------------------------
 
 # there are hard-coded numbers
 #  is_distillate_fuel_factor: From FFC CO2 corrections;
@@ -129,7 +234,7 @@
 # (distillate_fuel_adjusted_1 / distillate_fuel_ippu_total)
 
 
-### Gasoline--------------------------------------------------------
+## Gasoline--------------------------------------------------------
 
 
 # gasoline_inc_ethanol = state's MGICB btu/1000 
@@ -142,7 +247,7 @@
 
 
 
-### Petroleum Coke---------------------------------------------------
+## Petroleum Coke---------------------------------------------------
 
 # petroleum_coke = state's PCICB btu/1000 
 # sum_petroleum_coke: sum of all states' petroleum coke
@@ -155,7 +260,7 @@
 
 
 
-### LPG----------------------------------------------------------------
+## LPG----------------------------------------------------------------
 
 # hgl = state's HLICB btu / 1000
 # pentanes_plus = state's PPICB btu / 1000

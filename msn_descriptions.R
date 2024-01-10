@@ -8,7 +8,8 @@
 # msn: tibble; all MSNs with descriptions of MSN, source, and sector
 # source: tibble; temporary object with source codes and descriptions
 # sector: tibble; temporary object with sector codes and descriptions
-# state_codes: tibble; all US state and applicable territory codes
+# states_and_dc"
+# non-states"
 
 # Read Data--------------------------------------------------------------
 
@@ -99,26 +100,30 @@ msn <- read_csv("msn_descriptions.csv") %>%
   left_join(sectors, by = "sector_code")
 
 
-state_codes <- data.frame( 
-state_code = c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
+# US state and non-state codes
+states_and_dc <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
                 "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", 
                 "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", 
                 "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", 
                 "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", 
-                "WY", "X3", "X5", "US"),
-state_name = c("Alaska", "Alabama", "Arkansas", "Arizona", "California", 
-            "Colorado", "Connecticut", "District of Columbia", "Delaware", 
-            "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois",
-            "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", 
-            "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", 
-            "Mississippi", "Montana", "North Carolina", "North Dakota", 
-            "Nebraska", "New Hampshire", "New Jersey", "New Mexico", 
-            "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", 
-            "Pennsylvania", "Rhode Island", "South Carolina", 
-            "South Dakota", "Tennessee", "Texas", "Utah", "Virginia",
-            "Vermont", "Washington", "Wisconsin", "West Virginia",
-            "Wyoming", "Federal Offshore, Gulf of Mexico", 
-            "Federa Offshore, Pacific", "United States"))
+                "WY")
+
+non_states <- c("X3", "X5", "US")
+
+# state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California", 
+#             "Colorado", "Connecticut", "Delaware", 
+#             "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois",
+#             "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", 
+#             "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", 
+#             "Mississippi", "Montana", "North Carolina", "North Dakota", 
+#             "Nebraska", "New Hampshire", "New Jersey", "New Mexico", 
+#             "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", 
+#             "Pennsylvania", "Rhode Island", "South Carolina", 
+#             "South Dakota", "Tennessee", "Texas", "Utah", "Virginia",
+#             "Vermont", "Washington", "Wisconsin", "West Virginia",
+#             "Wyoming", "District of Columbia", 
+#             "Federal Offshore, Gulf of Mexico", 
+#             "Federa Offshore, Pacific", "United States")
 
 
 # Cleanup-------------------------------------------------------------------

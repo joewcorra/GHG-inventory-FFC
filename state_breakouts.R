@@ -9,6 +9,10 @@
 
 # State Breakouts (Final)-----------------------------------------------
 
+# Split into list elements by state
+dataobjectname %>% # TBD
+group_by(state) %>%
+  group_split() 
 
 # Unadjusted Residential, Commercial, Industrial, Transportation, Elec Power
 # find all btu values (again!) in the SEDS 'se all btu' data
