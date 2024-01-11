@@ -56,7 +56,9 @@ seds <- list.files(path = "data", pattern = "\\.csv$",
   # Retain data from 1990 onward
   filter(year > "1989") %>%   
   # Retain rows with MSN matching our msn_lookup data
-  filter(msn %in% msn_lookup) %>%
+  filter(msn %in% msn_lookup, 
+         # Retain rows with states or DC
+         state %in% states_and_dc) %>%
   left_join(msn, by = "msn") %>%
   # Convert to millions of BTUs, round to 2 places
   mutate(value = round(value / 1000, 2)) 

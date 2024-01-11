@@ -23,25 +23,33 @@ sng_factor <- 1
 cb_factor <- 1
 ### residual fuel national total: From FFC CO2 file input corrected
 residual_fuel_national <- 1
+### is_distillate_fuel_factor: From FFC CO2 corrections;
+### assume same percent as I&S GHGRP
+is_distillate_fuel_factor <- 1
+### distillate fuel national total: From FFC CO2 file input corrected
+distillate_fuel_national <- 1
 
 # Industrial Adjustments-------------------------------------------------
 
-# NGICB, RFICB, DFICB, MGICB, EMICB, PCICB, 
-# HLICB, PPICB, "industrial sector"
-# FINB "industrial sector (supplemental gaseous fuels)"
-# CLKCB "coke plants (coal only)"
-# CLOCB "industrial consumption, excluding coke plants"
-# See below for specifics
+# coking coal (CLKCB), other coal (CLOCB), ?net coke imports (CCNIB)?, 
+# natural gas = gas w supplemental (NGICB) - supplemental gas (SFINB), 
+# distillate fuel (DFICB), 
+# lpg = hgl (HLICB) + propane (PQICB) + propylene (PYICB) + ethane (EQICB) + 
+# ethylene (EYICB) + normal butane (BQICB) + butylene (BYICB) + 
+# isobutane (IQICB) + isobutylene (IYICB), 
+# motor gasoline = gas w ethanol (MGICB) + ethanol (EMICB), 
+# residual fuel (RFICB), petroleum coke (PCICB)
+# unadjusted: asphalt (ARICB), kerosene (KSICB), lubricants (LUICB), 
+# avgas blend (ABICB), crude oil (COICB), mogas blend (MBICB), 
+# misc products (MSICB), naphtha (FNICB), other oil (FOICB), 
+# pentanes plus (PPICB), still gas (SGICB), special naphtha (SNICB), 
+# unfinished oils (UOICB), waxes (WXICB)
 
-# Note: Unlike other scripts, all adjustments for industrial sources
-# are performed when list elements are defined (instead of mapping to 
-# the list elements). This approach was selected since many of the sources
-# have different adjustment methods. 
 
 # NOTE: Might be necessary to delete adjustment variables before list_rbind()
 
 # Break SEDS data into -element list based on MSNs
-seds_ind_adjusted <- list(
+seds_ind_adjusted <- lst(
   
   # Coking Coal
   coking_coal = seds %>% 
@@ -57,7 +65,13 @@ seds_ind_adjusted <- list(
   # This needs a lot of work. Gotta pass coking coal values to this element
   other_coal = seds %>%
     filter(msn == "CLOCB") %>%
-    # coke_factor = ippu - sum_coking_coal (if < 0, = 0)
+    left_join(coking_coal %>% 
+                select(sum_coking_coal = states_sum_value, 
+                       coking_coal_value = value, year, state), 
+              by = c("year", "state")) %>%
+    mutate(adjustment_factor = if_else(ippu < sum_coking_coal, 0,
+                                       ippu - sum_coking_coal),
+           value = adjustment_factor * (coking_coal_value / sum_coking_coal)),
     # other_coal_coke_adj  = (coking_coal/ sum_coking_coal) * coke_factor
     # other_coal_sng_adj  = sng_factor * another mysterious hard-coded %
     # other_coal_is_adj = is_coal_factor * another mysterious hard-coded %
@@ -66,8 +80,7 @@ seds_ind_adjusted <- list(
     # other_coal_ippu_total = sum(other_coal_adjusted_1)
     # another other coal national total = From FFC CO2 file adj input
     # other_coal_adjusted_2 (or, other_coal_adjusted??) = 
-    # this new mystery total * (other_coal_adjusted_1 / other_coal_ippu_total) 
-    mutate(value = value), 
+    # this new mystery total * (other_coal_adjusted_1 / other_coal_ippu_total)
   
   # Natural Gas
   # INCOMPLETE
@@ -89,32 +102,71 @@ seds_ind_adjusted <- list(
     filter(msn == "RFICB") %>%
     # adjust for cb factor = cb_factor * mysterious hard-coded % 
     # adjusted value = value - cb adjusted value (minimum = 0)
-  mutate(adjustment_factor = cb_factor,
-         value = if_else(value - (cb_factor * 1) < 0, 0, 
-                         value - (cb_factor * 1)), # 1 = placeholder for ? % 
-         # Get sum of all states' cb adjusted values
-         states_sum_value = sum(value), .by = c(msn, year), 
-  # now adjust by residual fuel national total
-  value = residual_fuel_national * (value / states_sum_value)),
+    mutate(adjustment_factor = cb_factor,
+           value = if_else(value - (cb_factor * 1) < 0, 0, 
+                           # 1 is a placeholder for the mystery percentage
+                           value - (cb_factor * 1))) %>% 
+    # Get sum of all states' cb adjusted values
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>% 
+    # now adjust by residual fuel national total
+    mutate(value = residual_fuel_national * (value / states_sum_value)),
   
+  # Distillate Fuel
+  distillate_fuel = seds %>%
+    filter(msn == "DFICB") %>%
+    # distillate_fuel_is_adj = is_distillate_fuel_factor * 
+    # mysterious hard-coded % used in the other_coal_is_adj, above
+    # distillate_fuel_is_adj (if negative, then 0)
+    mutate(adjustment_factor = is_distillate_fuel_factor,
+           value = if_else(value - (is_distillate_fuel_factor * 1) < 0, 0, 
+                           # 1 is a placeholder for the mystery percentage
+                           value - (is_distillate_fuel_factor * 1))) %>%
+    # Get sum of all states' cb adjusted values
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>% 
+    # now adjust by distillate fuel national total
+    mutate(value = distillate_fuel_national * (value / states_sum_value)),
   
-  # All other sources go in the third list element
+  # Gasoline
+  gasoline = seds %>% 
+    # All gasoline - ethanol = net gasoline
+    filter(msn %in% c("MGICB", "EMICB")) %>%
+    # Subtract ethanol from total gasoline
+    mutate(value = abs(diff(value)), .by = c(state, year)) %>%
+    # Group_size shows that each group has exactly two rows. Good!
+    # Supplemental gas no longer needed (and value is now duplicative)
+    filter(msn != "EMICB") %>%
+    # Get sum of all states' net gasoline
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # get adjustment factor for motor gasoline
+    left_join(adjustments %>% 
+                filter(sector_description == "industrial"), 
+              by = c("source_description", "year")) %>%
+    # Change MSN identifier. old MSN distinction no longer needed(?)
+    # However, MSN can be reconstituted from other _code fields if needed.
+    mutate(msn = "net_gasoline", 
+           # adjusted net gasoline = motor gas factor * gasoline - sum
+    value = adjustment_factor * (value / states_sum_value)),
+  # motor_gasoline_factor = US Compare--Industrial--motor gasoline 
+
+  # Petroleum Coke
+  petroleum_coke = seds %>%
+    filter(msn == "PCICB") %>%
+    # Get sum of all states' petroleum_coke
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # get adjustment factor for petroleum coke
+    left_join(adjustments %>% 
+                filter(sector_description == "industrial"), 
+              by = c("source_description", "year")) %>%
+    # adjusted petro coke = petro coke factor * (petro coke / sum of states)
+    mutate(value = adjustment_factor * (value / states_sum_value)),
+  
+  # All other sources go in this list element
   other_industrial = seds %>% 
-    filter(msn %in% c("", ""))) %>%
-  
-  
-  # Map to both list elements
-  map(\(.x) filter(.x, sector_code == "IC", state %in% states_and_dc) %>%
-        # SEDS values must be corrected to match national data.
-        # Join with the adjustment factor data (from national inventory)
-        left_join(adjustments %>% 
-                    filter(sector_description == "industrial"), 
-                  by = c("source_description", "year")) %>%
-        # Get sum of all states' value for each source
-        mutate(states_sum_value = sum(value), .by = c(msn, year), 
-               # Multiply adjustment factor by states's value / the above sum
-               adjusted_value = adjustment_factor * 
-                 (value / states_sum_value))) %>%
+    filter(msn %in% c("ARICB", "KSICB", "LUICB", "ABICB", "COICB", 
+                      "MBICB", "MSICB", "FNICB", "FOICB", "PPICB", 
+                      "SGICB", "SNICB", "UOICB", "WXICB")) %>%
+    # Adjusted = original value. Consider using a different variable name here
+    mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame
   list_rbind()
@@ -272,8 +324,7 @@ seds_ind_adjusted <- list(
 
 
 
-
-
+x<-seds_ind_adjusted[[1]]
 
 
 
