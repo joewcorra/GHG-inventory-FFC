@@ -25,7 +25,7 @@ sources <- data.frame(
   source_description = c("asphalt and road oil", 
                          "avian gasoline blending components",
                          "aviation gasoline", "renewable diesel",
-                          "biodiesel", "biofuels", "other biofuels", 
+                         "biodiesel", "biofuels", "other biofuels", 
                          "normal butane", "battery storage", 
                          "total biofuels (excluding fuel ethanol)", 
                          "butylene", "coal coke", "coal", 
@@ -92,7 +92,7 @@ sectors <- data.frame(
                          "transportation consumption per capita", 
                          "residential consumption per capita", 
                          "marketed production", 
-                        "aviation gasoline blending components consumed by the industrial sector"))
+                         "aviation gasoline blending components consumed by the industrial sector"))
 
 # Read in MSN data file and join with 'sources' and 'sectors'
 msn <- read_csv("msn_descriptions.csv") %>%
@@ -123,7 +123,7 @@ non_states <- c("X3", "X5", "US")
 #             "Vermont", "Washington", "Wisconsin", "West Virginia",
 #             "Wyoming", "District of Columbia", 
 #             "Federal Offshore, Gulf of Mexico", 
-#             "Federa Offshore, Pacific", "United States")
+#             "Federal Offshore, Pacific", "United States")
 
 
 # Cleanup-------------------------------------------------------------------

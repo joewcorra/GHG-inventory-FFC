@@ -32,7 +32,9 @@ years <- as_factor(1990:2024)
 # = ~1.4 million rows of data
 final_full <- crossing(year = years, state = states, fuel = fuels,
                        source = sources, subsource = subsources) %>%
-  filter(!(source == "NEU" & subsource %in% c("residential", "commercial", "electricity generation"))) %>%
+  filter(!(source == "NEU" & subsource %in% c("residential", 
+                                              "commercial", 
+                                              "electricity generation"))) %>%
   filter(!(source == "FFC" & subsource == "us territories")) %>%
   filter(!(fuel == "geothermal" & subsource != "electricity generation")) %>%
   mutate(value = rnorm(row_number()))
