@@ -21,7 +21,7 @@ distillate_fuel_adj <- 1
 
 ippu
 ammonia_factor
-sng_factor
+sng_adjustment
 cb_factor
 is_coal_factor
 is_gas_factor
@@ -74,8 +74,8 @@ seds_ind_adjusted <- lst(
     left_join(national_corrections, by = "year") %>%
     mutate(states_sum_value = sum(value), .by = c(msn, year),
            # ippu percent = ippu / sum_states_value as long as ippu is greater
-           ippu_factor = if_else(ippu > states_sum_value,
-                                       ippu / states_sum_value, 1),
+           ippu_factor = if_else(ippu < states_sum_value,
+                                 ippu / states_sum_value, 1),
            adjusted_value = value - (value * ippu_factor)),
 
   # Other Coal
@@ -87,16 +87,21 @@ seds_ind_adjusted <- lst(
               by = c("year", "state")) %>%
     # Join with national data corrections 
     left_join(national_corrections, by = "year") %>%
+    # Join with consumption input data
+    left_join(consumption_input %>% 
+                filter(sector == "industrial", source == "other coal"), 
+              by = "year") %>%
     mutate(coke_factor = if_else(ippu < sum_coking_coal, 0,
                                  ippu - sum_coking_coal),
            other_coal_coke_adj = 
              coke_factor * (coking_coal_value / sum_coking_coal),
-           other_coal_sng_adj  = sng_factor * 1, # mysterious hard-coded %
+           # SNG correction for North Dakota only 
+           other_coal_sng_adj  = if_else(state == "ND", sng_correction, 0), 
            other_coal_is_adj = is_coal_factor * 1, # mysterious hard-coded %
            adjusted_value = value -
              (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj),
            adjusted_value_2 =
-             (adjusted_value / sum(adjusted_value)) * 1) %>% # new mystery num
+             (adjusted_value / sum(adjusted_value)) * consumption_value) %>%
     # These variables can be removed
     select(),
   
@@ -111,6 +116,10 @@ seds_ind_adjusted <- lst(
     filter(msn != "SFICB") %>%
     # Join with national data corrections 
     left_join(national_corrections, by = "year") %>%
+    # Join with consumption input data
+    left_join(consumption_input %>% 
+                filter(sector == "industrial", source == "natural gas"), 
+              by = "year") %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
     mutate(msn = "net natural gas", 
@@ -126,7 +135,7 @@ seds_ind_adjusted <- lst(
              (natural_gas_furnace_adj + 
                 natural_gas_ammonia_adj + natural_gas_is_adj),
            adjusted_value_2 = 
-             (adjusted_value / sum(adjusted_value)) * 1) %>% # new mystery number
+             (adjusted_value / sum(adjusted_value)) * consumption_value) %>% 
     select(!total_furnace_factor:natural_gas_is_adj), 
   
   # Residual Fuel
@@ -243,7 +252,7 @@ seds_ind_adjusted <- lst(
 ## Coal------------------------------------------------------------------
 
 # there are hard-coded numbers
-# sng_factor (SNG adjustment): from FFC CO2 file, corrections; assume in ND
+# sng_adjustment (SNG adjustment): from FFC CO2 file, corrections; assume in ND
 # ippu (IPPU correction total): from FFC CO2 file, corrections
 # is_coal_factor (i & s adjustment for coal): from FFC CO2 file, corrections; 
 # assume distributed over percent of GHGRP I&S emissions
@@ -258,7 +267,7 @@ seds_ind_adjusted <- lst(
 # other_coal = state's CLOCB btu/1000
 # coke_factor = ippu - sum_coking_coal (if < 0, = 0)
 # other_coal_coke_adj  = (coking_coal/ sum_coking_coal) * coke_factor
-# other_coal_sng_adj  = sng_factor * another mysterious hard-coded %
+# other_coal_sng_adj  = sng_adjustment * another mysterious hard-coded %
 # other_coal_is_adj = is_coal_factor * another mysterious hard-coded %
 # other_coal_adjusted_1 = other_coal - other_coal_coke_adj -
 # other_coal_sng_adj - other_coal_is_adj (if negative, then 0)

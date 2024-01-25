@@ -6,7 +6,48 @@
 
 # List of objects created in the global environment:
 
-# NEU------------------------------------------------------------------
+# Notes on NEU Adjustments-----------------------------------------------
+
+# Adjustments for the following NEU sources are compiled in this script:
+# INDUSTRIAL: other coal, natural gas, distillate fuel, LPG, 
+# pentanes plus, petroleum coke, still gas
+
+
+# The following sources have already been compiled in the industry or 
+# transportation scripts, so they are not compiled here. 
+# For these sources, we assume 100% of consumption is for non-energy uses. 
+# 100% NEU: asphalt & road oil, coking coal, lubricants (both industrial and 
+# transportation), naphtha, other oil, special naphtha, waxes, misc products. 
+
+# NEU Adjustments--------------------------------------------------------
+
+
+# Break SEDS data into list based on MSNs
+seds_neu_adjusted <- lst(
+  
+  # Other coal
+  # Tennessee only, apparently--ask Vince before proceeding
+  # Will need to apply the Tennessee filter in state_breakouts
+  other_coal = neu_corrections %>%
+    filter(source_description == "other coal"),
+  
+  # Natural gas
+  natural_gas = neu_corrections %>%
+    filter(source_description == "natural gas") %>%
+    neu_factor = neu_factor * 1, #mystery percent similar to transportation
+
+  # Distillate fuel
+  distillate fuel = 
+  
+  
+)
+
+# Collapse list into a single data frame
+list_rbind()
+
+
+
+# Notes from Review of Excel Workbook------------------------------------
 
 # there are hard-coded numbers
 # other_coal_factor: coal to gas from Eastman gas plant from FFC CO2 
