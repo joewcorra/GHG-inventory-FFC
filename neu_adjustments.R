@@ -22,25 +22,93 @@
 # NEU Adjustments--------------------------------------------------------
 
 
+# Note that other coal and natural gas are awaiting the "mystery percent"
+# data; until then, the numbers are inaccurate and state == NA
+# Distillate fuel is inaccurate for the same reason, but has correct state
+
 # Break SEDS data into list based on MSNs
 seds_neu_adjusted <- lst(
   
   # Other coal
   # Tennessee only, apparently--ask Vince before proceeding
-  # Will need to apply the Tennessee filter in state_breakouts
+  # Will need to apply the Tennessee filter in state_breakouts(?)
   other_coal = neu_corrections %>%
-    filter(source_description == "other coal"),
+    filter(source_description == "other coal") %>%
+   mutate(adusted_value = neu_factor * 1), # mystery percent;
+  # mostly LA and TX
   
   # Natural gas
   natural_gas = neu_corrections %>%
-    filter(source_description == "natural gas") %>%
-    neu_factor = neu_factor * 1, #mystery percent similar to transportation
-
+    # Natural gas has a very long source name in the NEU data
+    filter(str_detect(source_description, "natural gas")) %>%
+    mutate(adusted_value = neu_factor * 1), # mystery percent;
+  # mostly LA and TX
+  
   # Distillate fuel
-  distillate fuel = 
+  distillate_fuel = seds_ind_adjusted %>% 
+    filter(msn == "DFICB") %>%
+    # Join with NEU corrections data
+    left_join(neu_corrections %>% 
+                filter(source_description == "distillate fuel oil"), 
+              by = "year") %>%
+    mutate(adjusted_value = neu_factor * 
+             (distillate_fuel_is_adj / states_sum_value)),
+    
+    # LPG
+    lpg = seds %>%
+    filter(msn %in% c("HLICB", "PPICB")) %>%
+    # Subtract pentanes plus from HGL
+    mutate(value = abs(diff(value)), .by = c(state, year)) %>%
+    # Group_size shows that each group has exactly two rows. Good!
+    # Pentanes plus computed below, so remove from this element:
+    filter(msn != "PPICB") %>%
+    # Change source description to reflect new value
+    mutate(source_description = "lpg") %>%
+    # Join with neu corrections to get neu factor
+    left_join(neu_corrections %>%
+                filter(source_description == "hgl"), 
+              by = "year") %>%
+    # Get sum of all states' lpg
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # Rename MSN and calculate adjusted value
+    mutate(msn = "net lpg", 
+           adjusted_value = neu_factor * (value / states_sum_value)),
   
+  # Pentanes plus
+  pentanes_plus = seds %>%
+    filter(msn == "PPICB") %>%
+    # Join with neu corrections to get neu factor
+    left_join(neu_corrections %>%
+                filter(source_description == "pentanes plus"), 
+              by = "year") %>%
+    # Get sum of all states' pentanes plus
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # Calculate adjusted value
+    mutate(adjusted_value = neu_factor * (value / states_sum_value)),
   
-)
+  # Petroleum coke
+  petroleum_coke = seds %>%
+    filter(msn == "PCICB") %>%
+    # Join with neu corrections to get neu factor
+    left_join(neu_corrections %>%
+                filter(source_description == "petroleum coke"), 
+              by = "year") %>%
+    # Get sum of all states' petroleum coke
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # Calculate adjusted value
+    mutate(adjusted_value = neu_factor * (value / states_sum_value)),
+    
+    # Still gas
+    still_gas = seds %>%
+    filter(msn == "SGICB") %>%
+    # Join with neu corrections to get neu factor
+    left_join(neu_corrections %>%
+                filter(source_description == "still gas"), 
+              by = "year") %>%
+    # Get sum of all states' still gas
+    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # Calculate adjusted value
+    mutate(adjusted_value = neu_factor * (value / states_sum_value))) %>%
 
 # Collapse list into a single data frame
 list_rbind()

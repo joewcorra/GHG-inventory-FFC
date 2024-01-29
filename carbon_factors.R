@@ -3,7 +3,7 @@
 
 # Objects Created--------------------------------------------------------
 
-# Ratio of the molecular weight of carbon dioxide to that of carbon
+# Ratio of the molecular weight of carbon dioxide to carbon
 carbon_ratio = 44/12
 
 # List of objects created in the global environment:

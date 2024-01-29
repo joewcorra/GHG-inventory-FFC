@@ -11,10 +11,10 @@
 
 # Split into list elements by state
 dataobjectname %>% # TBD
-group_by(state) %>%
+  group_by(state) %>%
   group_split() 
 
- # final value = adjusted value - NEU or IBF (if applicable)
+# final value = adjusted value - NEU or IBF (if applicable)
 
 # FOR THE FOLLOWING SOURCES, we adjust for NEU:
 # Coking coal, other coal, natural gas, distillate fuel, LPG, pentanes plus, 
@@ -28,6 +28,26 @@ group_by(state) %>%
 # FOR THE FOLLOWING TRANSPORTATION SOURCES, we adjust for IBF:
 # distillate fuel, residual fuel, jet fuel.
 
+# 1/29/2024 this might be a good place to remove unneeded columns
+seds_all_adjusted <- bind_rows(
+  seds_com_adjusted, seds_ele_adjusted, seds_ind_adjusted,
+  seds_res_adjusted, seds_tra_adjusted) %>%
+  # 1/29/2024 START WITH A SINGLE STATE to get the formatting right
+  filter(state == "NY") %>%
+  select(state:source_description, adjusted_value) %>%
+  mutate()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Notes from Review of Excel Workbook-----------------------------------
@@ -36,7 +56,7 @@ group_by(state) %>%
 
 # Additional Adjustments: minus NEU or IBF (Ind and Trans) for selected sources
 
-# Carbon calcularions: 
+# Carbon calculations: 
 # Adjustments: MMT CO2 (multiply by 'factors' and carbon_ratio)
 # Residential: coal, natural gas, dist fuel, kerosene = 
 # adjusted value * (foo_factor / 1000) * carbon_ratio

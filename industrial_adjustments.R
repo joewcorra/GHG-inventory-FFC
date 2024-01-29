@@ -12,22 +12,22 @@
 
 
 ### residual fuel national total: From FFC CO2 file input corrected
-residual_fuel_adj <- 1
+residual_fuel_factor <- 1
 ### distillate fuel national total: From FFC CO2 file input corrected
-distillate_fuel_adj <- 1
+distillate_fuel_factor <- 1
 
 # CANT FIND: distillate_fuel ('diesel fuel adjusted input'?), 
 # residual_fuel_adj. also need the mystery totals.
 
-ippu
-ammonia_factor
-sng_adjustment
-cb_factor
-is_coal_factor
-is_gas_factor
-blast_furnace_gas_factor
-coke_oven_gas_factor
-is_distillate_fuel_factor
+# ippu
+# ammonia_factor
+# sng_adjustment
+# cb_factor
+# is_coal_factor
+# is_gas_factor
+# blast_furnace_gas_factor
+# coke_oven_gas_factor
+# is_distillate_fuel_factor
 
 # Confirming Group Size for Net Values-----------------------------------
 
@@ -98,10 +98,10 @@ seds_ind_adjusted <- lst(
            # SNG correction for North Dakota only 
            other_coal_sng_adj  = if_else(state == "ND", sng_correction, 0), 
            other_coal_is_adj = is_coal_factor * 1, # mysterious hard-coded %
-           adjusted_value = value -
+           adjusted_value_pre = value -
              (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj),
-           adjusted_value_2 =
-             (adjusted_value / sum(adjusted_value)) * consumption_value) %>%
+           adjusted_value =
+             (adjusted_value_pre / sum(adjusted_value)) * consumption_value) %>%
     # These variables can be removed
     select(),
   
@@ -145,14 +145,15 @@ seds_ind_adjusted <- lst(
     left_join(national_corrections, by = "year") %>%
     # adjust for cb factor = cb_factor * mysterious hard-coded % 
     # adjusted value = value - cb adjusted value (minimum = 0)
-    mutate(value = if_else(value - (cb_factor * 1) < 0, 0, 
+    mutate(residual_fuel_cb_adj = if_else(value - (cb_factor * 1) < 0, 0, 
                            # 1 is a placeholder for the mystery percentage
                            value - (cb_factor * 1))) %>% 
     # Get sum of all states' cb adjusted values
-    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>% 
+    mutate(states_sum_value = sum(residual_fuel_cb_adj), 
+           .by = c(msn, year)) %>% 
     # now adjust by residual fuel national 
     mutate(adjusted_value = 
-             residual_fuel_adj * (value / states_sum_value)),
+             residual_fuel_factor * (residual_fuel_cb_adj / states_sum_value)),
   
   # Distillate Fuel
   distillate_fuel = seds %>%
@@ -162,14 +163,16 @@ seds_ind_adjusted <- lst(
     # distillate_fuel_is_adj = is_distillate_fuel_factor * 
     # mysterious hard-coded % used in the other_coal_is_adj, above
     # distillate_fuel_is_adj (if negative, then 0)
-    mutate(value = if_else(value - (is_distillate_fuel_factor * 1) < 0, 0, 
-                           # 1 is a placeholder for the mystery percentage
-                           value - (is_distillate_fuel_factor * 1))) %>%
+    mutate(distillate_fuel_is_adj = if_else(
+      value - (is_distillate_fuel_factor * 1) < 0, 0, 
+      # 1 is a placeholder for the mystery percentage
+      value - (is_distillate_fuel_factor * 1))) %>%
     # Get sum of all states' cb adjusted values
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>% 
     # now adjust by distillate fuel national total
     mutate(adjusted_value = 
-             distillate_fuel_adj * (value / states_sum_value)),
+             distillate_fuel_factor *
+             (distillate_fuel_is_adj / states_sum_value)),
   
   # Gasoline
   gasoline = seds %>% 
@@ -229,6 +232,7 @@ seds_ind_adjusted <- lst(
     rename(ind_lpg_factor = adjustment_factor) %>%
     # Get sum of all states' lpg
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+    # Rename MSN and calculate adjusted value
     mutate(msn = "net lpg", 
            adjusted_value = ind_lpg_factor * (value / states_sum_value)),
     # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
@@ -246,7 +250,9 @@ seds_ind_adjusted <- lst(
   # Collapse list into a single data frame
   list_rbind() %>%
   # Retain only necessary columns
-  select(state:unit, adjusted_value, adjusted_value_2)
+  # NOTE: Update this when finished!
+  select(state:unit, distillate_fuel_is_adj, 
+         states_sum_value, adjusted_value, adjusted_value_2)
 
 # Notes from Review of Excel Workbook------------------------------------
 ## Coal------------------------------------------------------------------
