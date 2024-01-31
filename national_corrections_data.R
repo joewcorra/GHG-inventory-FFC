@@ -61,19 +61,23 @@ consumption_input <- read_excel("national_inventory_CO2_data.xlsx",
                                    sheet = "Consumption Input", 
                                    skip = 0, range = "C5:AK131") %>%
   clean_names() %>%
-  rename(sector = t_btu, source = x2) %>%
-  mutate(sector = if_else(
-    str_detect(sector, "ource"), NA_character_, sector)) %>%
-  fill(sector) %>%
-  pivot_longer(cols = !c(sector, source), 
+  rename(sector_description = t_btu, 
+         source_description = x2) %>%
+  mutate(sector_description = if_else(
+    str_detect(sector_description, "ource"), 
+    NA_character_, sector_description)) %>%
+  fill(sector_description) %>%
+  pivot_longer(cols = !c(sector_description, source_description), 
                values_to = "consumption_value", names_to = "year") %>%
-  filter(!is.na(source), 
+  filter(!is.na(source_description), 
          !str_detect(year, "percent")) %>%
   mutate(year = parse_number(year) %>% as.character(), 
          # NAs are okay in the next line; we won't be using those values
          consumption_value = as.numeric(consumption_value),
-         source = str_to_lower(source), 
-         sector = str_to_lower(sector))
+         source_description = str_to_lower(source_description), 
+         sector_description = str_to_lower(sector_description) %>% 
+           str_c(" sector"))
   
   
-  
+  print("This generates a warning about NA values. 
+        Ignore this message--these values are not used.")

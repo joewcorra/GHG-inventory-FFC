@@ -7,6 +7,7 @@
 # List of objects created in the global environment:
 
 # seds_ind_adjusted: tibble; adjusted values for industrial sector emissions
+  # Created by rbind-ing a lst object
 
 # Adjustment Factors Specific to Industrial Sources---------------------
 
@@ -16,18 +17,6 @@ residual_fuel_factor <- 1
 ### distillate fuel national total: From FFC CO2 file input corrected
 distillate_fuel_factor <- 1
 
-# CANT FIND: distillate_fuel ('diesel fuel adjusted input'?), 
-# residual_fuel_adj. also need the mystery totals.
-
-# ippu
-# ammonia_factor
-# sng_adjustment
-# cb_factor
-# is_coal_factor
-# is_gas_factor
-# blast_furnace_gas_factor
-# coke_oven_gas_factor
-# is_distillate_fuel_factor
 
 # Confirming Group Size for Net Values-----------------------------------
 
@@ -62,81 +51,92 @@ distillate_fuel_factor <- 1
 # unfinished oils (UOICB), waxes (WXICB)
 
 
-# NOTE: Might be necessary to delete adjustment variables before list_rbind()
-
 # Break SEDS data into -element list based on MSNs
 seds_ind_adjusted <- lst(
-
+  
   # Coking Coal
   coking_coal = seds %>%
     filter(msn == "CLKCB") %>%
-    # Join with national data corrections 
+    # Join with national data corrections
     left_join(national_corrections, by = "year") %>%
     mutate(states_sum_value = sum(value), .by = c(msn, year),
            # ippu percent = ippu / sum_states_value as long as ippu is greater
            ippu_factor = if_else(ippu < states_sum_value,
                                  ippu / states_sum_value, 1),
-           adjusted_value = value - (value * ippu_factor)),
-
+           adjusted_value = value - (value * ippu_factor), 
+           # Standardize sector descriptions across all industrial sources
+           sector_description = "industrial sector"),
+  
   # Other Coal
   other_coal = seds %>%
     filter(msn == "CLOCB") %>%
+    # Standardize sector descriptions across all industrial sources
+    mutate(sector_description = "industrial sector") %>%
     left_join(coking_coal %>%
                 select(sum_coking_coal = states_sum_value,
                        coking_coal_value = value, year, state),
               by = c("year", "state")) %>%
-    # Join with national data corrections 
+    # Join with national data corrections
     left_join(national_corrections, by = "year") %>%
     # Join with consumption input data
-    left_join(consumption_input %>% 
-                filter(sector == "industrial", source == "other coal"), 
-              by = "year") %>%
+    left_join(consumption_input %>%
+                filter(source_description == "other coal") %>% 
+                # This filter-select contortion is required to avoid 
+                # source name conflicts: "other coal" vs "coal"
+                select(-source_description),
+              by = c("year", "sector_description")) %>%
+    # Join with I & S distribution data
+    left_join(is_distribution, by = c("state", "year")) %>% 
     mutate(coke_factor = if_else(ippu < sum_coking_coal, 0,
                                  ippu - sum_coking_coal),
-           other_coal_coke_adj = 
+           other_coal_coke_adj =
              coke_factor * (coking_coal_value / sum_coking_coal),
-           # SNG correction for North Dakota only 
-           other_coal_sng_adj  = if_else(state == "ND", sng_correction, 0), 
-           other_coal_is_adj = is_coal_factor * 1, # mysterious hard-coded %
+           # SNG correction for North Dakota only
+           other_coal_sng_adj  = if_else(state == "ND", sng_correction, 0),
+           # Multiply I & S factor by I & S state distribution percentages
+           other_coal_is_adj = is_coal_factor * is_percent,
            adjusted_value_pre = value -
-             (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj),
-           adjusted_value =
-             (adjusted_value_pre / sum(adjusted_value)) * consumption_value) %>%
-    # These variables can be removed
-    select(),
+             (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj)) %>%
+    # # Get sum of all states' adjusted values
+    mutate(states_sum_value = sum(adjusted_value_pre), 
+           .by = c(msn, year)) %>%
+    mutate(adjusted_value =
+             (adjusted_value_pre / states_sum_value) * consumption_value),
   
   # Natural Gas
-  natural_gas = seds %>% 
+  natural_gas = seds %>%
     # Separate list element required to find net natural gas
     filter(msn %in% c("NGICB", "SFINB")) %>%
     # Subtract supplemental gas from total natural gas
     mutate(value = abs(diff(value)), .by = c(state, year)) %>%
     # Group_size shows that each group has exactly two rows. Good!
     # Supplemental gas no longer needed (and value is now duplicative)
-    filter(msn != "SFICB") %>%
-    # Join with national data corrections 
+    filter(msn != "SFINB") %>%
+    # Join with national data corrections
     left_join(national_corrections, by = "year") %>%
+    # Change source and MSN to reflect that it's net natural gas
+    mutate(source_description = "natural gas",
+           msn = "net natural gas") %>%
     # Join with consumption input data
-    left_join(consumption_input %>% 
-                filter(sector == "industrial", source == "natural gas"), 
-              by = "year") %>%
+    left_join(consumption_input,
+              by = c("year", "sector_description", "source_description")) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
-    mutate(msn = "net natural gas", 
-           total_furnace_factor = 
-             blast_furnace_gas_factor + coke_oven_gas_factor, 
-           natural_gas_furnace_adj = 
-             total_furnace_factor * 1, # mysterious hard-coded  
+    mutate(total_furnace_factor =
+             blast_furnace_gas_factor + coke_oven_gas_factor,
+           natural_gas_furnace_adj =
+             total_furnace_factor * 1, # mysterious hard-coded
            # % used in the other_coal_is_adj, above)
            natural_gas_ammonia_adj = nat_gas_ammonia_factor * 1, # mystery %
            natural_gas_is_adj = is_gas_factor * 1, # mystery hard-coded % used
            # in the other_coal_is_adj, above
-           adjusted_value = value - 
-             (natural_gas_furnace_adj + 
+           adjusted_value_pre = value -
+             (natural_gas_furnace_adj +
                 natural_gas_ammonia_adj + natural_gas_is_adj),
-           adjusted_value_2 = 
-             (adjusted_value / sum(adjusted_value)) * consumption_value) %>% 
-    select(!total_furnace_factor:natural_gas_is_adj), 
+           adjusted_value =
+             (adjusted_value_pre / sum(adjusted_value_pre)) * 
+             consumption_value) %>%
+    select(!total_furnace_factor:natural_gas_is_adj),
   
   # Residual Fuel
   residual_fuel = seds %>%
@@ -146,8 +146,8 @@ seds_ind_adjusted <- lst(
     # adjust for cb factor = cb_factor * mysterious hard-coded % 
     # adjusted value = value - cb adjusted value (minimum = 0)
     mutate(residual_fuel_cb_adj = if_else(value - (cb_factor * 1) < 0, 0, 
-                           # 1 is a placeholder for the mystery percentage
-                           value - (cb_factor * 1))) %>% 
+                                          # 1 is a placeholder 
+                                          value - (cb_factor * 1))) %>% 
     # Get sum of all states' cb adjusted values
     mutate(states_sum_value = sum(residual_fuel_cb_adj), 
            .by = c(msn, year)) %>% 
@@ -188,27 +188,26 @@ seds_ind_adjusted <- lst(
     # Get sum of all states' net gasoline
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # get adjustment factor for motor gasoline
-    left_join(adjustments %>% 
-                filter(sector_description == "industrial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments,
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
     rename(motor_gas_factor = adjustment_factor) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
     mutate(msn = "net gasoline", 
+           source_description = "motor gasoline",
            # adjusted net gasoline = motor gas factor * gasoline - sum
            adjusted_value = motor_gas_factor * (value / states_sum_value)),
   # motor_gasoline_factor = US Compare--Industrial--motor gasoline 
-
+  
   # Petroleum Coke
   petroleum_coke = seds %>%
     filter(msn == "PCICB") %>%
     # Get sum of all states' petroleum_coke
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # get adjustment factor for petroleum coke
-    left_join(adjustments %>% 
-                filter(sector_description == "industrial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments,
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity 
     rename(petro_coke_factor = adjustment_factor) %>%
     # adjusted petro coke = petro coke factor * (petro coke / sum of states)
@@ -223,20 +222,20 @@ seds_ind_adjusted <- lst(
     # Pentanes plus goes in other_industrial(?) Remove from this element:
     filter(msn != "PPICB") %>%
     # Change source description to reflect new value
-    mutate(source_description == "lpg") %>%
+    mutate(source_description = "lpg") %>%
     # Join with adjustments to get adjustment factor
-    left_join(adjustments %>%
-                filter(sector_description == "industrial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments,
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
     rename(ind_lpg_factor = adjustment_factor) %>%
     # Get sum of all states' lpg
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-    # Rename MSN and calculate adjusted value
+    # Rename MSN & source and calculate adjusted value
     mutate(msn = "net lpg", 
+           source_description = "lpg", 
            adjusted_value = ind_lpg_factor * (value / states_sum_value)),
-    # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
-
+  # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
+  
   # All other sources go in this list element
   other_industrial = seds %>% 
     filter(msn %in% c("ARICB", "KSICB", "LUICB", "ABICB", "COICB", 
@@ -244,15 +243,16 @@ seds_ind_adjusted <- lst(
                       "SGICB", "SNICB", "UOICB", "WXICB", "PQICB", 
                       "PYICB", "EQICB", "EYICB", "BQICB", "BYICB", 
                       "IQICB", "IYICB")) %>%
-    # Adjusted = original value. Consider using a different variable name here
+    # Adjusted = original value
     mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame
   list_rbind() %>%
-  # Retain only necessary columns
-  # NOTE: Update this when finished!
-  select(state:unit, distillate_fuel_is_adj, 
-         states_sum_value, adjusted_value, adjusted_value_2)
+# Retain only necessary columns
+# NOTE: Update this when finished!
+# distillate_fuel_is_adj is required for neu_adjustments.R
+select(state:sector_description, distillate_fuel_is_adj, 
+       states_sum_value, adjusted_value)
 
 # Notes from Review of Excel Workbook------------------------------------
 ## Coal------------------------------------------------------------------

@@ -21,31 +21,33 @@
 seds_ibf_adjusted <- lst(
   
   distillate_fuel = adjustments %>% 
-    filter(sector_description == "transportation", 
+    filter(sector_description == "transportation sector", 
            source_description == "distillate fuel oil") %>%
-    mutate(ibf_value = adjustment_factor * 1), # mystery % 
+    mutate(ibf_adjusted_value = adjustment_factor * 1), # mystery % 
   # the mystery %s have the state code data
   
   residual_fuel = adjustments %>% 
-    filter(sector_description == "transportation", 
-           source_description == "residual fuel") %>%
-    mutate(ibf_value = adjustment_factor * 1), # mystery % 
+    filter(sector_description == "transportation sector", 
+           source_description == "residual fuel oil") %>%
+    mutate(ibf_adjusted_value = adjustment_factor * 1), # mystery % 
   # the mystery %s have the state code data
   
   jet_fuel = seds %>%
     filter(msn == "JFACB") %>%
-    left_join(ibf_corrections %>% select(-gas_mode_and_fuel_type), 
+    left_join(ibf_corrections %>% 
+                # This column is unnecessary since there's only 1 source
+                select(-gas_mode_and_fuel_type), 
               by = "year") %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
-    mutate(ibf_value = ibf_factor * 
-             (value / states_sum_value)))
+    mutate(ibf_adjusted_value = ibf_factor * 
+             (value / states_sum_value))) %>%
   
   # Collapse list into a single data frame
-  list_rbind()
-
-
+  list_rbind() %>%
+  # Remove nonessential columns to simplify joins in state_breakouts.R
+  select(sector_description:year, ibf_adjusted_value, state, msn)
 
 
 # Notes from Review of Excel Workbook------------------------------------

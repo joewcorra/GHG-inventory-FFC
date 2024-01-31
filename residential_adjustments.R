@@ -18,13 +18,15 @@ seds_res_adjusted <- lst(
   coal = seds %>%
     filter(msn == "CLRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "residential"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments,
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-    # Multiply adjustment factor by states's value / the above sum
-    mutate(adjusted_value = adjustment_factor * 
+   # Deal with zeroes in the sums to avoid NaNs
+    mutate(states_sum_value = if_else(
+      states_sum_value == 0, 1, states_sum_value), 
+      # Multiply adjustment factor by states's value / the above sum
+           adjusted_value = adjustment_factor * 
              (value / states_sum_value)), 
   
   natural_gas = seds %>% 
@@ -36,9 +38,8 @@ seds_res_adjusted <- lst(
     # Supplemental gas no longer needed (and value is now duplicative)
     filter(msn != "SFRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "residential"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments,  
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -46,14 +47,14 @@ seds_res_adjusted <- lst(
              (value / states_sum_value)) %>%
   # Change MSN identifier. old MSN distinction no longer needed(?)
   # However, MSN can be reconstituted from other _code fields if needed.
-    mutate(msn = "net_natural_gas"),
+    mutate(msn = "net natural gas", 
+           source_description = "natural gas"),
   
   distillate_fuel = seds %>%
     filter(msn == "DFRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "residential"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum

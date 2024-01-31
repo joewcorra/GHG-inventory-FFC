@@ -28,21 +28,28 @@ seds_tra_adjusted <- lst(
   # the mystery %s have the state code data
   
   lubricants = seds %>%
-    filter(msn == "LUACB"), 
+    filter(msn == "LUACB") %>%
+    # Adjusted = original value
+    mutate(adjusted_value = value), 
+  
+  jet_fuel = seds %>%
+    filter(msn == "JFACB") %>% 
+    # Adjusted = original value
+    mutate(adjusted_value = value), 
   
   natural_gas = seds %>%
     filter(msn == "NGACB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "transportation"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # rename for clarity
     rename(natural_gas_factor = adjustment_factor) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states' value / the above sum
     mutate(adjusted_value = natural_gas_factor * 
-             (value / states_sum_value))) %>%
+             (value / states_sum_value), 
+           source_description = "natural gas")) %>%
   
   # Collapse list into a single data frame
   list_rbind()

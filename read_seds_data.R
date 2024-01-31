@@ -85,7 +85,13 @@ adjustments <- read_csv("us_compare.csv") %>%
   pivot_longer(cols = starts_with("x"), 
                names_to = "year", values_to = "adjustment_factor") %>%
   # Get rid of leading 'x' in years
-  mutate(year = str_remove(year, "x")) 
+  mutate(year = str_remove(year, "x"), 
+         # Standardize sector descriptions   
+         sector_description = str_c(sector_description, " sector"), 
+         # Standardize source descriptions
+         source_description = if_else(
+           source_description == "hydrocarbon gas liquids", 
+           "lpg", source_description)) 
 
 # JOINING PROBLEMS: 'Adjustments' lumps all LPGs ("butylene", "propane", 
 # "propylene", "isobutane", "normal butane") together as 'lpg' in the 
@@ -115,5 +121,4 @@ adjustments <- read_csv("us_compare.csv") %>%
 
 # Remove unneeded data objects
 rm(msn_lookup)
-# seds_not_in_adj <- setdiff(seds_by_state$source_description, adjustments$source_description)
-# adj_not_in_sed <- setdiff(adjustments$source_description, seds_by_state$source_description)
+

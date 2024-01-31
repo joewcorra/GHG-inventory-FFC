@@ -23,7 +23,7 @@ sources <- data.frame(
                   "PY", "RF", "SF", "SG",  "SN", "SU", "TE", "TN", "UO",  
                   "WD", "WW", "WX"), 
   source_description = c("asphalt and road oil", 
-                         "avian gasoline blending components",
+                         "aviation gasoline blending components",
                          "aviation gasoline", "renewable diesel",
                          "biodiesel", "biofuels", "other biofuels", 
                          "normal butane", "battery storage", 

@@ -34,25 +34,26 @@ seds_neu_adjusted <- lst(
   # Will need to apply the Tennessee filter in state_breakouts(?)
   other_coal = neu_corrections %>%
     filter(source_description == "other coal") %>%
-   mutate(adusted_value = neu_factor * 1), # mystery percent;
+   mutate(neu_adjusted_value = neu_factor * 1), # mystery percent;
   # mostly LA and TX
   
   # Natural gas
   natural_gas = neu_corrections %>%
     # Natural gas has a very long source name in the NEU data
     filter(str_detect(source_description, "natural gas")) %>%
-    mutate(adusted_value = neu_factor * 1), # mystery percent;
+    mutate(neu_adjusted_value = neu_factor * 1), # mystery percent;
   # mostly LA and TX
   
   # Distillate fuel
   distillate_fuel = seds_ind_adjusted %>% 
     filter(msn == "DFICB") %>%
     # Join with NEU corrections data
-    left_join(neu_corrections %>% 
-                filter(source_description == "distillate fuel oil"), 
-              by = "year") %>%
-    mutate(adjusted_value = neu_factor * 
-             (distillate_fuel_is_adj / states_sum_value)),
+    left_join(neu_corrections,
+              by = c("year", "source_description", "sector_description")) %>%
+    mutate(neu_adjusted_value = neu_factor * 
+             (distillate_fuel_is_adj / states_sum_value)) %>%
+    # These columns no longer needed
+    select(-distillate_fuel_is_adj, -adjusted_value),
     
     # LPG
     lpg = seds %>%
@@ -65,53 +66,51 @@ seds_neu_adjusted <- lst(
     # Change source description to reflect new value
     mutate(source_description = "lpg") %>%
     # Join with neu corrections to get neu factor
-    left_join(neu_corrections %>%
-                filter(source_description == "hgl"), 
-              by = "year") %>%
+    left_join(neu_corrections,
+              by = c("year", "source_description", "sector_description")) %>%
     # Get sum of all states' lpg
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Rename MSN and calculate adjusted value
     mutate(msn = "net lpg", 
-           adjusted_value = neu_factor * (value / states_sum_value)),
+           neu_adjusted_value = neu_factor * (value / states_sum_value)),
   
   # Pentanes plus
   pentanes_plus = seds %>%
     filter(msn == "PPICB") %>%
     # Join with neu corrections to get neu factor
-    left_join(neu_corrections %>%
-                filter(source_description == "pentanes plus"), 
-              by = "year") %>%
+    left_join(neu_corrections,
+              by = c("year", "source_description", "sector_description")) %>%
     # Get sum of all states' pentanes plus
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Calculate adjusted value
-    mutate(adjusted_value = neu_factor * (value / states_sum_value)),
+    mutate(neu_adjusted_value = neu_factor * (value / states_sum_value)),
   
   # Petroleum coke
   petroleum_coke = seds %>%
     filter(msn == "PCICB") %>%
     # Join with neu corrections to get neu factor
-    left_join(neu_corrections %>%
-                filter(source_description == "petroleum coke"), 
-              by = "year") %>%
+    left_join(neu_corrections,
+              by = c("year", "source_description", "sector_description")) %>%
     # Get sum of all states' petroleum coke
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Calculate adjusted value
-    mutate(adjusted_value = neu_factor * (value / states_sum_value)),
+    mutate(neu_adjusted_value = neu_factor * (value / states_sum_value)),
     
     # Still gas
     still_gas = seds %>%
     filter(msn == "SGICB") %>%
     # Join with neu corrections to get neu factor
-    left_join(neu_corrections %>%
-                filter(source_description == "still gas"), 
-              by = "year") %>%
+    left_join(neu_corrections,
+              by = c("year", "source_description", "sector_description")) %>%
     # Get sum of all states' still gas
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Calculate adjusted value
-    mutate(adjusted_value = neu_factor * (value / states_sum_value))) %>%
-
-# Collapse list into a single data frame
-list_rbind()
+    mutate(neu_adjusted_value = neu_factor * (value / states_sum_value))) %>%
+  
+  # Collapse list into a single data frame
+  list_rbind() %>%
+  # Remove nonessential columns to simplify joins in state_breakouts.R
+  select(sector_description:year, neu_adjusted_value, state, msn)
 
 
 

@@ -21,9 +21,8 @@ seds_com_adjusted <- lst(
   coal = seds %>%
     filter(msn == "CLCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "commercial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -33,9 +32,8 @@ seds_com_adjusted <- lst(
   distillate_fuel = seds %>%
     filter(msn == "DFCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "commercial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -51,9 +49,8 @@ seds_com_adjusted <- lst(
     # Supplemental gas no longer needed (and value is now duplicative)
     filter(msn != "SFRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "commercial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -61,7 +58,8 @@ seds_com_adjusted <- lst(
              (value / states_sum_value)) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
-    mutate(msn = "net_natural_gas"),
+    mutate(msn = "net natural gas", 
+           source_description = "natural gas"),
   
   gasoline = seds %>% 
     # Separate list element required to find net gasoline
@@ -72,9 +70,8 @@ seds_com_adjusted <- lst(
     # Ethanol no longer needed (and value is now duplicative)
     filter(msn != "EMCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "commercial"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments , 
+              by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -82,7 +79,8 @@ seds_com_adjusted <- lst(
              (value / states_sum_value)) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
-    mutate(msn = "net_gasoline"),
+    mutate(msn = "net gasoline", 
+           source_description = "motor gasoline"),
 
   # All other sources go in the last list element
   other_commercial = seds %>% 

@@ -20,11 +20,10 @@ seds_ele_adjusted <- lst(
     filter(msn == "CLEIB") %>%
     # Make sector names match to complete the next join
     mutate(sector_description = word(sector_description, 
-                                     start = 1, end = 2)) %>%
+                                     start = 1, end = 3)) %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "electric power"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
     rename(coal_factor = adjustment_factor) %>%
     # Get sum of all states' value 
@@ -43,11 +42,10 @@ seds_ele_adjusted <- lst(
     filter(msn != "SFEIB") %>%
     # Make sector names match to complete the next join
     mutate(sector_description = word(sector_description, 
-                                     start = 1, end = 2)) %>%
+                                     start = 1, end = 3)) %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "electric power"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
     rename(natural_gas_factor = adjustment_factor) %>%
     # Get sum of all states' value 
@@ -57,17 +55,17 @@ seds_ele_adjusted <- lst(
              (value / states_sum_value)) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
-    mutate(msn = "net_natural_gas"),
+    mutate(msn = "net natural gas", 
+           source_description = "natural gas"),
   
   distillate_fuel = seds %>%
     filter(msn == "DFEIB") %>%
     # Make sector names match to complete the next join
     mutate(sector_description = word(sector_description, 
-                                     start = 1, end = 2)) %>%
+                                     start = 1, end = 3)) %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments %>% 
-                filter(sector_description == "electric power"), 
-              by = c("source_description", "year")) %>%
+    left_join(adjustments, 
+              by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
     rename(distillate_fuel_factor = adjustment_factor) %>%
     # Get sum of all states' value 

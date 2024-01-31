@@ -22,7 +22,7 @@
 
 # Read Excel Data--------------------------------------------------------
 
-# Read in IBF data from FFC excel workbook. Only need one line:
+# Read in NEU data from FFC excel workbook
 neu_corrections <- read_excel("national_inventory_CO2_data.xlsx", 
                               sheet = "Non-Energy Use", 
                               skip = 0, range = "D5:AJ24") %>%
