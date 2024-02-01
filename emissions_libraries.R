@@ -10,7 +10,9 @@ library(httr)
 library(janitor)
 library(jsonlite)
 library(readxl)
+library(reticulate)
 library(rvest)
+library(shiny)
 library(tidyverse)
 
 

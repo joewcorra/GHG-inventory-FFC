@@ -15,17 +15,23 @@
 # Break SEDS data into list based on MSNs
 seds_tra_adjusted <- lst(
   
-  distillate_fuel = adjustments %>% 
-    filter(sector_description == "transportation", 
-           source_description == "distillate fuel oil") %>%
-    mutate(adjusted_value = adjustment_factor * 1), # mystery % 
-  # the mystery %s have the state code data
+  distillate_fuel = diesel_distribution %>% 
+    # Join with adjustments data
+    left_join(adjustments %>% 
+                # Can only join by 'year', so a filter is required
+                filter(source_description == "distillate fuel oil", 
+                       sector_description == "transportation sector"), 
+              by = c("year")) %>%
+    mutate(adjusted_value = adjustment_factor * diesel_percent), 
   
-  gasoline = adjustments %>% 
-    filter(sector_description == "transportation", 
-           source_description == "aviation gasoline") %>%
-    mutate(adjusted_value = adjustment_factor * 1), # mystery % 
-  # the mystery %s have the state code data
+  gasoline = gasoline_distribution %>%
+    # Join with adjustments data
+    left_join(adjustments %>% 
+                # Can only join by 'year', so a filter is required
+                filter(source_description == "motor gasoline", 
+                       sector_description == "transportation sector"), 
+              by = c("year")) %>%
+    mutate(adjusted_value = adjustment_factor * gasoline_percent), 
   
   lubricants = seds %>%
     filter(msn == "LUACB") %>%

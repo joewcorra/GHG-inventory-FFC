@@ -16,17 +16,19 @@
 
 # Read Excel Data--------------------------------------------------------
 
-# Read in NEU data from FFC excel workbook
-is_distribution <- read_excel("ippu_i&s_percent_2021.xlsx", 
-                              sheet = 1, 
-                              skip = 0, range = "A2:AJ54") %>%
+# Read in I & S data from FFC excel workbook
+is_distribution <- read_excel(
+  "ippu_i&s_percent_2021.xlsx", 
+  sheet = 1, 
+  skip = 0, range = "A2:AJ54") %>%
   clean_names() %>%
-# Don't need the national value; we compute it below
+  # Don't need the national value; we compute it below
   filter(state != "National") %>%
   # Keep only state codes and value by year
   select(state, starts_with("x")) %>%
   # Make data long; i.e., one row per year
-  pivot_longer(cols = -1, names_to = "year", values_to = "is_percent") %>%
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "is_percent") %>%
   # Remove letters from year column 
   mutate(year = str_remove(year, "[a-z]"),
          # Get national total for each year by insta-grouping
@@ -36,12 +38,46 @@ is_distribution <- read_excel("ippu_i&s_percent_2021.xlsx",
   # No longer need national total
   select(-national_total)
 
+# Read in ammonia data from FFC excel workbook
+ammonia_distribution <- read_excel(
+  "ippu_ammonia_percent_2021.xlsx", 
+  sheet = 1, 
+  skip = 0, range = "A2:AJ54") %>%
+  clean_names() %>%
+  # Don't need the national value; we compute it below
+  filter(state != "National") %>%
+  # Keep only state codes and value by year
+  select(state, starts_with("x")) %>%
+  # Make data long; i.e., one row per year
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "ammonia_percent") %>%
+  # Remove letters from year column 
+  mutate(year = str_remove(year, "[a-z]"),
+         # Get national total for each year by insta-grouping
+         national_total = sum(ammonia_percent), .by = year) %>%
+  # Get ammonia percentage for each state 
+  mutate(ammonia_percent = ammonia_percent / national_total) %>%
+  # No longer need national total
+  select(-national_total)
 
-ammonia_distribution <- read_excel("ippu_ammonia_2021.xlsx", 
-                              sheet = 1, 
-                              skip = 0, range = "A2:AJ54") 
-
-
-petrochemicals_distribution <- read_excel("ippu_petrochemicals_2021.xlsx", 
-                              sheet = 1, 
-                              skip = 0, range = "A2:AJ54") 
+# Read in petrochemical data from FFC excel workbook
+petrochemicals_distribution <- read_excel(
+  "ippu_petrochemicals_percent_2021.xlsx", 
+  sheet = 1, 
+  skip = 0, range = "A2:AJ54") %>%
+  clean_names() %>%
+  # Don't need the national value; we compute it below
+  filter(state != "National") %>%
+  # Keep only state codes and value by year
+  select(state, starts_with("x")) %>%
+  # Make data long; i.e., one row per year
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "petrochemical_percent") %>%
+  # Remove letters from year column 
+  mutate(year = str_remove(year, "[a-z]"),
+         # Get national total for each year by insta-grouping
+         national_total = sum(petrochemical_percent), .by = year) %>%
+  # Get petrochemical percentage for each state 
+  mutate(petrochemical_percent = petrochemical_percent / national_total) %>%
+  # No longer need national total
+  select(-national_total)

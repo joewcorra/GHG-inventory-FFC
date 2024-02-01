@@ -65,7 +65,12 @@ consumption_input <- read_excel("national_inventory_CO2_data.xlsx",
          source_description = x2) %>%
   mutate(sector_description = if_else(
     str_detect(sector_description, "ource"), 
-    NA_character_, sector_description)) %>%
+    NA_character_, sector_description), 
+    # Standardize source descriptions for joins in industrial_adjustments.R
+    source_description = case_when(
+      str_detect(source_description, "istillate") ~ "distillate fuel oil", 
+      str_detect(source_description, "esidual") ~ "residual fuel oil",
+      .default = source_description)) %>%
   fill(sector_description) %>%
   pivot_longer(cols = !c(sector_description, source_description), 
                values_to = "consumption_value", names_to = "year") %>%
@@ -79,5 +84,5 @@ consumption_input <- read_excel("national_inventory_CO2_data.xlsx",
            str_c(" sector"))
   
   
-  print("This generates a warning about NA values. 
-        Ignore this message--these values are not used.")
+  print("This generates a warning about NA values.")
+  print("Ignore this warning. These values are not used.")

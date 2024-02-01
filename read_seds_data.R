@@ -21,10 +21,6 @@
 
 
 
-# Might not keep this (?)
-subsources <- c("residential", "commercial", "industrial", "transportation",
-                "electricity generation", "us territories")
-
 # Vector of MSNs to look up in the state summaries:
 # These MSNs are all in billions of BTUs; converted to millions below. 
 msn_lookup <- c("CLRCB", "NGRCB", "SFRCB", "DFRCB", "KSRCB", "HLRCB", "PQRCB", 

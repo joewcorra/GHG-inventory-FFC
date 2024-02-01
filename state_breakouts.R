@@ -83,8 +83,6 @@ carbon <- seds_all_adjusted %>%
            (carbon_factor/1000) * carbon_ratio)
 
 
-
-
 # Remove unneeded data objects
 rm(carbon_factors_variable)
 

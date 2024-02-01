@@ -9,15 +9,6 @@
 # seds_ind_adjusted: tibble; adjusted values for industrial sector emissions
   # Created by rbind-ing a lst object
 
-# Adjustment Factors Specific to Industrial Sources---------------------
-
-
-### residual fuel national total: From FFC CO2 file input corrected
-residual_fuel_factor <- 1
-### distillate fuel national total: From FFC CO2 file input corrected
-distillate_fuel_factor <- 1
-
-
 # Confirming Group Size for Net Values-----------------------------------
 
 # Some of the adjusted values first require finding the difference between  
@@ -97,7 +88,7 @@ seds_ind_adjusted <- lst(
            other_coal_is_adj = is_coal_factor * is_percent,
            adjusted_value_pre = value -
              (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj)) %>%
-    # # Get sum of all states' adjusted values
+    # Get sum of all states' adjusted values
     mutate(states_sum_value = sum(adjusted_value_pre), 
            .by = c(msn, year)) %>%
     mutate(adjusted_value =
@@ -120,22 +111,34 @@ seds_ind_adjusted <- lst(
     # Join with consumption input data
     left_join(consumption_input,
               by = c("year", "sector_description", "source_description")) %>%
+    # Join with I & S distribution data
+    left_join(is_distribution, by = c("state", "year")) %>% 
+    # Join with ammonia distribution data
+    left_join(ammonia_distribution, by = c("state", "year")) %>% 
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
     mutate(total_furnace_factor =
+             # Sum for total furnace factor
              blast_furnace_gas_factor + coke_oven_gas_factor,
-           natural_gas_furnace_adj =
-             total_furnace_factor * 1, # mysterious hard-coded
-           # % used in the other_coal_is_adj, above)
-           natural_gas_ammonia_adj = nat_gas_ammonia_factor * 1, # mystery %
-           natural_gas_is_adj = is_gas_factor * 1, # mystery hard-coded % used
-           # in the other_coal_is_adj, above
+           #  Furnace factor * I & S distribution = furnace adjusted value 
+           natural_gas_furnace_adj = total_furnace_factor * 
+             is_percent, 
+           #  Ammonia factor * ammonia distribution = ammonia adjusted value 
+           natural_gas_ammonia_adj = nat_gas_ammonia_factor * 
+             ammonia_percent, 
+           #  I & S factor * I & S distribution = I & S adjusted value 
+           natural_gas_is_adj = is_gas_factor * is_percent,
            adjusted_value_pre = value -
              (natural_gas_furnace_adj +
-                natural_gas_ammonia_adj + natural_gas_is_adj),
-           adjusted_value =
-             (adjusted_value_pre / sum(adjusted_value_pre)) * 
+                natural_gas_ammonia_adj + natural_gas_is_adj)) %>%
+    # # Get sum of all states' adjusted (preliminary) values
+    mutate(states_sum_value = sum(adjusted_value_pre), 
+           .by = c(msn, year)) %>%
+    # adj value / sum of all states' values * consumption = adjusted value
+    mutate(adjusted_value =
+             (adjusted_value_pre / states_sum_value) * 
              consumption_value) %>%
+    # Remove unneeded columns
     select(!total_furnace_factor:natural_gas_is_adj),
   
   # Residual Fuel
@@ -143,35 +146,45 @@ seds_ind_adjusted <- lst(
     filter(msn == "RFICB") %>%
     # Join with national data corrections 
     left_join(national_corrections, by = "year") %>%
-    # adjust for cb factor = cb_factor * mysterious hard-coded % 
+    # Join with consumption input data
+    left_join(consumption_input,
+              by = c("year", "sector_description", "source_description")) %>%
+    # Join with petrochemicals distribution data
+    left_join(petrochemicals_distribution, by = c("state", "year")) %>% 
+    # adjust for cb factor = cb_factor * petrochem distribution 
     # adjusted value = value - cb adjusted value (minimum = 0)
-    mutate(residual_fuel_cb_adj = if_else(value - (cb_factor * 1) < 0, 0, 
-                                          # 1 is a placeholder 
-                                          value - (cb_factor * 1))) %>% 
+    mutate(residual_fuel_cb_adj = if_else(
+      value - (cb_factor * petrochemical_percent) < 0, 0, 
+      value - (cb_factor * petrochemical_percent))) %>% 
     # Get sum of all states' cb adjusted values
     mutate(states_sum_value = sum(residual_fuel_cb_adj), 
            .by = c(msn, year)) %>% 
-    # now adjust by residual fuel national 
+    # now adjust by consumption value
     mutate(adjusted_value = 
-             residual_fuel_factor * (residual_fuel_cb_adj / states_sum_value)),
+             consumption_value * (residual_fuel_cb_adj / states_sum_value)),
   
   # Distillate Fuel
   distillate_fuel = seds %>%
     filter(msn == "DFICB") %>%
     # Join with national data corrections 
     left_join(national_corrections, by = "year") %>%
+    # Join with consumption input data
+    left_join(consumption_input,
+              by = c("year", "sector_description", "source_description")) %>%
+    # Join with I & S distribution data
+    left_join(is_distribution, by = c("state", "year")) %>% 
     # distillate_fuel_is_adj = is_distillate_fuel_factor * 
     # mysterious hard-coded % used in the other_coal_is_adj, above
     # distillate_fuel_is_adj (if negative, then 0)
     mutate(distillate_fuel_is_adj = if_else(
-      value - (is_distillate_fuel_factor * 1) < 0, 0, 
-      # 1 is a placeholder for the mystery percentage
-      value - (is_distillate_fuel_factor * 1))) %>%
+      value - (is_distillate_fuel_factor * is_percent) < 0, 0, 
+      value - (is_distillate_fuel_factor *  is_percent))) %>%
     # Get sum of all states' cb adjusted values
-    mutate(states_sum_value = sum(value), .by = c(msn, year)) %>% 
-    # now adjust by distillate fuel national total
+    mutate(states_sum_value = sum(distillate_fuel_is_adj), 
+           .by = c(msn, year)) %>% 
+    # now adjust by consumption value
     mutate(adjusted_value = 
-             distillate_fuel_factor *
+             consumption_value *
              (distillate_fuel_is_adj / states_sum_value)),
   
   # Gasoline

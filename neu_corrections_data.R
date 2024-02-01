@@ -39,7 +39,8 @@ neu_corrections <- read_excel("national_inventory_CO2_data.xlsx",
   # Move sector_description to the first column in order to pivot
   relocate(sector_description) %>%
   # Make data long; i.e., one row per year
-  pivot_longer(cols = -c(1, 2), names_to = "year", values_to = "neu_factor") %>%
+  pivot_longer(cols = -c(1, 2), names_to = "year", 
+               values_to = "neu_factor") %>%
   # Remove letters from year column 
   mutate(year = str_remove(year, "[a-z]"), 
          # Make source lowercase
