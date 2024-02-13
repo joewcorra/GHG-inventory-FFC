@@ -235,7 +235,7 @@ seds_ind_adjusted <- lst(
     # Pentanes plus goes in other_industrial(?) Remove from this element:
     filter(msn != "PPICB") %>%
     # Change source description to reflect new value
-    mutate(source_description = "lpg") %>%
+    mutate(source_description = "hgl") %>%
     # Join with adjustments to get adjustment factor
     left_join(adjustments,
               by = c("source_description", "year", "sector_description")) %>%
@@ -245,7 +245,6 @@ seds_ind_adjusted <- lst(
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Rename MSN & source and calculate adjusted value
     mutate(msn = "net lpg", 
-           source_description = "lpg", 
            adjusted_value = ind_lpg_factor * (value / states_sum_value)),
   # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
   

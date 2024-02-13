@@ -22,9 +22,7 @@
 # NEU Adjustments--------------------------------------------------------
 
 
-# Note that other coal and natural gas are awaiting the "mystery percent"
-# data; until then, the numbers are inaccurate and state == NA
-# Distillate fuel is inaccurate for the same reason, but has correct state
+
 
 # Break SEDS data into list based on MSNs
 seds_neu_adjusted <- lst(
@@ -64,7 +62,7 @@ seds_neu_adjusted <- lst(
     # Pentanes plus computed below, so remove from this element:
     filter(msn != "PPICB") %>%
     # Change source description to reflect new value
-    mutate(source_description = "lpg") %>%
+    mutate(source_description = "hgl") %>%
     # Join with neu corrections to get neu factor
     left_join(neu_corrections,
               by = c("year", "source_description", "sector_description")) %>%

@@ -87,7 +87,7 @@ adjustments <- read_csv("us_compare.csv") %>%
          # Standardize source descriptions
          source_description = if_else(
            source_description == "hydrocarbon gas liquids", 
-           "lpg", source_description)) 
+           "hgl", source_description)) 
 
 # JOINING PROBLEMS: 'Adjustments' lumps all LPGs ("butylene", "propane", 
 # "propylene", "isobutane", "normal butane") together as 'lpg' in the 

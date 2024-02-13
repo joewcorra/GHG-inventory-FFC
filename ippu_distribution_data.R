@@ -64,7 +64,8 @@ ammonia_distribution <- read_excel(
 petrochemicals_distribution <- read_excel(
   "ippu_petrochemicals_percent_2021.xlsx", 
   sheet = 1, 
-  skip = 0, range = "A2:AJ54") %>%
+  # Choose the 'carbon black' cell range 
+  skip = 0, range = "A110:AJ162") %>%
   clean_names() %>%
   # Don't need the national value; we compute it below
   filter(state != "National") %>%
