@@ -24,6 +24,7 @@ source("ibf_adjustments.R")
 source("neu_adjustments.R")
 source("carbon_factors_data.R")
 source("state_breakouts.R")
+source("dashboards.R")
 source("final_state_summaries.R")
 source("emissions_state_final") # need a final script to collate results (?)
 # Probably create a set of shared national-state scripts for generating

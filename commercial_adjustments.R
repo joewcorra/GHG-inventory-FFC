@@ -42,12 +42,12 @@ seds_com_adjusted <- lst(
   
   natural_gas = seds %>% 
     # Separate list element required to find net natural gas
-    filter(msn %in% c("NGRCB", "SFRCB")) %>%
+    filter(msn %in% c("NGCCB", "SFCCB")) %>%
     # Subtract supplemental gas from total natural gas
     mutate(value = abs(diff(value)), .by = c(state, year)) %>%
     # Group_size shows that each group has exactly two rows. Good!
     # Supplemental gas no longer needed (and value is now duplicative)
-    filter(msn != "SFRCB") %>%
+    filter(msn != "SFCCB") %>%
     # Join with the adjustment factor data (from national inventory)
     left_join(adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
