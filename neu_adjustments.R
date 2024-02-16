@@ -31,9 +31,10 @@ seds_neu_adjusted <- lst(
   # Tennessee only, apparently--ask Vince before proceeding
   # Will need to apply the Tennessee filter in state_breakouts(?)
   other_coal = neu_corrections %>%
-    filter(source_description == "other coal") %>%
-   mutate(neu_adjusted_value = neu_factor * 1), # mystery percent;
-  # mostly LA and TX
+    # Applies only to industrial other coal?
+    filter(source_description == "coal", 
+           sector_description == "industrial sector") %>%
+   mutate(neu_adjusted_value = neu_factor * 1), 
   
   # Natural gas
   natural_gas = neu_corrections %>%

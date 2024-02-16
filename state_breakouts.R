@@ -9,18 +9,12 @@
 
 # State Breakouts (Final)-----------------------------------------------
 
-# Split into list elements by state
-seds_all_adjusted %>% # TBD
-  group_by(state) %>%
-  group_split() 
 
-
-# 1/29/2024 this might be a good place to remove unneeded columns
 seds_all_adjusted <- bind_rows(
   seds_com_adjusted, seds_ele_adjusted, seds_ind_adjusted,
   seds_res_adjusted, seds_tra_adjusted) %>%
   # 1/29/2024 START WITH A SINGLE STATE to get the formatting right
-  filter(state == "NY") %>%
+  # filter(state == "NY") %>%
   select(state:adjusted_value, -type, -msn_description) %>%
   
   # NOTE: maybe move this to carbon calculations, below
@@ -38,7 +32,7 @@ seds_all_adjusted <- bind_rows(
     str_detect(source_description, "miscellaneous") ~ "misc. products",
     str_detect(source_description, "residual") ~ "residual fuel",
     .default = source_description)) %>%
-  # Add sector to each coal source
+  # Add sector to each coal source--required for carbon factors & NEU
   mutate(source_description = case_when(
     source_description == "coal" & sector_code == "CC" ~ 
       "commercial coal", 
@@ -79,8 +73,14 @@ seds_all_adjusted <- bind_rows(
 carbon <- seds_all_adjusted %>% 
   left_join(carbon_factors, 
             by =c("source_description", "year")) %>%
+  # MMT CO2  = btu * carbon factor/1000 * 44/12
   mutate(mmt_co2 = neu_ibf_adjusted_value * 
-           (carbon_factor/1000) * carbon_ratio)
+           (carbon_factor/1000) * carbon_ratio, 
+         # Restore original coal source descriptions
+         source_description = case_when(
+           str_detect(source_description, "coking coal" ) ~ "coking coal", 
+           str_detect(source_description, "(?<!coking )coal" ) ~ "coal", 
+           .default = source_description))
 
 
 # Remove unneeded data objects
