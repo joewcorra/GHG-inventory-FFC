@@ -9,6 +9,18 @@ seds_db_formatted <- carbon %>%
          carbon_factor, mmt_co2) %>%
   mutate(across(where(is.numeric), ~ round(.x, 2))) 
 
+# Mapping data
+usa <- map_data("state") 
+
+mapdata <- carbon %>% 
+  left_join(states, by = c("state" = "states_and_dc")) %>%
+  group_by(state_names, year) %>%
+  summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE))
+
+
+# Create tibble of state names; required for map data
+states <- tibble(states_and_dc, state_names) %>% 
+  mutate(state_names = str_to_lower(state_names))
 
 # Create colorblind-friendly color palette for plots
 cbPalette = c("#465177", "#E4C22B", "#965127", "#29483A", "#759C44", "#9FB6DA", 
@@ -45,7 +57,9 @@ ui <- fluidPage(
       tabPanel("Scatter plot", 
                plotOutput("plot")), 
       tabPanel("Column plot", 
-               plotOutput("plot2"))
+               plotOutput("plot2")), 
+      tabPanel("Map", 
+               plotOutput("map"))
     )
     ) 
   ) 
@@ -65,6 +79,7 @@ server <- function(input, output) {
       reactable() 
   })
   
+  # Scatter Plots
   output$plot <- renderPlot({
     seds_db_formatted %>% 
       rename(sector = sector_description, source = source_description) %>%
@@ -73,8 +88,10 @@ server <- function(input, output) {
              sector %in% input$sector,
              source %in% input$source) %>%
       filter(mmt_co2 >= input$emissions[1], mmt_co2 <= input$emissions[2]) %>%
-      ggplot(aes(x = year, y = mmt_co2)) +
-      geom_text(aes(label = state, color = source, fontface = "bold")) +
+      ggplot() +
+      # geom_text(aes(label = state, color = source, fontface = "bold")) +
+      geom_smooth(aes(x = NEU_IBF_adjusted_BTU, y = mmt_co2, color = source), 
+                method = "lm") + 
       scale_color_manual(values = cbPalette) + 
       theme_classic() +
       theme(axis.title.x = element_text(size = 14), 
@@ -87,6 +104,7 @@ server <- function(input, output) {
     
   })
   
+  # Bar Plots
   output$plot2 <- renderPlot({
     seds_db_formatted %>% 
       rename(sector = sector_description, source = source_description) %>%
@@ -107,6 +125,19 @@ server <- function(input, output) {
     
     
   })
+  
+  # Map
+  output$map <- renderPlot({
+    usa %>% left_join(mapdata, by = c("region" = "state_names")) %>%
+      filter(year %in% input$year) %>%
+      ggplot(aes(x = long, y = lat)) + 
+      geom_polygon(aes(fill = mmt_co2, group = region), color = "black") + 
+      scale_color_continuous() + 
+      facet_wrap(~ year)
+    
+    
+  })
+  
 } 
 
 

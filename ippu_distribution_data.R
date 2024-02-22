@@ -60,12 +60,13 @@ ammonia_distribution <- read_excel(
   # No longer need national total
   select(-national_total)
 
-# Read in petrochemical data from FFC excel workbook
+
+# Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_distribution <- read_excel(
   "ippu_petrochemicals_percent_2021.xlsx", 
   sheet = 1, 
   # Choose the 'carbon black' cell range 
-  skip = 0, range = "A110:AJ162") %>%
+  skip = 0, range = "A2:AJ54") %>%
   clean_names() %>%
   # Don't need the national value; we compute it below
   filter(state != "National") %>%
@@ -79,6 +80,32 @@ petrochemicals_distribution <- read_excel(
          # Get national total for each year by insta-grouping
          national_total = sum(petrochemical_percent), .by = year) %>%
   # Get petrochemical percentage for each state 
-  mutate(petrochemical_percent = petrochemical_percent / national_total) %>%
+  mutate(petrochemical_percent = 
+           petrochemical_percent / national_total) %>%
+  # No longer need national total
+  select(-national_total)
+
+
+# Read in petrochemical carbon black data from FFC excel workbook
+petrochemicals_cb_distribution <- read_excel(
+  "ippu_petrochemicals_percent_2021.xlsx", 
+  sheet = 1, 
+  # Choose the 'carbon black' cell range 
+  skip = 0, range = "A110:AJ162") %>%
+  clean_names() %>%
+  # Don't need the national value; we compute it below
+  filter(state != "National") %>%
+  # Keep only state codes and value by year
+  select(state, starts_with("x")) %>%
+  # Make data long; i.e., one row per year
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "petrochemical_cb_percent") %>%
+  # Remove letters from year column 
+  mutate(year = str_remove(year, "[a-z]"),
+         # Get national total for each year by insta-grouping
+         national_total = sum(petrochemical_cb_percent), .by = year) %>%
+  # Get petrochemical percentage for each state 
+  mutate(petrochemical_cb_percent = 
+           petrochemical_cb_percent / national_total) %>%
   # No longer need national total
   select(-national_total)

@@ -61,6 +61,11 @@ seds_all_adjusted <- bind_rows(
     !is.na(ibf_adjusted_value), 
     adjusted_value - ibf_adjusted_value, 
     adjusted_value), 
+    # Some MSNs are 100% NEU. For these, NEU value = 100% of adjusted value
+    neu_adjusted_value = if_else(msn %in% c("ARICB", "LUICB", "FNICB", 
+                                            "FOICB", "SNICB", "WXICB", 
+                                            "MSICB", "LUACB"), 
+                                 adjusted_value, neu_adjusted_value),  
     neu_ibf_adjusted_value = if_else(
       # Subtract NEU only if NEU applies (i.e., isn't NA)
       !is.na(neu_adjusted_value), 

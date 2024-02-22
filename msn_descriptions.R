@@ -100,7 +100,7 @@ msn <- read_csv("msn_descriptions.csv") %>%
   left_join(sectors, by = "sector_code")
 
 
-# US state and non-state codes
+# US state codes (including DC)
 states_and_dc <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
                 "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", 
                 "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", 
@@ -108,23 +108,24 @@ states_and_dc <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL",
                 "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", 
                 "WY")
 
-non_states <- c("X3", "X5", "US")
+# non_states <- c("X3", "X5", "US")
 
-# state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California", 
-#             "Colorado", "Connecticut", "Delaware", 
-#             "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois",
-#             "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", 
-#             "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", 
-#             "Mississippi", "Montana", "North Carolina", "North Dakota", 
-#             "Nebraska", "New Hampshire", "New Jersey", "New Mexico", 
-#             "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", 
-#             "Pennsylvania", "Rhode Island", "South Carolina", 
-#             "South Dakota", "Tennessee", "Texas", "Utah", "Virginia",
-#             "Vermont", "Washington", "Wisconsin", "West Virginia",
-#             "Wyoming", "District of Columbia", 
-#             "Federal Offshore, Gulf of Mexico", 
-#             "Federal Offshore, Pacific", "United States")
+# US state names (including DC)
+state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California",
+                 "Colorado", "Connecticut", "Delaware", "District of Columbia",
+                 "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois",
+                 "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts",
+                 "Maryland", "Maine", "Michigan", "Minnesota", "Missouri",
+                 "Mississippi", "Montana", "North Carolina", "North Dakota",
+                 "Nebraska", "New Hampshire", "New Jersey", "New Mexico",
+                 "Nevada", "New York", "Ohio", "Oklahoma", "Oregon",
+                 "Pennsylvania", "Rhode Island", "South Carolina",
+                 "South Dakota", "Tennessee", "Texas", "Utah", "Virginia",
+                 "Vermont", "Washington", "Wisconsin", "West Virginia",
+                 "Wyoming")
 
+# non_state_names <- c("Federal Offshore, Gulf of Mexico", 
+# "Federal Offshore, Pacific", "United States")
 
 # Cleanup-------------------------------------------------------------------
 

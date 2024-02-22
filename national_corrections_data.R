@@ -55,11 +55,13 @@ national_corrections <- read_excel("national_inventory_CO2_data.xlsx",
      is_coal_factor = coal)
 
 
-
+# Consumption input data is largely similar to the adjustments data from 
+# 'US compare', with the exception of resid fuel, dist fuel, nat gas, & coal.
+# Unclear how those 4 sources were adjusted between the two data sets. 
 
 consumption_input <- read_excel("national_inventory_CO2_data.xlsx", 
-                                   sheet = "Consumption Input", 
-                                   skip = 0, range = "C5:AK131") %>%
+                                sheet = "Consumption Input", 
+                                skip = 0, range = "C5:AK131") %>%
   clean_names() %>%
   rename(sector_description = t_btu, 
          source_description = x2) %>%
@@ -81,7 +83,17 @@ consumption_input <- read_excel("national_inventory_CO2_data.xlsx",
          consumption_value = as.numeric(consumption_value),
          source_description = str_to_lower(source_description), 
          sector_description = str_to_lower(sector_description) %>% 
-           str_c(" sector"))
+           str_c(" sector")) %>%
+  # Only used for ind: resid fuel, dist fuel, nat gas, & coal. Remove others
+  filter(sector_description == "industrial sector", 
+         source_description %in% c("residual fuel oil", "other coal", 
+                                   "distillate fuel oil", "natural gas")) %>%
+  # Change other coal = coal for consistent joins in industrial_adjustments.R
+  mutate(source_description = 
+           if_else(source_description == "other coal", "coal", 
+                   source_description))
+  
+  
   
   
   print("This generates a warning about NA values.")

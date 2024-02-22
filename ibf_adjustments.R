@@ -20,17 +20,25 @@
 # Break SEDS data into list based on MSNs
 seds_ibf_adjusted <- lst(
   
-  distillate_fuel = adjustments %>% 
-    filter(sector_description == "transportation sector", 
-           source_description == "distillate fuel oil") %>%
-    mutate(ibf_adjusted_value = adjustment_factor * 1), # mystery % 
-  # the mystery %s have the state code data
+  distillate_fuel = foks_diesel_distribution %>%
+    left_join(adjustments %>% filter(
+      sector_description == "transportation sector", 
+      source_description == "distillate fuel oil"), 
+      by = "year") %>% 
+     # Calculate adjusted value (factor * percent)
+    mutate(ibf_adjusted_value = adjustment_factor * diesel_percent,
+           # Add the MSN for transportation distillate fuel
+           msn = "DFASB"),
   
-  residual_fuel = adjustments %>% 
-    filter(sector_description == "transportation sector", 
-           source_description == "residual fuel oil") %>%
-    mutate(ibf_adjusted_value = adjustment_factor * 1), # mystery % 
-  # the mystery %s have the state code data
+  residual_fuel = foks_residual_distribution %>%
+    left_join(adjustments %>% filter(
+      sector_description == "transportation sector", 
+      source_description == "residual fuel oil"), 
+      by = "year") %>% 
+    # Calculate adjusted value (factor * percent)
+    mutate(ibf_adjusted_value = adjustment_factor * residual_percent, 
+           # Add the MSN for transportation residual fuel
+           msn = "RFACB"),
   
   jet_fuel = seds %>%
     filter(msn == "JFACB") %>%
@@ -47,7 +55,8 @@ seds_ibf_adjusted <- lst(
   # Collapse list into a single data frame
   list_rbind() %>%
   # Remove nonessential columns to simplify joins in state_breakouts.R
-  select(sector_description:year, ibf_adjusted_value, state, msn)
+  select(state, year, sector_description, source_description, 
+         msn, ibf_adjusted_value)
 
 
 # Notes from Review of Excel Workbook------------------------------------

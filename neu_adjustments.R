@@ -18,6 +18,7 @@
 # For these sources, we assume 100% of consumption is for non-energy uses. 
 # 100% NEU: asphalt & road oil, coking coal, lubricants (both industrial and 
 # transportation), naphtha, other oil, special naphtha, waxes, misc products. 
+# For these sources, 100% NEU adjustments are made in state_breakouts.R.
 
 # NEU Adjustments--------------------------------------------------------
 
@@ -28,20 +29,26 @@
 seds_neu_adjusted <- lst(
   
   # Other coal
-  # Tennessee only, apparently--ask Vince before proceeding
-  # Will need to apply the Tennessee filter in state_breakouts(?)
+  # NEU Correction applies to Tennessee only (Eastman Gas Plant)
   other_coal = neu_corrections %>%
-    # Applies only to industrial other coal?
-    filter(source_description == "coal", 
+    filter(source_description == "other coal", 
            sector_description == "industrial sector") %>%
-   mutate(neu_adjusted_value = neu_factor * 1), 
+   mutate(neu_adjusted_value = neu_factor,
+          # Add industrial other coal MSN
+          msn = "CLOCB", 
+          # Tennessee only
+          state = "TN"),
   
   # Natural gas
   natural_gas = neu_corrections %>%
     # Natural gas has a very long source name in the NEU data
     filter(str_detect(source_description, "natural gas")) %>%
-    mutate(neu_adjusted_value = neu_factor * 1), # mystery percent;
-  # mostly LA and TX
+    left_join(petrochemicals_distribution, by = "year") %>%
+    # NEU value = NEU factor * distribution (will be zero for most states)
+    mutate(neu_adjusted_value = neu_factor * petrochemical_percent, 
+           # Standardize MSN & source to match seds_ind_adjusted
+           msn = "net natural gas", 
+           source_description = "natural gas"), 
   
   # Distillate fuel
   distillate_fuel = seds_ind_adjusted %>% 
