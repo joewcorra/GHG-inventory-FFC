@@ -79,7 +79,7 @@ adjustments <- read_csv("us_compare.csv") %>%
   clean_names() %>%
   # Change 'year' to a column
   pivot_longer(cols = starts_with("x"), 
-               names_to = "year", values_to = "adjustment_factor") %>%
+               names_to = "year", values_to = "national_value") %>%
   # Get rid of leading 'x' in years
   mutate(year = str_remove(year, "x"), 
          # Standardize sector descriptions   

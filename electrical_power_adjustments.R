@@ -25,7 +25,7 @@ seds_ele_adjusted <- lst(
     left_join(adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
-    rename(coal_factor = adjustment_factor) %>%
+    rename(coal_factor = national_value) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -47,7 +47,7 @@ seds_ele_adjusted <- lst(
     left_join(adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
-    rename(natural_gas_factor = adjustment_factor) %>%
+    rename(natural_gas_factor = national_value) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
@@ -67,7 +67,7 @@ seds_ele_adjusted <- lst(
     left_join(adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Rename for clarity
-    rename(distillate_fuel_factor = adjustment_factor) %>%
+    rename(distillate_fuel_factor = national_value) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum

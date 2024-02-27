@@ -191,7 +191,7 @@ seds_ind_adjusted <- lst(
     left_join(adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
-    rename(motor_gas_factor = adjustment_factor) %>%
+    rename(motor_gas_factor = national_value) %>%
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
     mutate(msn = "net gasoline", 
@@ -209,7 +209,7 @@ seds_ind_adjusted <- lst(
     left_join(adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity 
-    rename(petro_coke_factor = adjustment_factor) %>%
+    rename(petro_coke_factor = national_value) %>%
     # adjusted petro coke = petro coke factor * (petro coke / sum of states)
     mutate(adjusted_value = petro_coke_factor * (value / states_sum_value)),
   
@@ -227,7 +227,7 @@ seds_ind_adjusted <- lst(
     left_join(adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
-    rename(ind_lpg_factor = adjustment_factor) %>%
+    rename(ind_lpg_factor = national_value) %>%
     # Get sum of all states' lpg
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Rename MSN & source and calculate adjusted value

@@ -61,6 +61,9 @@ source("carbon_factors_data.R")
 # Break out data by state/year; compute CO2 equivalent emissions
 source("state_breakouts.R")
 
+# Create figures (for Markdown report, possibly)
+source("figures.R")
+
 # R SHiny Dashboard for viewing data (in-work)
 source("dashboards.R")
 

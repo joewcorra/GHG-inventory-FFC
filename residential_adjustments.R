@@ -26,7 +26,7 @@ seds_res_adjusted <- lst(
     mutate(states_sum_value = if_else(
       states_sum_value == 0, 1, states_sum_value), 
       # Multiply adjustment factor by states's value / the above sum
-           adjusted_value = adjustment_factor * 
+           adjusted_value = national_value * 
              (value / states_sum_value)), 
   
   natural_gas = seds %>% 
@@ -43,7 +43,7 @@ seds_res_adjusted <- lst(
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
-    mutate(adjusted_value = adjustment_factor * 
+    mutate(adjusted_value = national_value * 
              (value / states_sum_value)) %>%
   # Change MSN identifier. old MSN distinction no longer needed(?)
   # However, MSN can be reconstituted from other _code fields if needed.
@@ -58,7 +58,7 @@ seds_res_adjusted <- lst(
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
-    mutate(adjusted_value = adjustment_factor * 
+    mutate(adjusted_value = national_value * 
              (value / states_sum_value)), 
   
   # All other sources go in the last list element
