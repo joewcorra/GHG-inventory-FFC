@@ -85,7 +85,7 @@ seds_com_adjusted <- lst(
   # All other sources go in the last list element
   other_commercial = seds %>% 
     filter(msn %in% c("KSCCB", "PCCCB", "RFCCB", "HLCCB", "PQCCB")) %>%
-    # Adjusted = original value. Consider using a different variable name here
+    # Adjusted = original value 
     mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame

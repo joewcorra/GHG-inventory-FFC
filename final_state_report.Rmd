@@ -1,0 +1,92 @@
+---
+title: "State-level Methodology Report"
+author: "EPA| OAR | OAP | Climate Change Division | Climate Policy Branch"
+date: "`r Sys.Date()`"
+output: html_document
+
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+
+
+```
+
+```{css, echo=FALSE}
+
+h1 { color : darkturquoise}
+h2 { color : seagreen}
+h3 { color : olive}
+h4 { color : darkkhaki}
+h5 { color : sandybrown}
+
+```
+
+
+# 2. Energy (NIR Chapter 3)
+
+For this methodology report, energy emissions are broken into two main categories: emissions associated with fuel use—including fossil fuel combustion (FFC) and nonenergy use (NEU)—and fugitive emissions mainly from fuel production. The energy emissions presented here include some categories that are not added to energy sector totals in the national Inventory but are instead presented as memo items, including international bunker fuels (IBFs) and biomass emissions, consistent with UNFCCC reporting guidelines. This approach directly affects state-level energy sector estimates and, in some cases, may account for differences with official estimates published by individual state governments. For more information on energy sector emissions, see Chapter 3 of the national Inventory. Table 2-1 summarizes the different approaches used to estimate state-level energy emissions and completeness across states. Geographic completeness is consistent with the national Inventory. The sections below provide more detail on each category.
+
+
+
+```{r fossil fuels, echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+
+source("ffc_state_master_script.R")
+
+
+```
+
+```{r background, echo=FALSE}
+
+table_2_1 %>%
+  opt_row_striping() %>%
+  opt_stylize(style = 6, color = 'cyan')
+
+```
+
+## 2.1 Emissions Related to Fuel Use
+
+This section presents the methodology used to estimate the fuel use portion of emissions, which consists of the following sources:
+
+* FFC (CO~2~, CH~4~, N~2~O)
+
+* Carbon emitted from NEUs of fossil fuels (CO~2~)
+
+* Geothermal emissions (CO~2~)
+
+* Incineration of waste (CO~2~, CH~4~, N~2~O)
+
+* IBFs (CO~~, CH~4~, N~2~O)
+
+* Wood biomass and biofuels consumption (CO~2~)
+
+
+### 2.1.1 Fossil Fuel Combustion (NIR Section 3.1)
+
+#### 2.1.1.1 Background
+
+Emissions from FFC include the GHGs CO~2~, CH~4~, and N~2~O. CO~2~ is the primary gas emitted from FFC and represents the largest share of U.S. total GHG emissions. The methods to estimate CO~2~ emissions from FFC and the methods to estimate CH_4 and N~2~O emissions from stationary and mobile combustion rely in large part on the same underlying data. However, there are some differences; therefore, the methods used to estimate CO~2~ and non-CO~2~ emissions are presented separately.
+
+#### 2.1.1.2 Methods/Approach
+
+The approach for determining national-level FFC emissions is based on multiplying emissions factors times activity data on fuel consumption. The activity data on fuel consumption were taken from national-level energy balances prepared for EIA’s Monthly Energy Review (MER) estimates (EIA 2023a). EIA prepares national-level energy statistics that consider energy production imports/exports and stock changes to determine energy supply/consumption. The fuel consumption information is used as a starting point for determining emissions.
+
+
+
+```{r plots, fig.dim = c(10, 10), fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+
+fig_2_2 <-  fig_2_2_coal / fig_2_2_ng
+fig_2_2
+
+```
+
+
+##### 2.1.1.2.1 FFC CO~2~ State-Level Breakout
+
+CO~2~ emissions from FFC at the national level are estimated with a Tier 2 method described by the IPCC in the 2006 IPCC Guidelines for National Greenhouse Gas Inventories (IPCC 2006). As discussed above, this method is based on multiplying activity data on fuel use (that have been adjusted to allocate and report data consistent with UNFCCC reporting guidelines and avoid double counting) by emissions factors to determine emissions.
+Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO~2~ emissions. In Appendix A to this document (included as separate Excel files), the “National 2021 FFC CO~2~” Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021. 
+
+##### 2.1.1.2.2 Step 1: Determine Total Fuel Consumption by Fuel Type and Sector
