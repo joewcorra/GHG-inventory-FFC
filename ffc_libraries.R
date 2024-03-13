@@ -4,10 +4,12 @@
 
 
 library(assertr)
-library(gt)
+# library(gt)
 library(httr)
 library(janitor)
 library(jsonlite)
+library(kableExtra)
+library(knitr)
 library(maps)
 library(openxlsx)
 library(patchwork)

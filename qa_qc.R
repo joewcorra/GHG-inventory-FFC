@@ -10,7 +10,6 @@
 
 validation <- function(data, ...) {
   
-  print(...)
   # Create a vector of column names
   columns <- list(...) %>% unlist()
   
@@ -30,6 +29,6 @@ validation <- function(data, ...) {
 }
 
 # Example
-# validation(carbon, "ibf_adjusted_value", "carbon_factor")
+validation(carbon, "ibf_adjusted_value", "carbon_factor")
 
 

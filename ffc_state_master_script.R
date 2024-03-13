@@ -5,10 +5,11 @@
 # Load required packages
 source("ffc_libraries.R")
 
-# data retrieval scripts here (API, etc.)?
-
-# QAQC functions to be used in subsequent scripts
-source("qa_qc.R")
+# # data retrieval scripts here (API, etc.)?
+# source("eia_api.R")
+# 
+# # QAQC functions to be used in subsequent scripts
+# source("qa_qc.R")
 
 # EIA SEDS code MSN descriptors, US state postal codes
 source("msn_descriptions.R")
@@ -22,7 +23,7 @@ source("national_corrections_data.R")
 # Read international bunker fuels adjustment data
 source("ibf_corrections_data.R")
 
-# Read NEU adjustments data 
+# Read NEU adjustments data
 source("neu_corrections_data.R")
 
 # Read IPPU distributions data (for I & S, petrochemicals, and ammonia)
@@ -42,7 +43,7 @@ source("commercial_adjustments.R")
 
 # Apply adjustments to industrial fossil fuels
 source("industrial_adjustments.R")
-
+# 
 # Apply adjustments to transportation fossil fuels
 source("transportation_adjustments.R")
 
@@ -57,7 +58,7 @@ source("neu_adjustments.R")
 
 # Read carbon factors data
 source("carbon_factors_data.R")
-
+# 
 # Break out data by state/year; compute CO2 equivalent emissions
 source("state_breakouts.R")
 
@@ -71,9 +72,9 @@ source("tables.R")
 # source("dashboards.R")
 
 # # Format data for InvDB; write data to InvDB Excel workbook
-# source("invdb.R") 
-
-# R Markdown report
+# source("invdb.R")
+# 
+# # R Markdown report
 # source("final_state_report.Rmd")
 
 

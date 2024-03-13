@@ -6,4 +6,9 @@
 # Create Data Object-----------------------------------------------------
 
 
-table_2_1 <- read_excel("table_2-1.xlsx", sheet = 1) %>% gt()
+table_2_1 <- read_excel("tables.xlsx", sheet = 1) 
+  
+
+table_2_2 <- read_excel("tables.xlsx", sheet = 2) 
+
+

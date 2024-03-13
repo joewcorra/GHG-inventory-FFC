@@ -54,4 +54,13 @@ writeData(wb, select(ffc_invdb, GHG:last_col()), sheet = 1,
 # Save InvDB workbook
 saveWorkbook(wb, "InvDB/InvDB_ffc_new.xlsx", overwrite = TRUE)
 
+# Save as csv
+write_csv(ffc_invdb, "ffc.csv")
+
+# Save as JSON
+write_json(ffc_invdb, "ffc.json")
+
+# # Convert to Python object
+# py_run_string("import pandas as pd")
+# py_run_string("ffc_invdb = pd.DataFrame(r.df)")
   
