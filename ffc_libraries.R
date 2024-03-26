@@ -10,7 +10,7 @@ library(janitor)
 library(jsonlite)
 library(kableExtra)
 library(knitr)
-library(maps)
+# library(maps)
 library(openxlsx)
 library(patchwork)
 library(RColorBrewer) # Might not be needed...
@@ -19,6 +19,7 @@ library(readxl)
 library(reticulate)
 library(rvest)
 library(shiny)
+library(tictoc)
 library(tidyverse)
 
 

@@ -1,13 +1,5 @@
 # Datascraper
 
-# Libraries--------------------------------------------------------------
-
-library(tidyverse)
-library(httr)
-library(jsonlite)
-library(janitor)
-library(rvest)
-library(readxl)
 
 # Objects Created--------------------------------------------------------
 
@@ -17,6 +9,33 @@ library(readxl)
 # API Keys--------------------------------------------------------------
 
 key <- "" 
+
+
+# Scrape FWHA Fuel Use Data---------------------------------------------
+
+# URL of the page where the Excel file is linked (as provided)
+page_url <- "https://www.fhwa.dot.gov/policyinformation/statistics/2022/mf21.cfm"
+
+# Assuming the Excel file link is directly accessible and provided here
+# For demonstration, let's say this is the Excel file URL (you need to replace this with the actual URL)
+excel_file_url <- "https://www.fhwa.dot.gov/policyinformation/statistics/2022/xls/mf21.xlsx"
+
+# Specify a local path to save the downloaded file
+local_excel_path <- tempfile(fileext = ".xlsx")
+
+# Download the file
+GET(excel_file_url, write_disk(local_excel_path, overwrite = TRUE))
+
+# Read the Excel file into a dataframe
+data <- read_excel(local_excel_path)
+
+
+
+
+
+
+
+
 
 # Extract Excel files-----------------------------------------------
 

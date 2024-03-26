@@ -1,5 +1,10 @@
 # Access DOE data via DOE API
 
+# This script contains two options for retrieving SEDS data from the EIA API:
+# 1) retrieve entire dataset for all states + DC, 1990-present, inclusive; 
+# 2) retrieve most recent year of data and append to the existing SEDS csv.
+
+
 # Objects Created--------------------------------------------------------
 
 # List of objects created in the global environment:
@@ -8,72 +13,97 @@
 # arguments: dataframe; user arguments that are passed to 'get_results'.
 # get_results: function; queries the Dept of Energy API.
 # limit_reached: boolean; indicates if API data limit has been reached.
-# results: list; full results from the 'get_results' API query.
-# data: dataframe; desired data pulled from the 'results' list.
+# api_results: list; full results from the 'get_results' API query.
+# api_seds: dataframe; desired data pulled from the 'api_results' list.
 
 
 # API Key----------------------------------------------------------------
 
-key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"# API key generated 11/22/23 
+# API key generated 11/22/23 
+key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
 
-# Retrieve DoE Data------------------------------------------------------
+# Function for Both Options--------------------------------------------------
 
-# user inputs should create a dataframe of arguments for API query function
-# The following is an example:
-arguments <- tibble(offset_by = 0, start_year = 2000, end_year = 2021, 
-                    state = "TX", sector = "EC", fuel = "CO")
-
-# Get Total CO2 Emissions By Sector and Fuel
-# Consider adding more arguments to function call (e.g., year, state, etc.)
-get_results <- function(arguments) {
+# Function to Query EIA API
+get_results <- function(state, year, offset) {
   
   # offset_by is the offset (i.e., row to start with) for pagination
-
-  results <- paste0("https://api.eia.gov/v2/co2-emissions/co2-emissions-aggregates/data/?frequency=annual&data[0]=value&facets[sectorId][]=",
-                    arguments$sector, "&facets[stateId][]=",
-                    arguments$state, "&facets[fuelId][]=",
-                    arguments$fuel, "&start=",
-                    arguments$start_year, "&end=",
-                    arguments$end_year, "&sort[0][column]=period&sort[0]",
-                    "[direction]=desc&offset=",
-                    arguments$offset_by, "&length=5000", "&api_key=", key) %>%
-  GET() %>% # retrieve page from url
-  content("raw") %>% # extract content as a raw vector
-  rawToChar() %>% # convert to character data
-  fromJSON() # convert from JSON to R object
-
+  # For now, to avoid exceeding the 5000-row data limit, we will pull
+  # only one year and state per query. This requires n=51*years API queries. 
+  results <- paste0("https://api.eia.gov/v2/seds/data/?frequency=annual",
+                    "&data[0]=value", 
+                    "&facets[stateId][]=", state, # state input
+                    "&start=", year, # start and end year are the same
+                    "&end=", year,
+                    "&sort[0][column]=period&sort[0][direction]=desc&offset=",
+                    offset, "&length=5000", # offset (usually 0)
+                    "&api_key=", key) %>% # our API key is required
+    GET() %>% # retrieve page from url
+    content("raw") %>% # extract content as a raw vector
+    rawToChar() %>% # convert to character data
+    fromJSON() # convert from JSON to R object
+  
+  # The data limit from EIA's API is 5000 rows per query. 
+  # Here, we check the results to see if we exceeded that. 
   # Extract warnings (if they exist)
-  limits <- pluck(results, "response", "warnings", "warning") 
+  limits <- pluck(results, "response", "warnings", "warning")
   limits <- ifelse(is_empty(limits), "nothing", limits)
- 
   print(limits)
+  
   # Check if data limit (5000 rows) was reached, ignoring empty values
   limit_reached <<- case_when(
-    limits == "nothing" ~ FALSE, 
+    limits == "nothing" ~ FALSE,
     str_detect(limits, "incomplete return") ~ TRUE,
     .default = FALSE)
   print(limit_reached)
+  
   return(results)
   
 }
 
-results <- get_results(arguments) 
 
 
-data <- pluck(results, "response", "data") %>% # pluck the data frame
-  # Check if data limit was reached; if so, get the rest and bind.
-  {if (limit_reached == TRUE) bind_rows(., get_results(5001) %>% # start at 5001
-                                      pluck("response", "data")) else .} %>%
-  clean_names() # standardize column names
-# NOTE: # This works, but need to consider what happens if rows > 10,000
+# Option 1: Retrieve All SEDS Data-------------------------------------------
+
+# Apply API data query function across all states and years.
+# Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
+tic()
+api_results <- expand_grid(state = "TX", 
+                           year = 1990:2021, 
+                           offset = 0) %>%
+  pmap(function(state, year, offset) get_results(state, year, offset))
+toc()
+
+ api_seds <- results %>%
+        map(\(.x) pluck(.x, "response", "data")) %>%
+  list_rbind()
+
+ # Write data to csv file
+write_csv(api_seds, "data/api_seds.csv")
+
+# The script read_seds_data.R performs further transformation of this data.
+
+# Option 2: Retrieve New Year of Data Only---------------------------------
+
+api_results_new <- expand_grid(state = states_and_dc, 
+                               year = 2022, 
+                               offset = 0) %>%
+  pmap(function(state, year, offset) get_results(state, year, offset))
+
+api_seds_new <- api_results_new %>%
+  map(\(.x) pluck(.x, "response", "data")) %>%
+  list_rbind()
+
+# Load existing csc and append new data to it
+api_seds <- read_csv("data/api_seds.csv") %>%
+  rbind(api_seds_new)
+
+# Save the updated file 
+write_csv(api_seds, "data/api_seds.csv")
 
 
-
-# https://api.eia.gov/v2/co2-emissions/co2-emissions-aggregates/data/?frequency=annual&data[0]=value&facets[sectorId][]=TC&facets[stateId][]=KY&facets[fuelId][]=CO&start=2012&end=2013&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000
-
-
-
+# Notes --------------------------------------------------------------------
 
 # For total CO2 emissions:
 # co2-emissions-aggregates

@@ -21,7 +21,6 @@ national_corrections <- read_excel("national_inventory_CO2_data.xlsx",
   filter(!is.na(x2)) %>%
   mutate(categories = case_when(
     categories == "(TBtu)" ~ "year", 
-    is.na(categories) ~ "ammonia_natural_gas",
     .default = categories %>% 
       str_to_lower() %>% 
       str_replace_all(" ", "_") %>%
@@ -38,7 +37,7 @@ national_corrections <- read_excel("national_inventory_CO2_data.xlsx",
         com_mogas_ethanol_factor = commercial,
      sng_correction = dakota_gas,
      # eastman gas isn't used?
-     nat_gas_ammonia_factor = ammonia_natural_gas, 
+     nat_gas_ammonia_factor = ammonia_production, 
      blast_furnace_gas_factor = blast_furnace_gas, 
      coke_oven_gas_factor = coke_oven_gas, 
      ippu = coking_coal, 

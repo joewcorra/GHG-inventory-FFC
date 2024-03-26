@@ -15,7 +15,7 @@ seds_all_adjusted <- bind_rows(
   seds_res_adjusted, seds_tra_adjusted) %>%
   # 1/29/2024 START WITH A SINGLE STATE to get the formatting right
   # filter(state == "NY") %>%
-  select(state:adjusted_value, -type, -msn_description) %>%
+  select(state:adjusted_value, -msn_description) %>%
   
   # NOTE: maybe move this to carbon calculations, below
   # standardize source descriptions for join with carbon_factors
@@ -64,7 +64,7 @@ seds_all_adjusted <- bind_rows(
     # Some MSNs are 100% NEU. For these, NEU value = 100% of adjusted value
     neu_adjusted_value = if_else(msn %in% c("ARICB", "LUICB", "FNICB", 
                                             "FOICB", "SNICB", "WXICB", 
-                                            "MSICB", "LUACB"), 
+                                            "MSICB", "LUACB"), # CLKCB???
                                  adjusted_value, neu_adjusted_value),  
     neu_ibf_adjusted_value = if_else(
       # Subtract NEU only if NEU applies (i.e., isn't NA)
@@ -91,34 +91,3 @@ carbon <- seds_all_adjusted %>%
 # Remove unneeded data objects
 rm(carbon_factors_variable)
 
-# Notes from Review of Excel Workbook-----------------------------------
-
-# Adjusted Residential, Commercial, Industrial, Transportation, Elec Power
-
-# Additional Adjustments: minus NEU or IBF (Ind and Trans) for selected sources
-
-# Carbon calculations: 
-# Adjustments: MMT CO2 (multiply by 'factors' and carbon_ratio)
-# Residential: coal, natural gas, dist fuel, kerosene = 
-# adjusted value * (foo_factor / 1000) * carbon_ratio
-# petroleum = dist fuel + kerosene + lpg
-# Commercial: coal, natural gas, dist fuel, kerosene, motor gas, resid fuel,
-# petro coke = adjusted value * (foo_factor / 1000) * carbon_ratio
-# petroleum = distillate_fuel + kerosene + lpg + motor_gasoline + 
-# residual_fuel + petroleum_coke
-# Industrial: coking coal, other coal, natural gas, asphalt, dist fuel, 
-# kerosene, lpg, lubricants, motor gas, resid fuel. avgas blend, 
-# crude oil, mo gas blend, misc products, naphtha, other oil, pentanes plus,
-# petro coke, still gas, special naphtha, unfinished oils, waxes = 
-# adjusted value * (foo_factor / 1000) * carbon_ratio
-# coal = coking coal + other coal
-# petroleum = sum(everything except coal and gas)
-# Transportation: coal, natural gas, aviation gas, dist fuel, jet fuel, 
-# lpg, lubricants, motor gas, resid fuel = 
-# adjusted value * (foo_factor / 1000) * carbon_ratio
-# petroleum = sum(everything except coal and gas)
-# Electrical Power: coal, natural gas, dist fuel (light), resid fuel (heavy) = 
-# adjusted value * (foo_factor / 1000) * carbon_ratio
-# petroleum = dist fuel (light) + resid fuel (heavy) + petro coke
-
-# THEN summary -> state_summary -> invdb, -> trans_summary (separate branch)

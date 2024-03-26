@@ -97,7 +97,8 @@ sectors <- data.frame(
 # Read in MSN data file and join with 'sources' and 'sectors'
 msn <- read_csv("msn_descriptions.csv") %>%
   left_join(sources, by = "source_code") %>%
-  left_join(sectors, by = "sector_code")
+  left_join(sectors, by = "sector_code") %>%
+  select(-type)
 
 
 # US state codes (including DC)

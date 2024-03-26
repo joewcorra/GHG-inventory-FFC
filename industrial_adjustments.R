@@ -120,7 +120,7 @@ seds_ind_adjusted <- lst(
            natural_gas_is_adj = is_gas_factor * is_percent,
            adjusted_value_pre = value -
              (natural_gas_ammonia_adj + natural_gas_is_adj)) %>%
-    # # Get sum of all states' adjusted (preliminary) values
+    # Get sum of all states' adjusted (preliminary) values
     mutate(states_sum_value = sum(adjusted_value_pre), 
            .by = c(msn, year)) %>%
     # adj value / sum of all states' values * consumption = adjusted value
@@ -246,10 +246,6 @@ seds_ind_adjusted <- lst(
     mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame
-  list_rbind() %>%
-# Retain only necessary columns
-# NOTE: Update this when finished!
-# distillate_fuel_is_adj is required for neu_adjustments.R
-select(state:sector_description, distillate_fuel_is_adj, 
-       states_sum_value, adjusted_value)
+  list_rbind()
+# BTW: distillate_fuel_is_adj is required for neu_adjustments.R
 

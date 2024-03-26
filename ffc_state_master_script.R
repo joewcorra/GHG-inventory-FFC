@@ -5,14 +5,14 @@
 # Load required packages
 source("ffc_libraries.R")
 
+# EIA SEDS code MSN descriptors, US state postal codes
+source("msn_descriptions.R")
+
 # # data retrieval scripts here (API, etc.)?
 # source("eia_api.R")
 # 
 # # QAQC functions to be used in subsequent scripts
 # source("qa_qc.R")
-
-# EIA SEDS code MSN descriptors, US state postal codes
-source("msn_descriptions.R")
 
 # Read SEDS data (EIA) & 'us compare' adjustments data (National Inventory)
 source("read_seds_data.R")
@@ -58,7 +58,7 @@ source("neu_adjustments.R")
 
 # Read carbon factors data
 source("carbon_factors_data.R")
-# 
+
 # Break out data by state/year; compute CO2 equivalent emissions
 source("state_breakouts.R")
 

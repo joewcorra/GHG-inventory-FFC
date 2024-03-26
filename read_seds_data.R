@@ -1,7 +1,6 @@
 # Calculate State-Level CO2 Emissions
 # Step 1: Total Fuel Consumption by Fuel Type and Sector
-# State-Level Source: Based on EIA SEDS (adjusted to match national totals 
-# as applicable)
+
 
 # Objects Created--------------------------------------------------------
 
@@ -9,7 +8,7 @@
 
 # adjustments: tibble; adjustment factors derived from national data (i think?)
 # msn_lookup: vector; all MSNs used in the state summaries
-# seds: tibble; all files in the 'data' subfolder
+# seds: tibble; all SEDS data
 
 
 # EIA SEDS---------------------------------------------------------------
@@ -35,14 +34,12 @@ msn_lookup <- c("CLRCB", "NGRCB", "SFRCB", "DFRCB", "KSRCB", "HLRCB", "PQRCB",
           "CLEIB", "NGEIB", "SFEIB", "DFEIB", "RFEIB", "PCEIB", "EMTCB", 
           "BDTCB")
 
-# Read in SEDS data
-seds <- list.files(path = "data", pattern = "\\.csv$", 
-                   full.names = TRUE) %>%
-  # Read all .csv files in the /data folder
-  map(\(.x) read.csv(.x) %>% 
-        clean_names()) %>%
-  # Collapse all list elements into one data frame
-  list_cbind() %>%
+
+# Read old SEDS data-------------------------------------------------------
+
+# Read in SEDS data from use_all_btu_csv
+seds_original <- read_csv("data/use_all_btu.csv") %>%
+        clean_names() %>%
   # Change 'year' to a column
   pivot_longer(cols = starts_with("x") , names_to = "year") %>%
   # Remove unneeded columns
@@ -59,20 +56,22 @@ seds <- list.files(path = "data", pattern = "\\.csv$",
   # Convert to millions of BTUs, round to 2 places
   mutate(value = round(value / 1000, 2)) 
 
+# Read API-derived SEDS data---------------------------------------------
 
-# Adjust to Match National Totals----------------------------------------
+# Alternatively, read SEDS data from EIA API file pulled with epa_api.R
+seds <- read_csv("data/api_seds.csv") %>%
+  clean_names() %>%
+  select( state = state_id, year = period, msn = series_id, value, unit) %>%
+  filter(unit == "Billion Btu") %>%
+  filter(msn %in% msn_lookup) %>%
+  mutate(unit = str_to_lower(unit), 
+         year = as.character(year)) %>%
+  left_join(msn %>% select(-unit, -type), by = "msn")
 
 
 
-# Adjust fuel use in each sector to match the national totals. This calculation 
-# is based on the percentage of each fuel used in each state from the SEDS 
-# data. For the industrial sector, this adjustment was made after subtracting
-# for uses in the IPPU sector. 
 
-# For other fuels where sector totals did not match up (e.g., gasoline 
-# and diesel fuel), totals for each fuel type were generally taken from the 
-# national Inventory and the SEDS data, or other proxy data sources were
-# used to determine state-level percentages of each fuel use.
+# Read National Total Adjustment Data---------------------------------------
 
 # Read in adjustment factors data, derived from national inventory
 adjustments <- read_csv("us_compare.csv") %>%
@@ -107,10 +106,6 @@ adjustments <- read_csv("us_compare.csv") %>%
   # 3 ethanol fuels = ???
   # Isobutylene = ???
   # Supplemental gaseous fuels = ???
-
-
-
-
 
 
 # Cleanup----------------------------------------------------------------

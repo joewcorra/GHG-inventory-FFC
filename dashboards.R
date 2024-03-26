@@ -12,15 +12,17 @@ seds_db_formatted <- carbon %>%
 # Mapping data
 usa <- map_data("state") 
 
+# Create tibble of state names; required for map data
+states <- tibble(states_and_dc, state_names) %>% 
+  mutate(state_names = str_to_lower(state_names))
+
 mapdata <- carbon %>% 
   left_join(states, by = c("state" = "states_and_dc")) %>%
   group_by(state_names, year) %>%
   summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE))
 
 
-# Create tibble of state names; required for map data
-states <- tibble(states_and_dc, state_names) %>% 
-  mutate(state_names = str_to_lower(state_names))
+
 
 # Create colorblind-friendly color palette for plots
 cbPalette = c("#465177", "#E4C22B", "#965127", "#29483A", "#759C44", "#9FB6DA", 
@@ -89,9 +91,10 @@ server <- function(input, output) {
              source %in% input$source) %>%
       filter(mmt_co2 >= input$emissions[1], mmt_co2 <= input$emissions[2]) %>%
       ggplot() +
-      # geom_text(aes(label = state, color = source, fontface = "bold")) +
-      geom_smooth(aes(x = NEU_IBF_adjusted_BTU, y = mmt_co2, color = source), 
-                method = "lm") + 
+      geom_text(aes(x = NEU_IBF_adjusted_BTU, y = mmt_co2,  
+                    label = state, color = source, fontface = "bold")) +
+      # geom_smooth(aes(x = NEU_IBF_adjusted_BTU, y = mmt_co2, color = source), 
+      #           method = "lm") + 
       scale_color_manual(values = cbPalette) + 
       theme_classic() +
       theme(axis.title.x = element_text(size = 14), 

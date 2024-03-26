@@ -6,7 +6,7 @@
 okabe_ito_colors <- c("#E69F00", "#000000", "#56B4E9", "#009E73",
                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
 
-
+myPalette <- colorRampPalette(c("purple","red"), space = "Lab")
 
 # Create Data Object (SEDS + National)--------------------------------------
 
@@ -138,29 +138,34 @@ fig_2_4 <- ggplot(state_vs_national %>%
   facet_grid(~ source_description, scales = "free_x")
 
 
-## Comparison of Transportation Sector Fuel Use----------------------------
+## IPPU Adjustments Made to Industrial Sector Energy Use--------------------
 
 
-fig_2_5 <- ggplot(state_vs_national %>% 
-                    list_rbind() %>% 
-                    filter(sector_description == "transportation sector", 
-                           str_detect(source_description, 
-                                      "distillate|motor")) %>%
-                    group_by(dataname, sector_description, source_description, year) %>%
-                    summarize(total_btu = sum(value, na.rm = TRUE)) %>%
-                    ungroup(),
-                  aes(x = as.numeric(year), y = total_btu)) + 
-  geom_line(aes(color = dataname), linewidth = 0.5) +
-  geom_point(aes(color = dataname), size = 1.3) +
+fig_2_5 <- seds_ind_adjusted %>%
+  mutate(ippu_adjustments = case_when(
+    msn == "CLKCB" ~ value * ippu_factor,
+    msn == "CLOCB" ~ other_coal_coke_adj + other_coal_is_adj,
+    msn == "net natural gas" ~ natural_gas_ammonia_adj + natural_gas_is_adj,
+    msn == "RFICB" ~ cb_factor * petrochemical_cb_percent,
+    msn == "DFICB" ~ is_distillate_fuel_factor * is_percent,
+    .default = 0)) %>%
+  mutate(ippu_adjustments = if_else(
+    ippu_adjustments < 0, 0, ippu_adjustments)) %>%
+  group_by(year) %>%
+  summarize(total_ippu_adjustments = sum(
+    ippu_adjustments, na.rm = TRUE), 
+    percent_of_unadjusted = total_ippu_adjustments / sum(
+      value, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = year, y = total_ippu_adjustments)) +
+  geom_col(aes(fill = percent_of_unadjusted * 100)) +
   theme_classic() +
-  scale_color_manual(values = okabe_ito_colors) +
-  scale_x_continuous(n.breaks = 20) + 
+  scale_fill_gradientn(colours = myPalette(100)) +
   theme(axis.text.x = element_text(size = 8, angle = 270, vjust = 0.08), 
         legend.position = "bottom", 
-        legend.title = element_blank(), 
         strip.background = element_blank()) + 
-  labs(x = "", y = "tBtu") + 
-  facet_grid(~ source_description)
+  labs(x = "", y = "tBtu", fill = "% of Unadjusted Emissions")
+
 
 ## Comparison of Transportation Sector Fuel Use----------------------------
 
@@ -185,3 +190,23 @@ fig_2_8 <- ggplot(state_vs_national %>%
         strip.background = element_blank()) + 
   labs(x = "", y = "tBtu") + 
   facet_grid(~ source_description)
+
+
+## Adjustments made to Industrial Sector for NEUs---------------------------
+
+fig_2_10 <- seds_all_adjusted %>%
+  filter(sector_description == "industrial sector") %>%
+  group_by(year) %>%
+  summarize(total_neu_adjustments = sum(
+    neu_adjusted_value, na.rm = TRUE), 
+    percent_of_unadjusted = total_neu_adjustments / sum(
+      value, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(aes(x = year, y = total_neu_adjustments)) +
+  geom_col(aes(fill = percent_of_unadjusted * 100)) +
+  theme_classic() +
+  scale_fill_gradientn(colours = myPalette(100)) +
+  theme(axis.text.x = element_text(size = 8, angle = 270, vjust = 0.08), 
+        legend.position = "bottom", 
+        strip.background = element_blank()) + 
+  labs(x = "", y = "tBtu", fill = "% of Unadjusted Emissions")
