@@ -128,6 +128,10 @@ state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California",
 # non_state_names <- c("Federal Offshore, Gulf of Mexico", 
 # "Federal Offshore, Pacific", "United States")
 
+# Key for matching state names and codes
+state_name_key <- tibble(states_and_dc, state_names)
+
+
 # Cleanup-------------------------------------------------------------------
 
 # Remove unneeded objects from global environment

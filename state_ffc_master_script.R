@@ -6,76 +6,82 @@
 source("ffc_libraries.R")
 
 # EIA SEDS code MSN descriptors, US state postal codes
-source("msn_descriptions.R")
+source("ffc_msn_descriptions.R")
 
-# # data retrieval scripts here (API, etc.)?
-# source("eia_api.R")
-# 
-# # QAQC functions to be used in subsequent scripts
-# source("qa_qc.R")
+
+# Retrieve SEDS data from EIA's API
+# When implemented, supersedes read_seds_data.R
+# source("ffc_eia_api.R")
+
+# QAQC functions to be used in subsequent scripts
+# source("ffc_qa_qc.R")
+
+# Scrape other data from web sources
+# source("ffc_datascraping.R")
+# When implemented, replaces state_ffc_fhwa_distribution_data.R
 
 # Read SEDS data (EIA) & 'us compare' adjustments data (National Inventory)
-source("read_seds_data.R")
+source("state_ffc_read_seds_data.R")
 
 # Read industrial corrections data & consumption input data (National Inventory)
-source("national_corrections_data.R")
+source("state_ffc_national_corrections_data.R")
 
 # Read international bunker fuels adjustment data
-source("ibf_corrections_data.R")
+source("state_ffc_ibf_corrections_data.R")
 
 # Read NEU adjustments data
-source("neu_corrections_data.R")
+source("state_ffc_neu_corrections_data.R")
 
 # Read IPPU distributions data (for I & S, petrochemicals, and ammonia)
-source("ippu_distribution_data.R")
+source("state_ffc_ippu_distribution_data.R")
 
 # Read gasoline and diesel consumption distribution data (FHWA)
-source("fhwa_distribution_data.R")
+source("state_ffc_fhwa_distribution_data.R")
 
 # Read FOKS IBF distribution data (EIA; no longer available as of 2021)
-source("foks_data.R")
+source("state_ffc_foks_data.R")
 
 # Apply adjustments to residential fossil fuels
-source("residential_adjustments.R")
+source("state_ffc_residential_adjustments.R")
 
 # Apply adjustments to commercial fossil fuels
-source("commercial_adjustments.R")
+source("state_ffc_commercial_adjustments.R")
 
 # Apply adjustments to industrial fossil fuels
-source("industrial_adjustments.R")
+source("state_ffc_industrial_adjustments.R")
 # 
 # Apply adjustments to transportation fossil fuels
-source("transportation_adjustments.R")
+source("state_ffc_transportation_adjustments.R")
 
 # Apply adjustments to electrical power fossil fuels
-source("electrical_power_adjustments.R")
+source("state_ffc_electrical_power_adjustments.R")
 
 # Determine adjustments for international bunker fuels
-source("ibf_adjustments.R")
+source("state_ffc_ibf_adjustments.R")
 
 # Determine adjustments for non-energy uses
-source("neu_adjustments.R")
+source("state_ffc_neu_adjustments.R")
 
 # Read carbon factors data
-source("carbon_factors_data.R")
+source("state_ffc_carbon_factors_data.R")
 
 # Break out data by state/year; compute CO2 equivalent emissions
-source("state_breakouts.R")
+source("state_ffc_breakouts.R")
 
 # Create figures (for Markdown report)
-source("figures.R")
+source("state_ffc_figures.R")
 
 # Create tables (for Markdown report)
-source("tables.R")
+source("state_ffc_tables.R")
 
-# # R SHiny Dashboard for viewing data (in-work)
-# source("dashboards.R")
+# R SHiny Dashboard for viewing data (in-work)
+source("state_ffc_dashboards.R")
 
-# # Format data for InvDB; write data to InvDB Excel workbook
-# source("invdb.R")
-# 
-# # R Markdown report
-# source("final_state_report.Rmd")
+# Format data for InvDB; write data to InvDB Excel workbook
+source("ffc_invdb.R")
+
+# R Markdown report
+source("state_ffc_final_report.Rmd")
 
 
 
