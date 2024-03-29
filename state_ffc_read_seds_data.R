@@ -11,29 +11,6 @@
 # seds: tibble; all SEDS data
 
 
-# EIA SEDS---------------------------------------------------------------
-
-# EIA’s State Energy Data System (SEDS)
-# Those data are broken out by fuel type and sector (residential, commercial,
-# industrial, transportation, and electric power) and are available for the 
-# years 1960–2021
-
-
-
-# Vector of MSNs to look up in the state summaries:
-# These MSNs are all in billions of BTUs; converted to millions below. 
-msn_lookup <- c("CLRCB", "NGRCB", "SFRCB", "DFRCB", "KSRCB", "HLRCB", "PQRCB", 
-          "CLCCB", "NGCCB", "SFCCB", "DFCCB", "KSCCB", "PQCCB", "HLCCB", 
-          "MGCCB", "EMCCB", "RFCCB", "PCCCB", "CLKCB", "CLOCB", "CCNIB", 
-          "NGICB", "SFINB", "ARICB", "DFICB", "KSICB", "HLICB", "PQICB", 
-          "PYICB", "EQICB", "EYICB", "BQICB", "BYICB", "IQICB", "IYICB", 
-          "LUICB", "MGICB", "EMICB", "RFICB", "ABICB", "COICB", "MBICB", 
-          "MSICB", "FNICB", "FOICB", "PPICB", "PCICB", "SGICB", "SNICB", 
-          "UOICB", "WXICB", "CLACB", "NGACB", "AVACB", "DFACB", "BDACB", 
-          "JFACB", "HLACB", "PQACB", "LUACB", "MGACB", "EMACB", "RFACB", 
-          "CLEIB", "NGEIB", "SFEIB", "DFEIB", "RFEIB", "PCEIB", "EMTCB", 
-          "BDTCB")
-
 
 # Read old SEDS data-------------------------------------------------------
 
@@ -106,10 +83,4 @@ adjustments <- read_csv("us_compare.csv") %>%
   # 3 ethanol fuels = ???
   # Isobutylene = ???
   # Supplemental gaseous fuels = ???
-
-
-# Cleanup----------------------------------------------------------------
-
-# Remove unneeded data objects
-rm(msn_lookup)
 

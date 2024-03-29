@@ -1,0 +1,40 @@
+# Calculate State-Level CO2 Emissions
+# Step 1: Total Fuel Consumption by Fuel Type and Sector
+
+
+# Objects Created--------------------------------------------------------
+
+# List of objects created in the global environment:
+
+
+
+# API Key----------------------------------------------------------------
+
+# API key generated 11/22/23 
+key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+
+
+# Read EIA Consumption Data----------------------------------------------
+
+eia_api_data <- paste0("https://api.eia.gov/v2/total-energy/data/?frequency", 
+                  "=annual&data[0]=value&start=2005&end=2005&sort[0][column]", 
+                  "=period&sort[0][direction]", 
+                  "=desc&offset=0&length=5000&api_key=", key) %>% # our API key 
+  GET() %>% # retrieve page from url
+  content("raw") %>% # extract content as a raw vector
+  rawToChar() %>% # convert to character data
+  fromJSON() # convert from JSON to R object
+
+eia_national <- pluck(eia_api_data, "response", "data") %>%
+  mutate(msn = str_sub(msn, 1, 5)) %>%
+  filter(unit == "Trillion Btu", 
+         str_sub(msn, 3,4) %in% c("AC", "IC", "RC", "CC", "EI")) %>%
+  select(-unit, -seriesDescription)
+
+us_consumption <- eia_national %>%
+  left_join(msn, by = "msn") %>%
+  filter(msn %in% msn_lookup) %>%
+  # Remove "(consumption)" from electric power sector description
+  mutate(sector_description = if_else(
+    str_detect(sector_description, "electric power"), 
+      "electric power", sector_description))

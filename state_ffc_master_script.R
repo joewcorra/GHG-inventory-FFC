@@ -8,7 +8,6 @@ source("ffc_libraries.R")
 # EIA SEDS code MSN descriptors, US state postal codes
 source("ffc_msn_descriptions.R")
 
-
 # Retrieve SEDS data from EIA's API
 # When implemented, supersedes read_seds_data.R
 # source("ffc_eia_api.R")

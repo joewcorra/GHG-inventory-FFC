@@ -14,24 +14,13 @@ source("ffc_libraries.R")
 # source("qa_qc.R")
 
 # EIA SEDS code MSN descriptors, US state postal codes
-source("msn_descriptions.R")
+source("ffc_msn_descriptions.R")
 
-# API Key----------------------------------------------------------------
+# Retrieve EIA Consumption Data from API
+source("state_ffc_read_seds_data.R")
 
-# API key generated 11/22/23 
-key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+# Apply motor gasoline adjustments
+source("national_ffc_mogas_adjustments.R")
 
-results <- paste0("https://api.eia.gov/v2/total-energy/data/?frequency", 
-                  "=annual&data[0]=value&start=2005&end=2005&sort[0][column]", 
-                  "=period&sort[0][direction]", 
-                  "=desc&offset=0&length=5000&api_key=", key) %>% # our API key 
-  GET() %>% # retrieve page from url
-  content("raw") %>% # extract content as a raw vector
-  rawToChar() %>% # convert to character data
-    fromJSON() # convert from JSON to R object
-
-api_national <- pluck(results, "response", "data") %>%
-  mutate(sector_code = str_sub(msn, 3, 4)) %>%
-  filter(unit == "Trillion Btu", 
-         sector_code %in% c("AC", "IC", "RC", "CC", "EI"))
-
+# Apply residential, commercial, and electric power adjustments (none)
+source("national_ffc_unadjusted.R")

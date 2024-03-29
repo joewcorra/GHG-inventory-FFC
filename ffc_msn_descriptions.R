@@ -16,9 +16,9 @@
 # Create 'sources' data frame
 sources <- data.frame(
   source_code = c("AR", "AB", "AV", "B1", "BD", "BF", "BO", "BQ", "BT", 
-                  "BX", "BY", "CC",  "CL", "CO", "DF", "EL", "EM", "ES", 
+                  "BX", "BY", "CC",  "CL", "CO", "DF", "DK", "EL", "EM", "ES", 
                   "EQ", "EY", "FN", "FO", "FS", "HL",  "HP", "IQ", "IY", 
-                  "JF", "KS", "LU", "MB", "MG", "MS", "NG", "NU", "OH", 
+                  "JF", "KS", "LU", "MB", "MG", "MS", "NG", "NN", "NU", "OH", 
                   "OJ", "OP", "P1", "P5", "PA", "PC", "PE", "PP", "PQ", 
                   "PY", "RF", "SF", "SG",  "SN", "SU", "TE", "TN", "UO",  
                   "WD", "WW", "WX"), 
@@ -29,7 +29,8 @@ sources <- data.frame(
                          "normal butane", "battery storage", 
                          "total biofuels (excluding fuel ethanol)", 
                          "butylene", "coal coke", "coal", 
-                         "crude oil", "distillate fuel oil", "electricity", 
+                         "crude oil", "distillate fuel oil", 
+                         "distillate fuel oil", "electricity", 
                          "fuel ethanol, excluding denaturant", 
                          "electricity sales", "ethane", "ethylene",  
                          "petrochemical feedstocks, naphtha less than 401 degrees F", 
@@ -42,6 +43,7 @@ sources <- data.frame(
                          "motor gasoline blending components", "motor gasoline", 
                          "miscellaneous petroleum products", 
                          "natural gas, including supplemental gaseous fuels", 
+                         "natural gas, excluding supplemental gaseous fuels",
                          "nuclear electric power", 
                          "other hydrocarbon gas liquids", 
                          "other gases", "other petroleum products", 
@@ -131,6 +133,25 @@ state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California",
 # Key for matching state names and codes
 state_name_key <- tibble(states_and_dc, state_names)
 
+# MSN Lookup for State and National Emissions-------------------------------
+
+
+# # Vector of MSNs to look up in the state summaries:
+# These MSNs are all in billions of BTUs; converted to millions below. 
+msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB", 
+                "CCNIB", "CCLKB", "CLOCB", "CLRCB", "CLACB", "CLCCB", "CLEIB", 
+                "DFACB", 
+                "DFCCB", "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", 
+                "EMTCB", 
+                "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB", "HLICB", 
+                "HLRCB", 
+                "JFACB", "KSICB", "KSCCB", "KSRCB", 
+                "LUACB", "LUICB", "MGACB", "MGCCB", 
+                "MGICB", "MSICB", "NNACB", "NNCCB", "NNEIB", "NNICB", "NNRCB", 
+                "PCCCB", 
+                "PCEIB", "PCICB", "PQACB", "PQCCB", "PQICB", "PPICB", "PYICB", 
+                "RFACB", "RFCCB", "RFEIB", "RFICB", "SFEIB", "SFCCB", "SFRCB", 
+                "SGICB", "SFINB", "SNICB", "UOICB", "WXICB")
 
 # Cleanup-------------------------------------------------------------------
 
