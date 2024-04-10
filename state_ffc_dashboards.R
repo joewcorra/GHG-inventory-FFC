@@ -133,15 +133,15 @@ server <- function(input, output) {
   output$map <- renderPlot({
     usa %>% left_join(mapdata, by = c("region" = "state_names")) %>%
       filter(year %in% input$year) %>%
-      ggplot(aes(x = long, y = lat)) + 
-      geom_polygon(aes(fill = mmt_co2, group = region), color = "black") + 
-      scale_color_continuous() + 
+      ggplot(aes(x = long, y = lat)) +
+      geom_polygon(aes(fill = mmt_co2, group = region), color = "black") +
+      scale_color_continuous() +
       facet_wrap(~ year)
-    
-    
+
+
   })
-  
-} 
+
+}
 
 
 # Run the application

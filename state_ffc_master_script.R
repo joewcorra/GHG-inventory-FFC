@@ -10,13 +10,13 @@ source("ffc_msn_descriptions.R")
 
 # Retrieve SEDS data from EIA's API
 # When implemented, supersedes read_seds_data.R
-# source("ffc_eia_api.R")
+# source("state_ffc_eia_api.R")
 
 # QAQC functions to be used in subsequent scripts
 # source("ffc_qa_qc.R")
 
 # Scrape other data from web sources
-# source("ffc_datascraping.R")
+# source("state_ffc_datascraping.R")
 # When implemented, replaces state_ffc_fhwa_distribution_data.R
 
 # Read SEDS data (EIA) & 'us compare' adjustments data (National Inventory)
@@ -41,19 +41,19 @@ source("state_ffc_fhwa_distribution_data.R")
 source("state_ffc_foks_data.R")
 
 # Apply adjustments to residential fossil fuels
-source("state_ffc_residential_adjustments.R")
+source("state_ffc_res_adjustments.R")
 
 # Apply adjustments to commercial fossil fuels
-source("state_ffc_commercial_adjustments.R")
+source("state_ffc_com_adjustments.R")
 
 # Apply adjustments to industrial fossil fuels
-source("state_ffc_industrial_adjustments.R")
+source("state_ffc_ind_adjustments.R")
 # 
 # Apply adjustments to transportation fossil fuels
-source("state_ffc_transportation_adjustments.R")
+source("state_ffc_tra_adjustments.R")
 
 # Apply adjustments to electrical power fossil fuels
-source("state_ffc_electrical_power_adjustments.R")
+source("state_ffc_ele_adjustments.R")
 
 # Determine adjustments for international bunker fuels
 source("state_ffc_ibf_adjustments.R")

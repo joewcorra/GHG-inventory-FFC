@@ -13,19 +13,24 @@
 # API key generated 11/22/23 
 key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
+# Set Year---------------------------------------------------------------
+
+# Change to match most recent available year (current year minus two)
+latest_year <- year(Sys.Date()) -2
 
 # Read EIA Consumption Data----------------------------------------------
 
-eia_api_data <- paste0("https://api.eia.gov/v2/total-energy/data/?frequency", 
-                  "=annual&data[0]=value&start=2005&end=2005&sort[0][column]", 
-                  "=period&sort[0][direction]", 
-                  "=desc&offset=0&length=5000&api_key=", key) %>% # our API key 
+eia_api_consumption <- paste0(
+  "https://api.eia.gov/v2/total-energy/data/?frequency", 
+  "=annual&data[0]=value&start=1990&end=1992&sort[0][column]", 
+  "=period&sort[0][direction]", 
+  "=desc&offset=0&length=5000&api_key=", key) %>% # our API key 
   GET() %>% # retrieve page from url
   content("raw") %>% # extract content as a raw vector
   rawToChar() %>% # convert to character data
   fromJSON() # convert from JSON to R object
 
-eia_national <- pluck(eia_api_data, "response", "data") %>%
+eia_national <- pluck(eia_api_consumption, "response", "data") %>%
   mutate(msn = str_sub(msn, 1, 5)) %>%
   filter(unit == "Trillion Btu", 
          str_sub(msn, 3,4) %in% c("AC", "IC", "RC", "CC", "EI")) %>%
@@ -38,3 +43,20 @@ us_consumption <- eia_national %>%
   mutate(sector_description = if_else(
     str_detect(sector_description, "electric power"), 
       "electric power", sector_description))
+
+# Read EIA Heat Content Data----------------------------------------------
+
+# Heat content is used for some adjustments
+eia_api_heat <- paste0(
+  "https://api.eia.gov/v2/total-energy/data/?frequency=annual&data[0]", 
+  "=value&facets[msn][]=MGTCKUS&start=1990&end=", latest_year, 
+  "&sort[0][column]=msn&sort[0][direction]=asc&offset=0&length=5000&api_key=",
+  key) %>%
+  GET() %>% # retrieve page from url
+  content("raw") %>% # extract content as a raw vector
+  rawToChar() %>% # convert to character data
+  fromJSON() # convert from JSON to R object
+
+# Units in Millions of Btu / Barrel
+heat_content <- pluck(eia_api_heat, "response", "data") %>%
+  select(year = period, msn, msn_description = seriesDescription, value)

@@ -6,25 +6,24 @@
 # List of objects created in the global environment:
 
 
-# API Keys--------------------------------------------------------------
+# Set Year---------------------------------------------------------------
 
-key <- "" 
+# Change to match most recent available year (current year minus two)
+latest_year <- year(Sys.Date()) -2
+
+# Scrape FWHA Fuel Use (State & National FFC) ----------------------------
 
 
-# Scrape FWHA Fuel Use Data---------------------------------------------
-
-# Change to match most recent available year
-year <- 2022
 # Temporary file storage path
 local_excel_path <- tempfile(fileext = ".xlsx")
 # URL for gasoline data by state, 1949 to present year
 gasoline_url <- paste0(
   "https://www.fhwa.dot.gov/policyinformation/statistics/", 
-  year, "/xls/mf226.xlsx")
+  latest_year, "/xls/mf226.xlsx")
 # URL for special fuel (diesel) data by state, 1949 to present year
 special_fuel_url <- paste0(
   "https://www.fhwa.dot.gov/policyinformation/statistics/", 
-  year, "/xls/mf225.xlsx")
+  latest_year, "/xls/mf225.xlsx")
 
 # Retrieve gasoline Excel file data
 GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
@@ -80,3 +79,25 @@ diesel_distribution <- read_excel(local_excel_path) %>%
   # No longer need national total or full state name
   select(-national_total, -state) %>%
   rename (state = states_and_dc)
+
+# National FFC------------------------------------------------------------
+
+
+# Retrieve gasoline Excel file data
+GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
+# Read from temp file 
+
+gasoline_use_national <- read_excel(local_excel_path) %>%
+  clean_names() %>%
+  # Remove unneeded rows
+  filter(state == "Total") %>%
+  # Make all value columns numeric
+  mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+  # Make data long; i.e., one row per year
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "gasoline_use_gal") %>%
+  # Remove letters from year column 
+  mutate(year = str_remove(year, "[a-z]")) %>%
+  # Retain only 1990 onward
+  filter(year > 1989) %>%
+  select(-state)
