@@ -139,8 +139,8 @@ state_name_key <- tibble(states_and_dc, state_names)
 # # Vector of MSNs to look up in the state summaries:
 # These MSNs are all in billions of BTUs; converted to millions below. 
 msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB", 
-                "CCNIB", "CCLKB", "CLOCB", "CLRCB", "CLACB", "CLCCB", "CLEIB", 
-                "DFACB", 
+                "CCNIB", "CCLKB", "CLICB", "CLOCB", "CLRCB", "CLACB", "CLCCB",  
+                "CLEIB", "DFACB", 
                 "DFCCB", "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", 
                 "EMTCB", 
                 "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB", "HLICB", 

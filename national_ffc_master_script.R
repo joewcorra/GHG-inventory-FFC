@@ -28,4 +28,21 @@ source("national_ffc_res_com_ele_adjustments.R")
 # Apply industrial adjustments
 source("national_ind_adjustments.R")
 
+# Read carbon factors data
+source("ffc_carbon_factors_data.R")
+
+# Create figures (for Markdown report)
+source("national_ffc_figures.R")
+
+# Create tables (for Markdown report)
+source("national_ffc_tables.R")
+
+# R Shiny Dashboard for viewing data (in-work)
+source("national_ffc_dashboards.R")
+
+# Format data for InvDB; write data to InvDB Excel workbook
+source("ffc_invdb.R")
+
+# R Markdown report
+source("national_ffc_final_report.Rmd")
 

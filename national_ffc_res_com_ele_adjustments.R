@@ -11,7 +11,7 @@
 
 # No adjustments EXCEPT dist fuel and mogas (see those scripts).
 
-seds_res_com_ele <- lst(
+us_res_com_ele <- lst(
   
   res = us_consumption %>%
     filter(msn %in% c("CLRCB", "NNRCB", "DFRCB", "HLRCB", "KSRCB")), 

@@ -62,7 +62,7 @@ source("state_ffc_ibf_adjustments.R")
 source("state_ffc_neu_adjustments.R")
 
 # Read carbon factors data
-source("state_ffc_carbon_factors_data.R")
+source("ffc_carbon_factors_data.R")
 
 # Break out data by state/year; compute CO2 equivalent emissions
 source("state_ffc_breakouts.R")
@@ -82,7 +82,3 @@ source("ffc_invdb.R")
 # R Markdown report
 source("state_ffc_final_report.Rmd")
 
-
-
-# Sharepoint Link:
-# https://usepa.sharepoint.com/sites/U.S._GHG_Inventory_Report/Shared%20Documents/Forms/AllItems.aspx?csf=1&web=1&e=QHgRM5&cid=7ef871ac%2Df5c1%2D4767%2Dafc3%2D906ccfaa5764&RootFolder=%2Fsites%2FU%2ES%2E%5FGHG%5FInventory%5FReport%2FShared%20Documents%2FReports%2FState%5FGHGI%5F90%2D21%2FState%5FFinal%5F90%2D21%2F1%2EEnergy%2F2021%20Calculations&FolderCTID=0x012000F803AFF28AED384BBFB1EA0D0AEFED57

@@ -32,7 +32,7 @@ eia_api_consumption <- paste0(
 
 eia_national <- pluck(eia_api_consumption, "response", "data") %>%
   mutate(msn = str_sub(msn, 1, 5)) %>%
-  filter(unit == "Trillion Btu", 
+  filter(str_detect(unit, "Btu"), 
          str_sub(msn, 3,4) %in% c("AC", "IC", "RC", "CC", "EI")) %>%
   select(-unit, -seriesDescription)
 

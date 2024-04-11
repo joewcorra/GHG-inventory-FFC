@@ -88,6 +88,3 @@ carbon <- seds_all_adjusted %>%
            .default = source_description))
 
 
-# Remove unneeded data objects
-rm(carbon_factors_variable)
-

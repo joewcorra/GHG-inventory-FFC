@@ -9,94 +9,87 @@
 
 # Collate Consumption Data------------------------------------------------
 
-seds_ind <- us_consumption %>%
-  filter(sector_description == "industrial sector")
 
-
-
-
-lst(
+us_ind <- lst(
   
-  # Asphalt & Road Oil
+  # Asphalt & Road Oil (NEU adjustment: 100%) 
   asphalt = us_consumption %>%
     filter(msn == "ARICB"),
   
-  # Coking Coal
-  coking_coal = us_consumption %>%
-    filter(msn == "CLKCB"),
+  # Coking Coal 
+  # ???
   
-  # Other Coal
+  # Other Coal (NEU adjustment: Eastman Gas coal gasification)
   other_coal = us_consumption %>%
-    filter(msn == "CLOCB"),
+    filter(msn == "CLICB"),
   
-  # Natural Gas
+  # Natural Gas (NEU adjustment: special)
   # Supplemental gas already excluded
   natural_gas = us_consumption %>%
     filter(msn == "NNICB"),
   
-  # Residual Fuel
+  # Residual Fuel (no adjustment)
   residual_fuel = us_consumption %>%
     filter(msn == "RFICB"),
   
-  # Distillate Fuel
+  # Distillate Fuel (mogas/df adjustment)
   distillate_fuel = us_consumption %>%
     filter(msn == "DFICB"),
   
-  # Gasoline
-  gasoline = us_consumption %>%
+  # Motor gasoline (mogas/df adjustment)
+  motor_gasoline = us_consumption %>%
     filter(msn %in% c("MGICB", "EMICB")),
   
-  # Kerosene
+  # Kerosene (no adjustment)
   kerosene = us_consumption %>%
     filter(msn == "KSICB"),
   
-  # Petroleum Coke
+  # Petroleum Coke (NEU adjustment: special)
   petroleum_coke = us_consumption %>%
     filter(msn == "PCICB"),
   
-  # LPG
+  # LPG (AKA Propane) (no adjustment)
   lpg = us_consumption %>%
     filter(msn == "HLICB"),
-
   
-  # PQICB     PYICB
+  # PQICB     PYICB (NEU adjustment: special)
+  # Propane and Propylene: Included w/ HLICB ?
   
-  
-  # Lubricants
+  # Lubricants (NEU adjustment: 100%) 
   lubricants = us_consumption %>%
     filter(msn == "LUICB"),
   
-  # Misc Products
+  # Misc Products (NEU adjustment: 100%) 
   misc_products = us_consumption %>%
     filter(msn == "MSICB"),
   
-  # Naphtha (<401 deg. F)
+  # Naphtha (<401 deg. F) (NEU adjustment: 100%) 
   naphtha = us_consumption %>%
     filter(msn == "FNICB"),
   
-  # Other Oil (>401 deg. F)
+  # Other Oil (>401 deg. F) (NEU adjustment: 100%) 
   other_oil = us_consumption %>%
     filter(msn == "FOICB"),
   
-  # Pentanes Plus
+  # Pentanes Plus (NEU adjustment: special)
   pentanes_plus = us_consumption %>%
     filter(msn == "PPICB"),
   
-  # Still Gas
+  # Still Gas (NEU adjustment: special)
   still_gas = us_consumption %>%
     filter(msn == "SGICB"), 
   
-  # Special Naphtha
+  # Special Naphtha (NEU adjustment: 100%) 
   special_naphtha = us_consumption %>%
     filter(msn == "SNICB"), 
   
-  # Waxes
+  # Waxes (NEU adjustment: 100%) 
   waxes = us_consumption %>%
     filter(msn == "WXICB"), 
   
-  # Unfinished Oils   
+  # Unfinished Oils (no adjustment)   
   unfinished_oils = us_consumption %>%
-    filter(msn == "UOICB"))
+    filter(msn == "UOICB")) %>%
 
   # Collapse list into a single data frame
   list_rbind()
