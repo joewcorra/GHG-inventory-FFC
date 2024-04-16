@@ -21,6 +21,9 @@ source("ffc_datascraping.R")
 # Retrieve and calculate motor gasoline corrections data
 source("national_ffc_mogas_corrections_data.R")
 
+# Retrieve and calculate distillate fuel corrections data
+source("national_ffc_dist_fuel_corrections_data.R")
+
 # Apply residential, commercial, and electric power adjustments 
 # Motor gas and dist fuel should be the only adjustments here
 source("national_ffc_res_com_ele_adjustments.R")
@@ -28,8 +31,14 @@ source("national_ffc_res_com_ele_adjustments.R")
 # Apply industrial adjustments
 source("national_ind_adjustments.R")
 
+# Apply industrial adjustments
+source("national_tra_adjustments.R")
+
 # Read carbon factors data
 source("ffc_carbon_factors_data.R")
+
+# Calculate carbon emissions and collate final data set
+source("national_ffc_emissions_final.R")
 
 # Create figures (for Markdown report)
 source("national_ffc_figures.R")

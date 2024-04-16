@@ -14,7 +14,9 @@ us_ind <- lst(
   
   # Asphalt & Road Oil (NEU adjustment: 100%) 
   asphalt = us_consumption %>%
-    filter(msn == "ARICB"),
+    filter(msn == "ARICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value),
   
   # Coking Coal 
   # ???
@@ -61,15 +63,21 @@ us_ind <- lst(
   
   # Misc Products (NEU adjustment: 100%) 
   misc_products = us_consumption %>%
-    filter(msn == "MSICB"),
+    filter(msn == "MSICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value),
   
   # Naphtha (<401 deg. F) (NEU adjustment: 100%) 
   naphtha = us_consumption %>%
-    filter(msn == "FNICB"),
+    filter(msn == "FNICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value),
   
   # Other Oil (>401 deg. F) (NEU adjustment: 100%) 
   other_oil = us_consumption %>%
-    filter(msn == "FOICB"),
+    filter(msn == "FOICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value),
   
   # Pentanes Plus (NEU adjustment: special)
   pentanes_plus = us_consumption %>%
@@ -81,11 +89,15 @@ us_ind <- lst(
   
   # Special Naphtha (NEU adjustment: 100%) 
   special_naphtha = us_consumption %>%
-    filter(msn == "SNICB"), 
+    filter(msn == "SNICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value), 
   
   # Waxes (NEU adjustment: 100%) 
   waxes = us_consumption %>%
-    filter(msn == "WXICB"), 
+    filter(msn == "WXICB") %>%
+    # NEU adjustment is 100% of total
+    mutate(adjusted_value = value - value), 
   
   # Unfinished Oils (no adjustment)   
   unfinished_oils = us_consumption %>%

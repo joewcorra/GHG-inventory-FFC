@@ -46,10 +46,11 @@ us_consumption <- eia_national %>%
 
 # Read EIA Heat Content Data----------------------------------------------
 
-# Heat content is used for some adjustments
+# Heat content may vary and is used for some adjustments
 eia_api_heat <- paste0(
   "https://api.eia.gov/v2/total-energy/data/?frequency=annual&data[0]", 
-  "=value&facets[msn][]=MGTCKUS&start=1990&end=", latest_year, 
+  "=value&facets[msn][]=DMTCKUS&facets[msn][]=MGTCKUS&start=1990&end=", 
+  latest_year, 
   "&sort[0][column]=msn&sort[0][direction]=asc&offset=0&length=5000&api_key=",
   key) %>%
   GET() %>% # retrieve page from url
