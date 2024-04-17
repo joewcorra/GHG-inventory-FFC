@@ -9,35 +9,27 @@
 
 # Distillate Fuel Adjustments--------------------------------------------
 
-# commercial distillate fuel 2010 = mo gas! summary v8 = EIA adjust! c21/ 10^3
-# EIA adjust! c21  = estimated commercial consumption = C7 / C17 * C16
-# C7 = commercial dist fuel data from EIA = EIA_Output QBtu'!G16 * 10^6
-# C16 = total res com ind, Bottom up analysis = C12 - C15
-# C17 = sales for res com ind, Bottom up analysis = C6 + C7 + C8
-# C12 = total without ele power = C11 - C10
-# C15 = transportation, Bottom up analysis = Trans!C41 / 1000
-# C6, 7, 8 = com, ind, res dist fuel data from EIA (see line 14)
-# C10 = ele power dist fuel data from EIA (see line 14)
-# C11 = sum of res com ind tra ele dist fuel data from EIA (see line 14)
-# mogas Trans sheet
-# Trans!C41 = dist fuel consumption MMBTU, all classes = C31 * heat contents!C39
-# C31 = dist fuel consumption barrels, all classes = C21 / 42
-# [transport]heat contents!C39 = heat contents for dist fuel mmbtu/barrel
-# C21 = dist fuel consumption gallons, all classes = C7 - C17
-# C7 = dist fuel consumption gallons, all classes, inc biodiesel = 
-  # sum of all classes incl trains & boats = sum C8 C9 C10 C11 C12 C13
-# C17 = biodiesel = [Add_Var_22_FR.xls]Distillate  -Biodiesel'!AU7) * 42 * 1000
-# [Add_Var_22_FR]DistillateBiodiesel!AU7) = EIA input???????????????????
-# C8, 9, 10, 11, 13= [transport]Main calcs!C14, 15, 16, 17, 20
-# C12 = [Mobile]EIA Vessel Bunkering'!D48*1000
-# [transport]Main calcs!C14:17: dist fuel by class = [VMT]Outputs!E40:43
-# [transport]Main calcs!C20: rail dist fuel = [Mobile]Non_HW_Input!F$13
-# [Mobile]EIA Vessel Bunkering'!D48 = US dist fuel = 2064842,HARD CODED see below
-# [Mobile]Non_HW_Input!F$13 = locomotive diesel = F102
-# F102 = sum rail clas I, II, III, commuter, amtrak = sum E98:101
-# E98:101 = HARD CODED see below
-# [VMT]Outputs!E40:43 = FHWA MPG = HARD CODED see below
+# commercial, as an example
+com_dist_fuel_adj <- ((com_dist_fuel * 10^6) / ((com_dist_fuel + res_dist_fuel + ind_dist_fuel) * bottom_up_total)) / 10^3
 
+bottom_up_total <- (com_dist_fuel + res_dist_fuel + ind_dist_fuel + tra_dist_fuel) - bottom_up_tra
+
+bottom_up_tra <- total_dist_fuel_consumption_mmbtu / 1000
+
+total_dist_fuel_consumption_mmbtu <- (total_dist_fuel_consumption_gal / 42) * heat_content # dist fuel heat content for year from EIA
+
+total_dist_fuel_consumption_gal <- total_dist_fuel_consumption_incl_biodiesel_gal - total_biodiesel_gal
+
+total_dist_fuel_consumption_incl_biodiesel_gal <- sum(dist_fuel_fuel_class + dist_fuel_rail + dist_fuel_vessel) #by class is FHWA MPG data
+
+total_biodiesel_gal <- sum(biodiesel_fuel_class) * 42 * 1000 # Pull from EIA
+
+dist_fuel_rail <- sum(dist_fuel_rail_i, dist_fuel_rail_ii_iii, dist_fuel_commuter, dist_fuel_amtrak) # ata from weird rail sources
+
+dist_fuel_vessel <- dist_fuel_vessel_us * 1000 # hard coded from EIA
+
+
+# Data Sources------------------------------------------------------------
 
 
 # EIA stuff
@@ -77,4 +69,35 @@
   # Table A.13: Class I rail
   # Table A.14: Commuter rail
   # Table A.16: Amtrak
+
+# Methodology Notes
+
+# commercial distillate fuel 2010 = mo gas! summary v8 = EIA adjust! c21/ 10^3
+# EIA adjust! c21  = estimated commercial consumption = C7 / C17 * C16
+# C7 = commercial dist fuel data from EIA = EIA_Output QBtu'!G16 * 10^6
+# C16 = total res com ind, Bottom up analysis = C12 - C15
+# C17 = sales for res com ind, Bottom up analysis = C6 + C7 + C8
+# C12 = total without ele power = C11 - C10
+# C15 = transportation, Bottom up analysis = Trans!C41 / 1000
+# C6, 7, 8 = com, ind, res dist fuel data from EIA (see line 14)
+# C10 = ele power dist fuel data from EIA (see line 14)
+# C11 = sum of res com ind tra ele dist fuel data from EIA (see line 14)
+# mogas Trans sheet
+# Trans!C41 = dist fuel consumption MMBTU, all classes = C31 * heat contents!C39
+# C31 = dist fuel consumption barrels, all classes = C21 / 42
+# [transport]heat contents!C39 = heat contents for dist fuel mmbtu/barrel
+# C21 = dist fuel consumption gallons, all classes = C7 - C17
+# C7 = dist fuel consumption gallons, all classes, inc biodiesel = 
+# sum of all classes incl trains & boats = sum C8 C9 C10 C11 C12 C13
+# C17 = biodiesel = [Add_Var_22_FR.xls]Distillate  -Biodiesel'!AU7) * 42 * 1000
+# [Add_Var_22_FR]DistillateBiodiesel!AU7) = EIA input???????????????????
+# C8, 9, 10, 11, 13= [transport]Main calcs!C14, 15, 16, 17, 20
+# C12 = [Mobile]EIA Vessel Bunkering'!D48*1000
+# [transport]Main calcs!C14:17: dist fuel by class = [VMT]Outputs!E40:43
+# [transport]Main calcs!C20: rail dist fuel = [Mobile]Non_HW_Input!F$13
+# [Mobile]EIA Vessel Bunkering'!D48 = US dist fuel = 2064842,HARD CODED see below
+# [Mobile]Non_HW_Input!F$13 = locomotive diesel = F102
+# F102 = sum rail clas I, II, III, commuter, amtrak = sum E98:101
+# E98:101 = HARD CODED see below
+# [VMT]Outputs!E40:43 = FHWA MPG = HARD CODED see below
 
