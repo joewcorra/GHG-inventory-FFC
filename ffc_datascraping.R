@@ -80,7 +80,7 @@ diesel_distribution <- read_excel(local_excel_path) %>%
   select(-national_total, -state) %>%
   rename (state = states_and_dc)
 
-# National FFC------------------------------------------------------------
+# Scrape FWHA Fuel Use National FFC---------------------------------------
 
 
 # Retrieve gasoline Excel file data
@@ -101,3 +101,24 @@ gasoline_use_national <- read_excel(local_excel_path) %>%
   # Retain only 1990 onward
   filter(year > 1989) %>%
   select(-state)
+
+# ------------------------------------------------------------------------
+
+# URL for table VM-1, diesel fuel by class
+diesel_url <- paste0(
+  "https://www.fhwa.dot.gov/policyinformation/statistics/", 
+  latest_year, "/xls/vm1.xlsx") 
+# https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
+GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
+
+
+diesel_use_by_class <- read_excel(local_excel_path) %>%
+  clean_names() %>%
+  # Make all value columns numeric
+  mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+  # Make data long; i.e., one row per year
+  pivot_longer(cols = -1, names_to = "year", 
+               values_to = "gasoline_use_gal") %>%
+  # Remove letters from year column 
+  mutate(year = str_remove(year, "[a-z]"))
+  # Retain only 1990 onward

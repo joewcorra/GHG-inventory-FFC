@@ -42,7 +42,10 @@ us_consumption <- eia_national %>%
   # Remove "(consumption)" from electric power sector description
   mutate(sector_description = if_else(
     str_detect(sector_description, "electric power"), 
-      "electric power", sector_description))
+      "electric power", sector_description), 
+    # Make btu value numeric and remove non-numeric data (generates warning)
+   value = parse_number(value)) %>%
+  rename(year = period)
 
 # Read EIA Heat Content Data----------------------------------------------
 
@@ -60,4 +63,26 @@ eia_api_heat <- paste0(
 
 # Units in Millions of Btu / Barrel
 heat_content <- pluck(eia_api_heat, "response", "data") %>%
-  select(year = period, msn, msn_description = seriesDescription, value)
+  select(year = period, msn, 
+         msn_description = seriesDescription, heat_content = value) %>%
+  # Make heat content value numeric
+  mutate(heat_content = as.numeric(heat_content))
+
+
+# Read EIA Vessel Bunkering Diesel Data----------------------------------
+
+eia_api_vessel_bunker <- paste0(
+  "https://api.eia.gov/v2/petroleum/cons/821usea/data/?frequency=annual",
+  "&data[0]=value&facets[duoarea][]=NUS&facets[process][]=VAB&start=1990&end=",
+  latest_year, 
+  "&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000",
+  "&api_key=", key) %>%
+  GET() %>% # retrieve page from url
+  content("raw") %>% # extract content as a raw vector
+  rawToChar() %>% # convert to character data
+  fromJSON() # convert from JSON to R object
+
+# Units in Millions of Gallons
+vessel_bunker_dist_fuel <- pluck(eia_api_vessel_bunker, "response", "data") %>%
+  select(year = period, description = 'series-description', value)
+
