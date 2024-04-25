@@ -84,5 +84,7 @@ eia_api_vessel_bunker <- paste0(
 
 # Units in Millions of Gallons
 vessel_bunker_dist_fuel <- pluck(eia_api_vessel_bunker, "response", "data") %>%
-  select(year = period, description = 'series-description', value)
+  select(year = period, description = 'series-description', value) %>%
+  # Make fuel consumption value numeric
+  mutate(value = as.numeric(value))
 

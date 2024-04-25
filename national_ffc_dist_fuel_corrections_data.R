@@ -6,27 +6,121 @@
 
 # List of objects created in the global environment:
 
+# Vessel Fuel-----------------------------------------------------------
 
-# Distillate Fuel Adjustments--------------------------------------------
+# Retrieved from EIA 
 
-# commercial, as an example
-com_dist_fuel_adj <- ((com_dist_fuel * 10^6) / ((com_dist_fuel + res_dist_fuel + ind_dist_fuel) * bottom_up_total)) / 10^3
+vessel_bunker_dist_fuel
+# Data needed for vessel fuel and rail 
+dist_fuel_vessel <- vessel_bunker_dist_fuel %>%
+  # Dist fuel only
+  filter(str_detect(description, "istillate")) %>%
+  # Convert units to million gallons
+  mutate(value = value * 1000)
 
-bottom_up_total <- (com_dist_fuel + res_dist_fuel + ind_dist_fuel + tra_dist_fuel) - bottom_up_tra
+# Rail Dist Fuel--------------------------------------------------------
 
-bottom_up_tra <- total_dist_fuel_consumption_mmbtu / 1000
+# From weird rail sources...awaiting data access.
 
-total_dist_fuel_consumption_mmbtu <- (total_dist_fuel_consumption_gal / 42) * heat_content # dist fuel heat content for year from EIA
+dist_fuel_rail <- sum(dist_fuel_rail_i, dist_fuel_rail_ii_iii, 
+                      dist_fuel_commuter, dist_fuel_amtrak) 
 
-total_dist_fuel_consumption_gal <- total_dist_fuel_consumption_incl_biodiesel_gal - total_biodiesel_gal
 
-total_dist_fuel_consumption_incl_biodiesel_gal <- sum(dist_fuel_fuel_class + dist_fuel_rail + dist_fuel_vessel) #by class is FHWA MPG data
+# Rail diesel:
+# Amtrak: Louise Huttinger: data pulled from DOE Transportation Energy Data 
+# Book Table A.16. http://cta.ornl.gov/data/index.shtml  
+# Commuter rail: Beth Moore: Table a.14 of TEDB. Starting in 2003, data pulled 
+# directly from APTA web site.
+# Louise Huttinger: Starting in 2007, data pulled from Public Transportation 
+# Fact Book - Appendix A - Table 57.  
+# APTA (2007 through 2017) Public Transportation Fact Book.
+# at <http://www.apta.com/resources/statistics/Pages/transitstats.aspx>.
+# Class II & III Rail: Beth Moore: 1990-2001 data from Doug Benson, 
+# Upper Great Plains Transportation Institute, Doug.Benson@ndsu.nodak.edu.
+# Louise Huttinger: Data for BY2006 and BY2013 is from David Whorton.  
+# Document Reference: Whorton, D. (2006 through 2014) Personal 
+# communication, Class II and III Rail Energy Consumption, 
+# American Short Line and Regional Railroad Association.
+#  Emily Peterson: Data for BY2013 and forward is estimated based on 
+# carload data reported from RailInc. Calculations in 'Class II and III 
+# Diesel Consumption Estimates.xlsx'.
+# Class I Rail: Louise Huttinger: From Railroad Facts.  Advanced estimates 
+# can be received from Clyde Crimmel at AAR.
 
-total_biodiesel_gal <- sum(biodiesel_fuel_class) * 42 * 1000 # Pull from EIA
 
-dist_fuel_rail <- sum(dist_fuel_rail_i, dist_fuel_rail_ii_iii, dist_fuel_commuter, dist_fuel_amtrak) # ata from weird rail sources
+# Rail sources: https://tedb.ornl.gov/wp-content/uploads/2022/03/TEDB_Ed_40.pdf
+# Table A.13: Class I rail
+# Table A.14: Commuter rail
+# Table A.16: Amtrak
 
-dist_fuel_vessel <- dist_fuel_vessel_us * 1000 # hard coded from EIA
+# Biodiesel-------------------------------------------------------------
+
+# Pull from EIA consumption data
+  biodiesel <- us_consumption %>%
+  # Biodiesel only
+  filter(msn == "BDACB") %>%
+  # Rename value as 'biodiesel' since it must be subtracted later 
+  select(year, biodiesel = value) %>%
+  # Convert to millions of gallons. Convert NAs to zero
+  mutate(biodiesel = if_else(is.na(biodiesel), 0, biodiesel * 42 * 1000))
+
+
+# FHWA Dist Fuel by Vehicle Class---------------------------------------
+
+# FWHA Source: FHWA Annual Highway Statistics, Table VM-1.  
+# https://www.fhwa.dot.gov/policyinformation/statistics.cfm
+
+
+dist_fuel_by_class
+
+# 
+
+# EIA Dist Fuel---------------------------------------------------------
+
+# For each: com, ind, res, and tra
+
+us_consumption_dist_fuel <- us_consumption %>% 
+  filter(msn %in% c("DFRCB", "DFICB", "DFCCB", "DFACB")) %>%
+  mutate(meta_sector = case_when(
+    sector_description == "commercial sector" ~ "non-trans", 
+    sector_description == "industrial sector" ~ "non-trans",
+    sector_description == "residential sector" ~ "non-trans",
+    sector_description == "transportation sector" ~ "trans")) 
+
+
+# Dist Fuel Adjustments--------------------------------------------------
+
+# Total dist fuel = cars, rails, and vessels minus biodiesel
+dist_fuel_excl_biodiesel <- dist_fuel_vessel %>%
+  select(year, value) %>%
+  # bind_rows(dist_fuel_by_class) %>%
+  # bind_rows(dist_fuel_rail) %>%
+  bind_rows(biodiesel) %>%
+  group_by(year) %>%
+  summarize(total_dist_fuel = sum(
+    value, na.rm = TRUE) - sum(
+      biodiesel,  na.rm = TRUE)) %>%
+  ungroup() %>%
+  # Join with heat content data for distillate fuel
+  left_join(heat_content %>% 
+              # Distillate fuel only
+              filter(str_detect(msn_description, "istillate")), by = "year") %>%
+  # Convert to barrels and multiply by heat content to get mmbtu
+  mutate(total_dist_fuel = (total_dist_fuel / 42) * heat_content, 
+         bottom_up_trans = total_dist_fuel / 1000)
+
+
+
+dist_fuel <- us_consumption_dist_fuel %>%
+  left_join(dist_fuel_excl_biodiesel  %>% 
+              select(year, bottom_up_trans), by = "year") %>%
+  mutate(bottom_up_nontrans = sum(value, na.rm = TRUE) - bottom_up_trans, 
+         .by = c(year, meta_sector)) %>%
+  mutate(bottom_up_total = sum(value, na.rm = TRUE) - bottom_up_trans, 
+         .by = c(year)) %>%
+  mutate(adjusted_value = ((value * 10^6) / (sum(
+    value, na.rm = TRUE) * bottom_up_total)) / 10^3, 
+         .by = c(year))
 
 
 # Data Sources------------------------------------------------------------
@@ -43,32 +137,7 @@ dist_fuel_vessel <- dist_fuel_vessel_us * 1000 # hard coded from EIA
 # FWHA Source: FHWA Annual Highway Statistics, Table VM-1.  
     # https://www.fhwa.dot.gov/policyinformation/statistics.cfm
 
-# Rail diesel:
-  # Amtrak: Louise Huttinger: data pulled from DOE Transportation Energy Data 
-    # Book Table A.16. http://cta.ornl.gov/data/index.shtml  
-  # Commuter rail: Beth Moore: Table a.14 of TEDB. Starting in 2003, data pulled 
-    # directly from APTA web site.
-    # Louise Huttinger: Starting in 2007, data pulled from Public Transportation 
-      # Fact Book - Appendix A - Table 57.  
-      # APTA (2007 through 2017) Public Transportation Fact Book.
-      # at <http://www.apta.com/resources/statistics/Pages/transitstats.aspx>.
-  # Class II & III Rail: Beth Moore: 1990-2001 data from Doug Benson, 
-    # Upper Great Plains Transportation Institute, Doug.Benson@ndsu.nodak.edu.
-    # Louise Huttinger: Data for BY2006 and BY2013 is from David Whorton.  
-        # Document Reference: Whorton, D. (2006 through 2014) Personal 
-        # communication, Class II and III Rail Energy Consumption, 
-        # American Short Line and Regional Railroad Association.
-    #  Emily Peterson: Data for BY2013 and forward is estimated based on 
-    # carload data reported from RailInc. Calculations in 'Class II and III 
-    # Diesel Consumption Estimates.xlsx'.
-  # Class I Rail: Louise Huttinger: From Railroad Facts.  Advanced estimates 
-    # can be received from Clyde Crimmel at AAR.
 
-
-# Rail sources: https://tedb.ornl.gov/wp-content/uploads/2022/03/TEDB_Ed_40.pdf
-  # Table A.13: Class I rail
-  # Table A.14: Commuter rail
-  # Table A.16: Amtrak
 
 # Methodology Notes
 
