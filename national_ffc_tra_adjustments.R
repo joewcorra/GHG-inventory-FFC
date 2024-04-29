@@ -13,7 +13,8 @@ us_tra <- lst(
   
   # Lubricants (NEU adjustment)
   lubricants = us_consumption %>%
-    filter(msn == "LUACB"),
+    filter(msn == "LUACB") %>%
+    mutate(adjusted_value = value - value), # NEU is 100% of lubricants
   
   # Aviation Gasoline
   aviation_gasoline = us_consumption %>%
@@ -22,12 +23,12 @@ us_tra <- lst(
   # Distillate Fuel (IBF adjustment, mogas/df adjustment)
   distillate_fuel = us_consumption %>%
     filter(msn == "DFACB") %>%
-    mutate(adjusted_value = value - ibf_dist_fuel_adjustment), 
+    mutate(adjusted_value = value - ibf_dist_fuel_adj), 
   
   # Jet Fuel (IBF adjustment)
   jet_fuel = us_consumption %>%
     filter(msn == "JFACB") %>%
-    mutate(adjusted_value = value - ibf_jet_fuel_adjustment),
+    mutate(adjusted_value = value - ibf_jet_fuel_adj),
   
   # LPG (Propane) AKA HGL
   lpg = us_consumption %>%
@@ -40,7 +41,7 @@ us_tra <- lst(
   # Residual Fuel (IBF adjustment)
   residual_fuel = us_consumption %>%
     filter(msn == "RFACB") %>%
-    mutate(adjusted_value = value - residual_fuel_adjustment)) %>%
+    mutate(adjusted_value = value - ibf_residual_fuel_adj)) %>%
   
   # Collapse list into a single data frame
   list_rbind()
