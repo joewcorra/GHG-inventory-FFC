@@ -7,14 +7,9 @@
 
 # Objects Created--------------------------------------------------------
 
-# List of objects created in the global environment:
+# Persistent objects created in the global environment:
 
-# key: character vector; API key generated from DoE or data.gov
-# arguments: dataframe; user arguments that are passed to 'get_results'.
-# get_results: function; queries the Dept of Energy API.
-# limit_reached: boolean; indicates if API data limit has been reached.
-# api_results: list; full results from the 'get_results' API query.
-# api_seds: dataframe; desired data pulled from the 'api_results' list.
+# api_seds (dataframe): desired data pulled from the 'api_results' list.
 
 
 # API Key----------------------------------------------------------------
@@ -102,6 +97,11 @@ api_seds <- read_csv("data/api_seds.csv") %>%
 # Save the updated file 
 write_csv(api_seds, "data/api_seds.csv")
 
+# Cleanup-------------------------------------------------------------------
+
+# Remove unneeded objects 
+
+rm(c(key, arguments, get_results, api_results, limited_reached))
 
 # Notes --------------------------------------------------------------------
 

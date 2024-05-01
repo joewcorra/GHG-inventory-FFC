@@ -3,13 +3,12 @@
 
 # Objects Created--------------------------------------------------------
 
-# List of objects created in the global environment:
+# Persistent objects created in the global environment:
 
-# msn: tibble; all MSNs with descriptions of MSN, source, and sector
-# source: tibble; temporary object with source codes and descriptions
-# sector: tibble; temporary object with sector codes and descriptions
-# states_and_dc"
-# non-states"
+# msn (tibble): all MSNs with descriptions of MSN, source, and sector
+# msn_lookup (vector): 5-letter codes for all MSNs used in calculations
+# state_names (vector): state full names
+# states_and_dc (vector): state postal codes
 
 # Read Data--------------------------------------------------------------
 

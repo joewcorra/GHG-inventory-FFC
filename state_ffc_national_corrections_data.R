@@ -7,8 +7,24 @@
 
 # List of objects created in the global environment:
 
+# adjustments: tibble; adjustment factors derived from national data (i think?)
+
 # Read Excel Data--------------------------------------------------------
 
+# Read in adjustment factors data, derived from national inventory
+adjustments <- read_csv("us_compare.csv") %>%
+  clean_names() %>%
+  # Change 'year' to a column
+  pivot_longer(cols = starts_with("x"), 
+               names_to = "year", values_to = "national_value") %>%
+  # Get rid of leading 'x' in years
+  mutate(year = str_remove(year, "x"), 
+         # Standardize sector descriptions   
+         sector_description = str_c(sector_description, " sector"), 
+         # Standardize source descriptions
+         source_description = if_else(
+           source_description == "hydrocarbon gas liquids", 
+           "hgl", source_description)) 
 # This is excessively complex! Source file needs to be formatted differently
 
 
@@ -54,9 +70,9 @@ national_corrections <- read_excel("national_inventory_CO2_data.xlsx",
      is_coal_factor = coal)
 
 
-# Consumption input data is largely similar to the adjustments data from 
-# 'US compare', with the exception of resid fuel, dist fuel, nat gas, & coal.
-# Unclear how those 4 sources were adjusted between the two data sets. 
+# Consumption input is the 'US compare' data with corrections factors applied. 
+# It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
+
 
 consumption_input <- read_excel("national_inventory_CO2_data.xlsx", 
                                 sheet = "Consumption Input", 

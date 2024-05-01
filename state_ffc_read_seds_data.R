@@ -6,7 +6,7 @@
 
 # List of objects created in the global environment:
 
-# adjustments: tibble; adjustment factors derived from national data (i think?)
+
 # msn_lookup: vector; all MSNs used in the state summaries
 # seds: tibble; all SEDS data
 
@@ -48,39 +48,7 @@ seds <- read_csv("data/api_seds.csv") %>%
 
 
 
-# Read National Total Adjustment Data---------------------------------------
 
-# Read in adjustment factors data, derived from national inventory
-adjustments <- read_csv("us_compare.csv") %>%
-  clean_names() %>%
-  # Change 'year' to a column
-  pivot_longer(cols = starts_with("x"), 
-               names_to = "year", values_to = "national_value") %>%
-  # Get rid of leading 'x' in years
-  mutate(year = str_remove(year, "x"), 
-         # Standardize sector descriptions   
-         sector_description = str_c(sector_description, " sector"), 
-         # Standardize source descriptions
-         source_description = if_else(
-           source_description == "hydrocarbon gas liquids", 
-           "hgl", source_description)) 
 
-# JOINING PROBLEMS: 'Adjustments' lumps all LPGs ("butylene", "propane", 
-# "propylene", "isobutane", "normal butane") together as 'lpg' in the 
-# source_description, while SEDS is specific. 
-  # Solution 1: create a new column in both tibbles 
-  # Solution 2: in the csv, create additional identical rows for all of the 
-  # sources.
-# Other adjustments source_description without corresponding match in 
-# SEDS: 'other coal', 'other hydrocarbon gas liquids'
-  # 'other hydrocarbon gas liquids' is correct, but no matches in SEDS
-  # 'other coal' has no MSN match or SEDS match 
-# other SEDS source_description without corresponding match in 
-# adjustments: 'biodiesel', 'ethane', 'isobutylene', 'supplemental fuels', 
-# 'ethylene', 'fuel ethanol, exluding denaturant'
-  # Biodiesel is addressed in a later step
-  # LPGs: butylene, propane, propylene, isobutane, normal butane
-  # 3 ethanol fuels = ???
-  # Isobutylene = ???
-  # Supplemental gaseous fuels = ???
+
 
