@@ -38,8 +38,9 @@ source("ffc_datascraping.R")
 # Read industrial corrections & consumption input data (National Inventory)
 source("state_ffc_national_corrections_data.R")
 
-# Read international bunker fuels adjustment data
+ # Read international bunker fuels adjustment data
 source("state_ffc_ibf_corrections_data.R")
+
 
 # Read NEU adjustments data
 source("state_ffc_neu_corrections_data.R")
@@ -97,12 +98,12 @@ source("state_ffc_figures.R")
 # Create tables (for Markdown report)
 source("state_ffc_tables.R")
 
-# R SHiny Dashboard for viewing data (in-work)
-source("state_ffc_dashboards.R")
-
-# Format data for InvDB; write data to InvDB Excel workbook
-source("ffc_invdb.R")
-
+# # R SHiny Dashboard for viewing data (in-work)
+# source("state_ffc_dashboards.R")
+# 
+# # Format data for InvDB; write data to InvDB Excel workbook
+# source("ffc_invdb.R")
+# 
 # R Markdown report
-source("state_ffc_final_report.Rmd")
+# source("state_ffc_final_report.Rmd")
 

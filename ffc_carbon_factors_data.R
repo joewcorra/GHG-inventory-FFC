@@ -1,6 +1,8 @@
 # Calculate State and National CO2 Emissions
 # Carbon Factors
 
+print("Retrieving carbon factors data.")
+
 # Objects Created--------------------------------------------------------
 
 # Ratio of the molecular weight of carbon dioxide to carbon
@@ -13,7 +15,7 @@ carbon_ratio = 44/12
 # Read Excel Data-----------------------------------------------
 
 # Read in variable carbon factors data from FFC excel workbook
-carbon_factors_variable <- read_excel("national_inventory_CO2_data.xlsx", 
+carbon_factors_variable <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                       sheet = "Factors", 
                                       skip = 0, range = "I12:AO28") %>%
   clean_names() %>%
@@ -26,7 +28,7 @@ carbon_factors_variable <- read_excel("national_inventory_CO2_data.xlsx",
 
 
 # Read in carbon factors data from FFC excel workbook
-carbon_factors <- read_excel("national_inventory_CO2_data.xlsx", 
+carbon_factors <- read_excel("data/national_inventory_CO2_data.xlsx", 
                               sheet = "Factors", 
                               skip = 0, range = "B9:D58") %>%
   clean_names() %>%

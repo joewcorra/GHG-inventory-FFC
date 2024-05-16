@@ -1,6 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # IBF Adjustments
 
+print("Performing adjustments for international bunker fuels.")
 
 # Objects Created--------------------------------------------------------
 

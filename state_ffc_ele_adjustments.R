@@ -1,6 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # Electric Power Adjustments# 
 
+print("Performing adjustments to electric power sector consumption.")
 
 # Objects Created--------------------------------------------------------
 

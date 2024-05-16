@@ -7,13 +7,14 @@ output:
     keep_tex: true
 header-includes:
 
-  - \usepackage{xcolor} % For font color 
+  - \usepackage{xcolor} % For font color
   - \usepackage[dvipsnames]{xcolor}
-  - \usepackage{sectsty} % For section font size 
-  - \usepackage{titlesec} % For customizing title spacing 
-  - \sectionfont{\color{TealBlue}\LARGE} 
-  - \subsectionfont{\color{CornflowerBlue}\Large} 
-  - \subsubsectionfont{\color{Aquamarine}\large} 
+  - \usepackage{sectsty} % For section font size
+  - \usepackage{titlesec} % For customizing title spacing
+  - \sectionfont{\color{TealBlue}\LARGE}
+  - \subsectionfont{\color{CornflowerBlue}\Large}
+  - \subsubsectionfont{\color{Aquamarine}\large}
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +31,7 @@ For this methodology report, energy emissions are broken into two main categorie
 
 ```{r fossil fuels, echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
-source("ffc_state_master_script.R")
+source("state_ffc_master_script.R")
 
 
 ```

@@ -4,6 +4,8 @@
 
 # Note that FOKS data is no longer available as of 2020. Consider removing(?)
 
+print("Retrieving FOKS data.")
+
 # Objects Created--------------------------------------------------------
 
 
@@ -15,7 +17,7 @@
 
 # Read in diesel fuel data from FOKS excel workbook
 foks_diesel_distribution <- read_excel(
-  "FOKS Diesel Fuel Bunker 2020.xls", 
+  "data/FOKS Diesel Fuel Bunker 2020.xls", 
   sheet = 3, 
   skip = 0, range = "A2:AF53") %>%
   clean_names() %>%
@@ -36,7 +38,7 @@ foks_diesel_distribution <- read_excel(
 
 # Read in residual fuel data from FOKS excel workbook
 foks_residual_distribution <- read_excel(
-  "FOKS Resid Fuel Bunker 2020.xls", 
+  "data/FOKS Resid Fuel Bunker 2020.xls", 
   sheet = 3, 
   skip = 0, range = "A2:AF53") %>%
   clean_names() %>%

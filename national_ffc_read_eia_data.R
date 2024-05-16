@@ -22,7 +22,7 @@ latest_year <- year(Sys.Date()) -2
 
 eia_api_consumption <- paste0(
   "https://api.eia.gov/v2/total-energy/data/?frequency", 
-  "=annual&data[0]=value&start=1990&end=1992&sort[0][column]", 
+  "=annual&data[0]=value&start=2021&end=2023&sort[0][column]", 
   "=period&sort[0][direction]", 
   "=desc&offset=0&length=5000&api_key=", key) %>% # our API key 
   GET() %>% # retrieve page from url

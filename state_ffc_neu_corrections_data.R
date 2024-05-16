@@ -7,6 +7,9 @@
 # 'EIA_outputs_to_EPA 1990-2021_FR.xlsx'. Until we implement
 # data retrieval scripts, we will simply pull data from the FFC workbook.
 
+
+print("Retrieving NEU data for industrial and transportation adjustments.")
+
 # Objects Created--------------------------------------------------------
 
 
@@ -23,7 +26,7 @@
 # Read Excel Data--------------------------------------------------------
 
 # Read in NEU data from FFC excel workbook
-neu_corrections <- read_excel("national_inventory_CO2_data.xlsx", 
+neu_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                               sheet = "Non-Energy Use", 
                               skip = 0, range = "D5:AJ24") %>%
   clean_names() %>%

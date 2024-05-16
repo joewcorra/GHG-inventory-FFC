@@ -1,5 +1,6 @@
 # QAQC
 
+print("Performing QA/QC checks.")
 # assert, verify
 
 # all.equal, all.identical

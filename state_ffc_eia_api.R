@@ -4,6 +4,7 @@
 # 1) retrieve entire dataset for all states + DC, 1990-present, inclusive; 
 # 2) retrieve most recent year of data and append to the existing SEDS csv.
 
+print("Retreieving SEDS data via EIA's API.")
 
 # Objects Created--------------------------------------------------------
 

@@ -1,5 +1,6 @@
 # Create Dataframes of MSNs and descriptions and state codes
 
+print("Creating data frames of sectors, sources, and states.")
 
 # Objects Created--------------------------------------------------------
 
@@ -96,7 +97,7 @@ sectors <- data.frame(
                          "aviation gasoline blending components consumed by the industrial sector"))
 
 # Read in MSN data file and join with 'sources' and 'sectors'
-msn <- read_csv("msn_descriptions.csv") %>%
+msn <- read_csv("data/msn_descriptions.csv") %>%
   left_join(sources, by = "source_code") %>%
   left_join(sectors, by = "sector_code") %>%
   select(-type)

@@ -1,6 +1,8 @@
 # Calculate State-Level CO2 Emissions
 # National Corrections Data
 
+print("Retrieving national FFC data required to adjust SEDS data.")
+
 # Objects Created--------------------------------------------------------
 
 
@@ -12,7 +14,7 @@
 # Read Excel Data--------------------------------------------------------
 
 # Read in adjustment factors data, derived from national inventory
-adjustments <- read_csv("us_compare.csv") %>%
+adjustments <- read_csv("data/us_compare.csv") %>%
   clean_names() %>%
   # Change 'year' to a column
   pivot_longer(cols = starts_with("x"), 
@@ -28,7 +30,7 @@ adjustments <- read_csv("us_compare.csv") %>%
 # This is excessively complex! Source file needs to be formatted differently
 
 
-national_corrections <- read_excel("national_inventory_CO2_data.xlsx", 
+national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                    sheet = "Corrections", 
                                    skip = 0, range = "b5:AH60",
                                    col_names = FALSE) %>%
@@ -46,35 +48,19 @@ national_corrections <- read_excel("national_inventory_CO2_data.xlsx",
   pivot_longer(cols = -1) %>%
  pivot_wider(names_from = categories) %>%
   mutate(year = as.character(year)) %>%
-  select(-name) %>%
-   rename(
-       trans_mogas_ethanol_factor = transportation,
-       ind_mogas_ethanol_factor = industrial,
-        com_mogas_ethanol_factor = commercial,
-     sng_correction = dakota_gas,
-     # eastman gas isn't used?
+  select(year, sng_correction = dakota_gas,
      nat_gas_ammonia_factor = ammonia_production, 
-     blast_furnace_gas_factor = blast_furnace_gas, 
-     coke_oven_gas_factor = coke_oven_gas, 
      ippu = coking_coal, 
-     #    industrial_other_coal  , ??????
-     #    aluminum  , # petroleum coke corrections
-     #    ferroalloys  , # petroleum coke corrections
-     #    titanium_dioxide  , # petroleum coke corrections
-     #    ammonia  =  ammonia_factor , # petroleum coke corrections
-     #    silicon_carbide_petroleum_coke  , # petroleum coke corrections
-     #    other_oil_401_deg_f  , # carbon black corrections
      cb_factor = residual_fuel, 
      is_gas_factor = natural_gas, 
      is_distillate_fuel_factor = distillate_fuel, 
      is_coal_factor = coal)
 
-
 # Consumption input is the 'US compare' data with corrections factors applied. 
 # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
 
 
-consumption_input <- read_excel("national_inventory_CO2_data.xlsx", 
+consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                 sheet = "Consumption Input", 
                                 skip = 0, range = "C5:AK131") %>%
   clean_names() %>%

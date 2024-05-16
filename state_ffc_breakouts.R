@@ -1,6 +1,8 @@
 # Calculate State-Level CO2 Emissions
 # State Data Breakouts
 
+print("Collating final data set and computing emissions.")
+
 # Objects Created--------------------------------------------------------
 
 # List of objects created in the global environment:

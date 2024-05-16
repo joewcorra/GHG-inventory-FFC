@@ -29,10 +29,12 @@ source("national_ffc_dist_fuel_corrections_data.R")
 source("national_ffc_res_com_ele_adjustments.R")
 
 # Apply industrial adjustments
-source("national_ind_adjustments.R")
+source("national_ffc_ind_adjustments.R")
+#IPPU: non-energy calcs, petrochemicals, coal to chemicals workbook E8
 
-# Apply industrial adjustments
-source("national_tra_adjustments.R")
+
+# Apply transportation adjustments
+source("national_ffc_tra_adjustments.R")
 
 # Read carbon factors data
 source("ffc_carbon_factors_data.R")

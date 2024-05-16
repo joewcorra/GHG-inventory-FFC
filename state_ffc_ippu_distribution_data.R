@@ -13,12 +13,13 @@
 
 # All used by industrial_adjustments.R
 
+print("Retrieving IPPU data for industrial adjustments.")
 
 # Read Excel Data--------------------------------------------------------
 
 # Read in I & S data from FFC excel workbook
 is_distribution <- read_excel(
-  "ippu_i&s_percent_2021.xlsx", 
+  "data/ippu_i&s_percent_2021.xlsx", 
   sheet = 1, 
   skip = 0, range = "A2:AJ54") %>%
   clean_names() %>%
@@ -40,7 +41,7 @@ is_distribution <- read_excel(
 
 # Read in ammonia data from FFC excel workbook
 ammonia_distribution <- read_excel(
-  "ippu_ammonia_percent_2021.xlsx", 
+  "data/ippu_ammonia_percent_2021.xlsx", 
   sheet = 1, 
   skip = 0, range = "A2:AJ54") %>%
   clean_names() %>%
@@ -63,7 +64,7 @@ ammonia_distribution <- read_excel(
 
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_distribution <- read_excel(
-  "ippu_petrochemicals_percent_2021.xlsx", 
+  "data/ippu_petrochemicals_percent_2021.xlsx", 
   sheet = 1, 
   # Choose the 'carbon black' cell range 
   skip = 0, range = "A2:AJ54") %>%
@@ -88,7 +89,7 @@ petrochemicals_distribution <- read_excel(
 
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_cb_distribution <- read_excel(
-  "ippu_petrochemicals_percent_2021.xlsx", 
+  "data/ippu_petrochemicals_percent_2021.xlsx", 
   sheet = 1, 
   # Choose the 'carbon black' cell range 
   skip = 0, range = "A110:AJ162") %>%

@@ -1,6 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # Commercial Adjustments
 
+print("Performing adjustments to commercial sector consumption.")
 
 # Objects Created--------------------------------------------------------
 

@@ -1,5 +1,7 @@
 # Calculate State-Level CO2 Emissions
 
+print("Loading required libraries.")
+
 # Libraries--------------------------------------------------------------
 
 

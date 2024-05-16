@@ -1,6 +1,5 @@
 # Datascraping
 
-
 # Objects Created--------------------------------------------------------
 
 # List of objects created in the global environment:
@@ -13,6 +12,7 @@ latest_year <- year(Sys.Date()) -2
 
 # Scrape FWHA Fuel Use (State & National FFC) ----------------------------
 
+print("Datascraping: DOT FWHA data.")
 
 # Temporary file storage path
 local_excel_path <- tempfile(fileext = ".xlsx")
@@ -122,3 +122,4 @@ diesel_use_by_class <- read_excel(local_excel_path) %>%
   # Remove letters from year column 
   mutate(year = str_remove(year, "[a-z]"))
   # Retain only 1990 onward
+

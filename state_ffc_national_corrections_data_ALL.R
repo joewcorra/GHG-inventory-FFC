@@ -3,6 +3,8 @@
 # This script replaces all of the other scripts that read in Excel 
 # data from the national FFC calculations. 
 
+print("Retrieving national FFC data required to adjust SEDS data.")
+
 # Objects Created--------------------------------------------------------
 
 
@@ -16,7 +18,7 @@
 adjustments <- us_consumption %>%
   # Data is only used to adjust the following sources
   filter(source_descrption %in% c("distillate fuel oil", "motor gasoline", 
-                                  "natural gas",    "coal", 
+                                  "natural gas", "coal", 
                                   "petroleum coke", "lpg")) %>%
   # Rename value field to distinguish from state-level values during joins
   select(year, sector_description, source_description, national_value = value) 
@@ -39,14 +41,16 @@ print("And maybe deal with variable names ('value' vs 'adjusted value'.")
 
 
 national_corrections
-# Calls on these workbooks: IndCalc_Metals, EIAOutputs..., Aluminum Production, SNG, Biomass
+# provides sng_correction, nat_gas_ammonia_factor, ippu,
+# cb_factor, is_gas_factor, is_distillate_fuel_factor, is_coal_factor
 
-ibf_corrections
+ibf_corrections <- jet_fuel_consumption
 
-neu_corrections
+neu_corrections # required for other coal, nat gas, dist fuel, hgl/lpg,
+  # pentanes plus, petrol coke, stil gas
 
-is_distribution
-
+is_distribution # these four distribution lists come from IPPU data
+# Which, in turn, comes from inaccessible sources. Need to ask Vince.
 ammonia_distribution
 
 petrochemicals_distribution

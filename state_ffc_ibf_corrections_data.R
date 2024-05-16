@@ -7,6 +7,8 @@
 # 'International Bunker Fuels 90-21_12-02-22_PR.xls'. Until we implement
 # data retrieval scripts, we will simply pull data from the FFC workbook.
 
+print("Retrieving IBF data for for transportation adjustments.")
+
 # Objects Created--------------------------------------------------------
 
 
@@ -16,7 +18,7 @@
 # Read Excel Data--------------------------------------------------------
 
 # Read in IBF data from FFC excel workbook. Only need one line:
-ibf_corrections <- read_excel("national_inventory_CO2_data.xlsx", 
+ibf_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                    sheet = "International Bunker Fuels", 
                                    skip = 0, range = "C7:AI8") %>%
   clean_names() %>%

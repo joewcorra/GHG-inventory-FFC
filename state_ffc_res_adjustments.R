@@ -1,6 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # Residential Adjustments
 
+print("Performing adjustments to residential sector consumption.")
 
 # Objects Created--------------------------------------------------------
 

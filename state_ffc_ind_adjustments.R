@@ -1,6 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # Industrial Adjustments
 
+print("Performing adjustments to industrial sector consumption.")
 
 # Objects Created--------------------------------------------------------
 
@@ -178,8 +179,6 @@ seds_ind_adjusted <- lst(
   gasoline = seds %>% 
     # All gasoline - ethanol = net gasoline
     filter(msn %in% c("MGICB", "EMICB")) %>%
-    # Join with national data corrections 
-    left_join(national_corrections, by = "year") %>%
     # Subtract ethanol from total gasoline
     mutate(value = abs(diff(value)), .by = c(state, year)) %>%
     # Group_size shows that each group has exactly two rows. Good!
