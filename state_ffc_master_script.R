@@ -6,7 +6,7 @@
 source("ffc_libraries.R")
 
 
-# Build local datasets-----------------------------------------------
+# Build local datasets---------------------------------
 
 # EIA SEDS code MSN descriptors, US state postal codes
 source("ffc_msn_descriptions.R")
@@ -18,7 +18,7 @@ source("ffc_msn_descriptions.R")
 # When implemented, supersedes state_ffc_read_seds_data.R
 # source("state_ffc_eia_api.R")
 
-# Read SEDS data (EIA)
+# Read SEDS data (EIA); last downloaded from EIA in May 2024
 source("state_ffc_read_seds_data.R")
 
 # Scrape other data from web sources
@@ -106,4 +106,4 @@ source("state_ffc_tables.R")
 # 
 # R Markdown report
 # source("state_ffc_final_report.Rmd")
-
+d <- seds_all_adjusted %>% filter(state == "IL", year == "2022") %>% select(state:msn, source_description, sector_description, adjusted_value, neu_ibf_adjusted_value)  %>% mutate(r_value = round(neu_ibf_adjusted_value, 1))

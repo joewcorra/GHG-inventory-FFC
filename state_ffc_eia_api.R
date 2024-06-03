@@ -83,7 +83,7 @@ write_csv(api_seds, "data/api_seds.csv")
 # Option 2: Retrieve New Year of Data Only---------------------------------
 
 api_results_new <- expand_grid(state = states_and_dc, 
-                               year = 2022, 
+                               year = 2023, 
                                offset = 0) %>%
   pmap(function(state, year, offset) get_results(state, year, offset))
 

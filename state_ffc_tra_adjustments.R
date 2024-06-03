@@ -35,13 +35,18 @@ seds_tra_adjusted <- lst(
   
   lubricants = seds %>%
     filter(msn == "LUACB") %>%
-    # Adjusted = original value
-    mutate(adjusted_value = value), 
+    # Adjusted = original value / 1000
+    mutate(adjusted_value = value / 1000), 
   
   jet_fuel = seds %>%
     filter(msn == "JFACB") %>% 
-    # Adjusted = original value
-    mutate(adjusted_value = value), 
+    # Adjusted = original value / 1000
+    mutate(adjusted_value = value / 1000), 
+  
+  aviation_gasoline = seds %>%
+    filter(msn == "AVACB") %>%
+  # Adjusted = original value / 1000
+  mutate(adjusted_value = value / 1000), 
   
   natural_gas = seds %>%
     filter(msn == "NGACB") %>%

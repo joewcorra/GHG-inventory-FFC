@@ -43,7 +43,9 @@ seds <- read_csv("data/api_seds.csv") %>%
   filter(msn %in% msn_lookup) %>%
   mutate(unit = str_to_lower(unit), 
          year = as.character(year)) %>%
-  left_join(msn %>% select(-unit), by = "msn")
+  left_join(msn %>% select(-unit), by = "msn") %>%
+  # Remove any duplicates caused by appending new annual data
+  distinct()
 
 
 

@@ -26,7 +26,9 @@ seds_all_adjusted <- bind_rows(
     str_detect(source_description, "other oils") ~ "other oils", 
     str_detect(source_description, " and ") ~ 
       str_replace(source_description, " and ", " & "),
-    str_detect(source_description, "aviation") ~ "avgas blend components",
+    str_detect(source_description, "aviation gasoline c") ~ "aviation gasoline",
+    source_description == "aviation gasoline blending components" ~ 
+      "avgas blend components",
     source_description == "motor gasoline blending components" ~ 
       "mogas blend components",
     str_detect(source_description, "pentanes") ~ "pentanes plus",

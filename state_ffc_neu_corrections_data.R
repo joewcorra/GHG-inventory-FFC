@@ -28,7 +28,7 @@ print("Retrieving NEU data for industrial and transportation adjustments.")
 # Read in NEU data from FFC excel workbook
 neu_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                               sheet = "Non-Energy Use", 
-                              skip = 0, range = "D5:AJ24") %>%
+                              skip = 0, range = "D5:AK24") %>%
   clean_names() %>%
   # Rename to match column names in SEDS
   rename(source_description = sector_fuel_type) %>%

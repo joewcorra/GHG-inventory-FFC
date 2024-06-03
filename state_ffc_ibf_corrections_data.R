@@ -20,7 +20,7 @@ print("Retrieving IBF data for for transportation adjustments.")
 # Read in IBF data from FFC excel workbook. Only need one line:
 ibf_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                    sheet = "International Bunker Fuels", 
-                                   skip = 0, range = "C7:AI8") %>%
+                                   skip = 0, range = "C7:AJ8") %>%
   clean_names() %>%
   # Make data long; i.e., one row per year
   pivot_longer(cols = -1, names_to = "year", values_to = "ibf_factor") %>%

@@ -19,9 +19,9 @@ print("Retrieving IPPU data for industrial adjustments.")
 
 # Read in I & S data from FFC excel workbook
 is_distribution <- read_excel(
-  "data/ippu_i&s_percent_2021.xlsx", 
+  "data/ippu_i&s_percent.xlsx", 
   sheet = 1, 
-  skip = 0, range = "A2:AJ54") %>%
+  skip = 0, range = "A2:AK54") %>%
   clean_names() %>%
   # Don't need the national value; we compute it below
   filter(state != "National") %>%
@@ -41,7 +41,7 @@ is_distribution <- read_excel(
 
 # Read in ammonia data from FFC excel workbook
 ammonia_distribution <- read_excel(
-  "data/ippu_ammonia_percent_2021.xlsx", 
+  "data/ippu_ammonia_percent.xlsx", 
   sheet = 1, 
   skip = 0, range = "A2:AJ54") %>%
   clean_names() %>%
@@ -64,10 +64,10 @@ ammonia_distribution <- read_excel(
 
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_distribution <- read_excel(
-  "data/ippu_petrochemicals_percent_2021.xlsx", 
+  "data/ippu_petrochemicals_percent.xlsx", 
   sheet = 1, 
   # Choose the 'carbon black' cell range 
-  skip = 0, range = "A2:AJ54") %>%
+  skip = 0, range = "A2:AK54") %>%
   clean_names() %>%
   # Don't need the national value; we compute it below
   filter(state != "National") %>%
@@ -89,10 +89,10 @@ petrochemicals_distribution <- read_excel(
 
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_cb_distribution <- read_excel(
-  "data/ippu_petrochemicals_percent_2021.xlsx", 
+  "data/ippu_petrochemicals_percent.xlsx", 
   sheet = 1, 
   # Choose the 'carbon black' cell range 
-  skip = 0, range = "A110:AJ162") %>%
+  skip = 0, range = "A58:AK110") %>%
   clean_names() %>%
   # Don't need the national value; we compute it below
   filter(state != "National") %>%
@@ -110,3 +110,4 @@ petrochemicals_cb_distribution <- read_excel(
            petrochemical_cb_percent / national_total) %>%
   # No longer need national total
   select(-national_total)
+

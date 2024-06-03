@@ -32,7 +32,7 @@ adjustments <- read_csv("data/us_compare.csv") %>%
 
 national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                    sheet = "Corrections", 
-                                   skip = 0, range = "b5:AH60",
+                                   skip = 0, range = "B5:AI60",
                                    col_names = FALSE) %>%
   clean_names() %>%
   rename(categories = x1) %>%
@@ -49,12 +49,13 @@ national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
  pivot_wider(names_from = categories) %>%
   mutate(year = as.character(year)) %>%
   select(year, sng_correction = dakota_gas,
-     nat_gas_ammonia_factor = ammonia_production, 
+     nat_gas_ammonia_factor = ammonia_production,
      ippu = coking_coal, 
      cb_factor = residual_fuel, 
      is_gas_factor = natural_gas, 
      is_distillate_fuel_factor = distillate_fuel, 
      is_coal_factor = coal)
+
 
 # Consumption input is the 'US compare' data with corrections factors applied. 
 # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.

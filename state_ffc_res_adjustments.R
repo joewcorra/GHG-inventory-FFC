@@ -65,8 +65,8 @@ seds_res_adjusted <- lst(
   # All other sources go in the last list element
   other_residential = seds %>% 
     filter(msn %in% c("KSRCB", "HLRCB", "PQRCB")) %>%
-    # Adjusted = original value. Consider using a different variable name here
-    mutate(adjusted_value = value)) %>%
+    # Adjusted = original value / 1000. Consider a different variable name here
+    mutate(adjusted_value = value / 1000)) %>%
 
   # Collapse list into a single data frame
   list_rbind()

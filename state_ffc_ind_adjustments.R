@@ -241,8 +241,8 @@ seds_ind_adjusted <- lst(
                       "SGICB", "SNICB", "UOICB", "WXICB", "PQICB", 
                       "PYICB", "EQICB", "EYICB", "BQICB", "BYICB", 
                       "IQICB", "IYICB")) %>%
-    # Adjusted = original value
-    mutate(adjusted_value = value)) %>%
+    # Adjusted = original value / 1000
+    mutate(adjusted_value = value / 1000)) %>%
   
   # Collapse list into a single data frame
   list_rbind()
