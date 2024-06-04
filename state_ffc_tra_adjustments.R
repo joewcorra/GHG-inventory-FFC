@@ -35,18 +35,38 @@ seds_tra_adjusted <- lst(
   
   lubricants = seds %>%
     filter(msn == "LUACB") %>%
-    # Adjusted = original value / 1000
-    mutate(adjusted_value = value / 1000), 
+    # Adjusted = original value 
+    mutate(adjusted_value = value), 
   
   jet_fuel = seds %>%
     filter(msn == "JFACB") %>% 
-    # Adjusted = original value / 1000
-    mutate(adjusted_value = value / 1000), 
+    # Adjusted = original value
+    mutate(adjusted_value = value), 
+  
+  residual_fuel = seds %>%
+    filter(msn == "RFACB") %>% 
+    # Adjusted = original value
+    mutate(adjusted_value = value), 
+  
+  coal = seds %>%
+    filter(msn == "CLACB") %>% 
+    # Adjusted = original value 
+    mutate(adjusted_value = value), 
+  
+  # LPGs (propane and/or HGL)
+  lpg = seds %>%
+    filter(case_when(year < 2010 ~ msn == "HLACB", 
+                     year >= 2010 ~ msn == "PQACB")) %>% 
+    # Adjusted = original value
+    mutate(msn = "combined lpg", 
+           adjusted_value = value), 
   
   aviation_gasoline = seds %>%
     filter(msn == "AVACB") %>%
-  # Adjusted = original value / 1000
-  mutate(adjusted_value = value / 1000), 
+  # Adjusted = original value
+  mutate(adjusted_value = value), 
+  
+  
   
   natural_gas = seds %>%
     filter(msn == "NGACB") %>%

@@ -84,7 +84,9 @@ seds_ind_adjusted <- lst(
            # Multiply I & S factor by I & S state distribution percentages
            other_coal_is_adj = is_coal_factor * is_percent,
            adjusted_value_pre = value -
-             (other_coal_coke_adj + other_coal_sng_adj + other_coal_is_adj)) %>%
+             (other_coal_coke_adj + 
+                other_coal_sng_adj + 
+                other_coal_is_adj)) %>%
     # Get sum of all states' adjusted values
     mutate(states_sum_value = sum(adjusted_value_pre), 
            .by = c(msn, year)) %>%
@@ -218,7 +220,7 @@ seds_ind_adjusted <- lst(
     # Subtract pentanes plus from HGL
     mutate(value = abs(diff(value)), .by = c(state, year)) %>%
     # Group_size shows that each group has exactly two rows. Good!
-    # Pentanes plus goes in other_industrial(?) Remove from this element:
+    # Remove pentanes plus from this list element:
     filter(msn != "PPICB") %>%
     # Change source description to reflect new value
     mutate(source_description = "hgl") %>%
@@ -241,8 +243,7 @@ seds_ind_adjusted <- lst(
                       "SGICB", "SNICB", "UOICB", "WXICB", "PQICB", 
                       "PYICB", "EQICB", "EYICB", "BQICB", "BYICB", 
                       "IQICB", "IYICB")) %>%
-    # Adjusted = original value / 1000
-    mutate(adjusted_value = value / 1000)) %>%
+    mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame
   list_rbind()

@@ -62,11 +62,18 @@ seds_res_adjusted <- lst(
     mutate(adjusted_value = national_value * 
              (value / states_sum_value)), 
   
+  # LPGs (propane and/or HGL)
+  lpg = seds %>%
+    filter(case_when(year < 2010 ~ msn == "HLRCB", 
+                     year >= 2010 ~ msn == "PQRCB")) %>% 
+    # Adjusted = original value
+    mutate(msn = "combined lpg", 
+           adjusted_value = value), 
+  
   # All other sources go in the last list element
   other_residential = seds %>% 
-    filter(msn %in% c("KSRCB", "HLRCB", "PQRCB")) %>%
-    # Adjusted = original value / 1000. Consider a different variable name here
-    mutate(adjusted_value = value / 1000)) %>%
+    filter(msn %in% c("KSRCB")) %>%
+    mutate(adjusted_value = value)) %>%
 
   # Collapse list into a single data frame
   list_rbind()

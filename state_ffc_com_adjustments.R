@@ -82,12 +82,19 @@ seds_com_adjusted <- lst(
     # However, MSN can be reconstituted from other _code fields if needed.
     mutate(msn = "net gasoline", 
            source_description = "motor gasoline"),
+  
+  # LPGs (propane and/or HGL)
+  lpg = seds %>%
+    filter(case_when(year < 2010 ~ msn == "HLCCB", 
+                     year >= 2010 ~ msn == "PQCCB")) %>% 
+    # Adjusted = original value
+    mutate(msn = "combined lpg", 
+           adjusted_value = value), 
 
   # All other sources go in the last list element
   other_commercial = seds %>% 
-    filter(msn %in% c("KSCCB", "PCCCB", "RFCCB", "HLCCB", "PQCCB")) %>%
-    # Adjusted = original value / 1000
-    mutate(adjusted_value = value / 1000)) %>%
+    filter(msn %in% c("KSCCB", "PCCCB", "RFCCB")) %>%
+    mutate(adjusted_value = value)) %>%
   
   # Collapse list into a single data frame
   list_rbind()

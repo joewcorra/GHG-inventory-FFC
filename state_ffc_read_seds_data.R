@@ -45,7 +45,10 @@ seds <- read_csv("data/api_seds.csv") %>%
          year = as.character(year)) %>%
   left_join(msn %>% select(-unit), by = "msn") %>%
   # Remove any duplicates caused by appending new annual data
-  distinct()
+  distinct() %>%
+  # Convert to millions of BTUs
+  mutate(value = value / 1000) 
+
 
 
 

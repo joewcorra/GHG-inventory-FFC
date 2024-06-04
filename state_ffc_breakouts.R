@@ -31,8 +31,7 @@ seds_all_adjusted <- bind_rows(
       "avgas blend components",
     source_description == "motor gasoline blending components" ~ 
       "mogas blend components",
-    str_detect(source_description, "pentanes") ~ "pentanes plus",
-    str_detect(source_description, "hydrocarbon") ~ "hgl",
+    str_detect(source_description, "hydrocarbon|propane") ~ "lpg",
     str_detect(source_description, "miscellaneous") ~ "misc. products",
     str_detect(source_description, "residual") ~ "residual fuel",
     .default = source_description)) %>%
@@ -46,6 +45,8 @@ seds_all_adjusted <- bind_rows(
       "industrial other coal",
     source_description == "coal" & sector_code == "KC" ~ 
       "industrial coking coal",
+    source_description == "coal" & sector_code == "AC" ~ 
+      "transportation coal",
     source_description == "coal" & sector_code == "RC" ~ 
       "residential coal",
     .default = source_description)) %>%
@@ -66,9 +67,9 @@ seds_all_adjusted <- bind_rows(
     adjusted_value - ibf_adjusted_value, 
     adjusted_value), 
     # Some MSNs are 100% NEU. For these, NEU value = 100% of adjusted value
-    neu_adjusted_value = if_else(msn %in% c("ARICB", "LUICB", "FNICB", 
+    neu_adjusted_value = if_else(msn %in% c("ARICB", "LUICB", "FNICB", "CLKCB",
                                             "FOICB", "SNICB", "WXICB", 
-                                            "MSICB", "LUACB"), # CLKCB???
+                                            "MSICB", "LUACB"), 
                                  adjusted_value, neu_adjusted_value),  
     neu_ibf_adjusted_value = if_else(
       # Subtract NEU only if NEU applies (i.e., isn't NA)

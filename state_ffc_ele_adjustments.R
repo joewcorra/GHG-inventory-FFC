@@ -59,6 +59,20 @@ seds_ele_adjusted <- lst(
     mutate(msn = "net natural gas", 
            source_description = "natural gas"),
   
+  residual_fuel = seds %>%
+    filter(msn == "RFEIB") %>%
+    # Make sector names match to complete the next join
+    mutate(sector_description = word(sector_description, 
+                                     start = 1, end = 3)) %>%
+    mutate(adjusted_value = value),
+  
+  petroleum_coke = seds %>%
+    filter(msn == "PCEIB") %>%
+    # Make sector names match to complete the next join
+    mutate(sector_description = word(sector_description, 
+                                     start = 1, end = 3)) %>%
+    mutate(adjusted_value = value),
+  
   distillate_fuel = seds %>%
     filter(msn == "DFEIB") %>%
     # Make sector names match to complete the next join

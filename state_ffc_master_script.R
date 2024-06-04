@@ -41,7 +41,6 @@ source("state_ffc_national_corrections_data.R")
  # Read international bunker fuels adjustment data
 source("state_ffc_ibf_corrections_data.R")
 
-
 # Read NEU adjustments data
 source("state_ffc_neu_corrections_data.R")
 
