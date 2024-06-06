@@ -15,6 +15,7 @@ library(knitr)
 # library(maps)
 library(openxlsx)
 library(patchwork)
+library(pdftools)
 library(RColorBrewer) # Might not be needed...
 library(reactable)
 library(readxl)

@@ -19,7 +19,7 @@ print("Retreieving SEDS data via EIA's API.")
 key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
 
-# Function for Both Options--------------------------------------------------
+# Function for Options 1 & 2---------------------------------------------
 
 # Function to Query EIA API
 get_results <- function(state, year, offset) {
@@ -97,6 +97,7 @@ api_seds <- read_csv("data/api_seds.csv") %>%
 
 # Save the updated file 
 write_csv(api_seds, "data/api_seds.csv")
+
 
 # Cleanup-------------------------------------------------------------------
 

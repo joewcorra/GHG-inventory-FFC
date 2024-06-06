@@ -133,6 +133,16 @@ state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California",
 # Key for matching state names and codes
 state_name_key <- tibble(states_and_dc, state_names)
 
+
+# US territories codes
+territories <- c("ASM", "GUM", "PRI", "USIQ", "VIR", "WAK")
+
+territories_names <- c("American Samoa", "Guam", "Puerto Rico", 
+                       "US Pacific islands", "US Virgin Islands", 
+                       "Wake Island")
+
+territory_name_key <- tibble(territories, territories_names)
+
 # MSN Lookup for State and National Emissions-------------------------------
 
 
@@ -140,17 +150,13 @@ state_name_key <- tibble(states_and_dc, state_names)
 # These MSNs are all in billions of BTUs; converted to millions below. 
 msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB", 
                 "CCNIB", "CLICB", "CLKCB", "CLOCB", "CLRCB", "CLACB", 
-                "CLCCB", "CLEIB", "COICB", "DFACB", 
-                "DFCCB", "DFEIB",
-                "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", 
-                "EMTCB", 
-                "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB", "HLICB", 
-                "HLRCB", 
-                "JFACB", "KSICB", "KSCCB", "KSRCB", 
+                "CLCCB", "CLEIB", "COICB", "DFACB", "DFCCB", "DFEIB",
+                "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB",  "EMICB", "EMTCB", 
+                "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB",  
+                "HLICB", "HLRCB", "JFACB", "KSICB", "KSCCB", "KSRCB",
                 "LUACB", "LUICB", "MBICB", "MGACB", "MGCCB", 
                 "MGICB", "MSICB", "NGACB", "NGCCB", "NGEIB", "NGRCB", "NGICB", 
-                "NNACB", "NNCCB", "NNEIB", "NNICB", "NNRCB", 
-                "PCCCB", 
+                "NNACB", "NNCCB", "NNEIB", "NNICB", "NNRCB", "PCCCB", 
                 "PCEIB", "PCICB", "PQACB", "PQCCB", "PQICB", "PPICB", "PYICB", 
                 "RFACB", "RFCCB", "RFEIB", "RFICB", "SFEIB", "SFCCB", "SFRCB", 
                 "SGICB", "SFINB", "SNICB", "UOICB", "WXICB")
