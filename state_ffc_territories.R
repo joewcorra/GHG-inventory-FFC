@@ -12,6 +12,8 @@ key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
 # Retrieve Territories FF Consumption from EIA---------------------------
 
+# Get latest data year 
+latest_year <- year(now()) -2
 
 # American Samoa, Guam, Puerto Rico, US Virgin Islands, 
 # US Pacific islands, Wake Island
@@ -24,12 +26,13 @@ api_territories <- paste0(
   "[]=USIQ&facets[countryRegionId][]=VIR&facets",
   "[countryRegionId][]=WAK&facets[activityId][]=2&facets",
   "[unit][]=BCF&facets[unit][]=TBPD&facets[unit][]=TST&facets",
-  "[productId][]=26&facets[productId][]=5&facets[productId]",
-  "[]=54&facets[productId][]=62&facets[productId]",
+  "[productId][]=26&&facets[productId]",
+  "[]=62&facets[productId]",
   "[]=63&facets[productId][]=64&facets[productId]",
   "[]=65&facets[productId][]=66&facets[productId]",
   "[]=67&facets[productId][]=68&facets[productId]",
-  "[]=7&start=1989&end=2022&sort[0][column]=",
+  "[]=7&start=1989&end=", latest_year, 
+  "&sort[0][column]=",
   "period&sort[0][direction]=desc&offset=0&length=5000",
   "&api_key=", key) %>% # our API key is required
   GET() %>% # retrieve page from url
@@ -47,9 +50,10 @@ ff_territories <- api_territories %>%
   mutate(value = as.numeric(value), 
          source_description = str_to_lower(source_description), 
          source_description = case_when(
-           source_description == "liquified petroleum gases" ~ "lpg",
-           source_description == " " ~ "lubricants",
-           source_description == " " ~ "other petroleum liquids" ))
+           source_description == "liquefied petroleum gases" ~ "lpg",
+           source_description == "dry natural gas" ~ "natural gas", 
+           source_description == "foo" ~ "lubricants",
+           .default = source_description))
 
 
 
@@ -87,7 +91,7 @@ eia_api_heat <- paste0(
 # other petrol liquids, and LPG (average of 9 HGLs)
 heat_commodities <- c("Residual Fuel Oil", "Kerosene", 
                       "Jet Fuel, Kerosene Type", "Lubricants", 
-                      "than 500 ppm sulfur", "Other Hydrocarbons",
+                      "than 500 ppm sulfur", "Miscellaneous Products",
                       "Ethane", "Propane", "Normal Butane", "Isobutane",
                       "Ethylene", "Propylene", "Butylene", 
                       "Isobutylene", "Pentanes Plus")
@@ -129,8 +133,8 @@ heat_content_territories <- heat_commodities %>%
   bind_rows(eia_api_heat) %>%
   # Standardize source descriptions to match EIA territories data
   mutate(source_description = case_when(
-    source_description == "natural gas" ~ "dry natural gas", 
-    source_description == "other hydrocarbons" ~ "other petroleum liquids"))
+    source_description == "miscellaneous products" ~ "other petroleum liquids", 
+    .default = source_description))
 
 
 # Calculcate TBtu---------------------------------------------------------
@@ -139,7 +143,8 @@ ffc_territories <- ff_territories %>%
   left_join(heat_content_territories, 
             by = c("year", "source_description")) %>%
   # TBtu = consumption * days * 1000 * heat content / 1,000,000 
-  mutate(tbtu = value * 365 * heat_content / 1000)
+  mutate(tbtu = value * 365 * heat_content / 1000) %>%
+  select(-unit, -dataFlagDescription, -value, -source)
 
 
 

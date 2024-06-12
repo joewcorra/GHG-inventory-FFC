@@ -17,7 +17,7 @@ carbon_ratio = 44/12
 # Read in variable carbon factors data from FFC excel workbook
 carbon_factors_variable <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                       sheet = "Factors", 
-                                      skip = 0, range = "I12:AO28") %>%
+                                      skip = 0, range = "I12:AP28") %>%
   clean_names() %>%
   rename(source_description = fuel_type) %>%
   # Make sources lowercase and standardize sources
@@ -45,6 +45,7 @@ carbon_factors <- read_excel("data/national_inventory_CO2_data.xlsx",
            source_description == "naphtha (<401 deg. f)" ~ "naphtha", 
            source_description == "other oil (>401 deg. f)" ~ "other oils",
            source_description == "lpg (propane)" ~ "lpg",
+           source_description == "residual fuel" ~ "residual fuel oil",
            source_description == "jet fuel (kerosene)" ~ "jet fuel", 
            str_detect(source_description, "utility coal") ~ "electric power coal", 
            .default = source_description)) %>%

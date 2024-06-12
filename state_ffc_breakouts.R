@@ -33,7 +33,8 @@ seds_all_adjusted <- bind_rows(
       "mogas blend components",
     str_detect(source_description, "hydrocarbon|propane") ~ "lpg",
     str_detect(source_description, "miscellaneous") ~ "misc. products",
-    str_detect(source_description, "residual") ~ "residual fuel",
+    str_detect(source_description, "distillate ") ~ "distillate fuel oil",
+    str_detect(source_description, "residual") ~ "residual fuel oil",
     .default = source_description)) %>%
   # Add sector to each coal source--required for carbon factors & NEU
   mutate(source_description = case_when(
@@ -61,8 +62,8 @@ seds_all_adjusted <- bind_rows(
             by = c("sector_description", "source_description", "year", 
                    "state", "msn")) %>%
   # Get adjusted value - NEU and IBD values = final adjusted tBtu 
-    mutate(neu_ibf_adjusted_value = if_else(
-      # Subtract IBF only if IBF applies (i.e., isn't NA)
+  mutate(neu_ibf_adjusted_value = if_else(
+    # Subtract IBF only if IBF applies (i.e., isn't NA)
     !is.na(ibf_adjusted_value), 
     adjusted_value - ibf_adjusted_value, 
     adjusted_value), 
@@ -75,8 +76,14 @@ seds_all_adjusted <- bind_rows(
       # Subtract NEU only if NEU applies (i.e., isn't NA)
       !is.na(neu_adjusted_value), 
       neu_ibf_adjusted_value - neu_adjusted_value, 
-      neu_ibf_adjusted_value))
+      neu_ibf_adjusted_value)) %>% 
   
+  # Finally, ZERO OUT all pentanes plus and unfinished oils
+  mutate(neu_ibf_adjusted_value = case_when(
+    source_description == "pentanes plus" ~ 0, 
+    source_description == "unfinished oils" ~ 0, 
+    .default = neu_ibf_adjusted_value))
+
 
 # Calculate Carbon Emissions--------------------------------------------
 

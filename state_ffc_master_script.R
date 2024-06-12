@@ -108,7 +108,7 @@ source("state_ffc_tables.R")
 # 
 # R Markdown report
 # source("state_ffc_final_report.Rmd")
-d <- seds_all_adjusted %>% filter(state == "IL", year == "2022") %>% 
+d <- seds_all_adjusted %>% filter(state == "LA", year == "2022") %>% 
   select(state:msn, source_description, 
-         sector_description, adjusted_value, neu_ibf_adjusted_value)  %>% 
+         sector_description, value, adjusted_value:neu_ibf_adjusted_value)  %>% 
   mutate(r_value = round(neu_ibf_adjusted_value, 1))

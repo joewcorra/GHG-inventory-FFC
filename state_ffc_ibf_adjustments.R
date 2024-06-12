@@ -22,35 +22,33 @@ print("Performing adjustments for international bunker fuels.")
 seds_ibf_adjusted <- lst(
   
   distillate_fuel = foks_diesel_distribution %>%
-    left_join(adjustments %>% filter(
-      sector_description == "transportation sector", 
+    left_join(ibf_corrections %>% filter(
       source_description == "distillate fuel oil"), 
       by = "year") %>% 
      # Calculate adjusted value (factor * percent)
-    mutate(ibf_adjusted_value = national_value * diesel_percent,
-           # Add the MSN for transportation distillate fuel
-           msn = "DFASB"),
+    mutate(ibf_adjusted_value = ibf_value * diesel_percent,
+           # Add the MSN & sector  for transportation distillate fuel
+           msn = "DFACB", 
+           sector_description = "transportation sector"),
   
   residual_fuel = foks_residual_distribution %>%
-    left_join(adjustments %>% filter(
-      sector_description == "transportation sector", 
+    left_join(ibf_corrections %>% filter(
       source_description == "residual fuel oil"), 
       by = "year") %>% 
     # Calculate adjusted value (factor * percent)
-    mutate(ibf_adjusted_value = national_value * residual_percent, 
-           # Add the MSN for transportation residual fuel
-           msn = "RFACB"),
+    mutate(ibf_adjusted_value = ibf_value * residual_percent, 
+           # Add the MSN & sector for transportation residual fuel
+           msn = "RFACB", 
+           sector_description = "transportation sector"),
   
   jet_fuel = seds %>%
     filter(msn == "JFACB") %>%
-    left_join(ibf_corrections %>% 
-                # This column is unnecessary since there's only 1 source
-                select(-gas_mode_and_fuel_type), 
-              by = "year") %>%
+    left_join(ibf_corrections,
+      by = c("year", "source_description")) %>% 
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # Multiply adjustment factor by states's value / the above sum
-    mutate(ibf_adjusted_value = ibf_factor * 
+    mutate(ibf_adjusted_value = ibf_value * 
              (value / states_sum_value))) %>%
   
   # Collapse list into a single data frame

@@ -35,6 +35,17 @@ foks_diesel_distribution <- read_excel(
   # No longer need national total
   select(-national_total)
 
+# Append Extrapolated Data for 2021 Onward 
+
+# FOKS data unavailable after 2020. Extrapolate using 2020 data
+# 2021 extrapolated data
+foks_diesel_distribution <- foks_diesel_distribution %>%
+  bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>% 
+              mutate(year = "2021")) %>%
+  # 2022 extrapolated data
+  bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>% 
+              mutate(year = "2022"))
+
 
 # Read in residual fuel data from FOKS excel workbook
 foks_residual_distribution <- read_excel(
@@ -55,3 +66,15 @@ foks_residual_distribution <- read_excel(
   mutate(residual_percent = residual_percent / national_total) %>%
   # No longer need national total
   select(-national_total)
+
+# Append Extrapolated Data for 2021 Onward 
+
+# FOKS data unavailable after 2020. Extrapolate using 2020 data
+  # 2021 extrapolated data
+foks_residual_distribution <- foks_residual_distribution %>%
+  bind_rows(foks_residual_distribution %>% filter(year == "2020") %>% 
+              mutate(year = "2021")) %>%
+  # 2022 extrapolated data
+  bind_rows(foks_residual_distribution %>% filter(year == "2020") %>% 
+              mutate(year = "2022"))
+

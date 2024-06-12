@@ -1,7 +1,7 @@
 # Calculate State-Level CO2 Emissions
 # NEU Adjustments
 
-print("Adjusting industrial and transporation data for non-energy uses.")
+print("Adjusting industrial and transportation data for non-energy uses.")
 
 # Objects Created--------------------------------------------------------
 

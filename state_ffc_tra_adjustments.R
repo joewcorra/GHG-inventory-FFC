@@ -22,7 +22,8 @@ seds_tra_adjusted <- lst(
                 filter(source_description == "distillate fuel oil", 
                        sector_description == "transportation sector"), 
               by = c("year")) %>%
-    mutate(adjusted_value = national_value * diesel_percent), 
+    mutate(adjusted_value = national_value * diesel_percent, 
+           msn = "DFACB"), 
   
   gasoline = gasoline_distribution %>%
     # Join with adjustments data
@@ -31,7 +32,8 @@ seds_tra_adjusted <- lst(
                 filter(source_description == "motor gasoline", 
                        sector_description == "transportation sector"), 
               by = c("year")) %>%
-    mutate(adjusted_value = national_value * gasoline_percent), 
+    mutate(adjusted_value = national_value * gasoline_percent, 
+           msn = "net gasoline"), 
   
   lubricants = seds %>%
     filter(msn == "LUACB") %>%
@@ -65,8 +67,6 @@ seds_tra_adjusted <- lst(
     filter(msn == "AVACB") %>%
   # Adjusted = original value
   mutate(adjusted_value = value), 
-  
-  
   
   natural_gas = seds %>%
     filter(msn == "NGACB") %>%
