@@ -27,6 +27,7 @@ special_fuel_url <- paste0(
 
 # Retrieve gasoline Excel file data
 GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
+
 # Read from temp file 
 gasoline_distribution <- read_excel(local_excel_path) %>%
   clean_names() %>%
@@ -45,7 +46,9 @@ gasoline_distribution <- read_excel(local_excel_path) %>%
   # Retain only 1990 onward
   filter(year > 1989) %>%
   # Get gasoline percentage for each state 
-  mutate(gasoline_percent = gasoline_percent / national_total) %>%
+  mutate(gasoline_percent = gasoline_percent / national_total, 
+         # Fix the dumb abbreviation for District of Columbia
+         state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
   # Get state codes
   left_join(state_name_key, by = c("state" = "state_names")) %>%
   # No longer need national total or full state name
@@ -73,7 +76,9 @@ diesel_distribution <- read_excel(local_excel_path) %>%
   # Retain only 1990 onward
   filter(year > 1989) %>%
   # Get gasoline percentage for each state 
-  mutate(diesel_percent = diesel_percent / national_total) %>%
+  mutate(diesel_percent = diesel_percent / national_total, 
+         # Fix the dumb abbreviation for District of Columbia
+         state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
   # Get state codes
   left_join(state_name_key, by = c("state" = "state_names")) %>%
   # No longer need national total or full state name

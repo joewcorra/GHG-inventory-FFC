@@ -58,6 +58,9 @@ source("ffc_carbon_factors_data.R")
 # QAQC functions to be used in subsequent scripts
 # source("ffc_qa_qc.R")
 
+# Perform QA/QC on loaded datasets (pre-calculation)
+# source("state_ffc_qa_qc_precalc.R")
+
 # Apply adjustments to SEDS data---------------------------------------
 
 

@@ -142,8 +142,12 @@ heat_content_territories <- heat_commodities %>%
 ffc_territories <- ff_territories %>% 
   left_join(heat_content_territories, 
             by = c("year", "source_description")) %>%
-  # TBtu = consumption * days * 1000 * heat content / 1,000,000 
-  mutate(tbtu = value * 365 * heat_content / 1000) %>%
+  # time = 365 days for coal and nat gas, 1 year for everything else
+  mutate(time_units = case_when(
+    source_description %in% c("coal", "natural gas") ~ 1,
+      .default = 365),
+    # TBtu = consumption * time * 1000 * heat content / 1,000,000 
+    tbtu = value * time_units * heat_content / 1000) %>%
   select(-unit, -dataFlagDescription, -value, -source)
 
 
