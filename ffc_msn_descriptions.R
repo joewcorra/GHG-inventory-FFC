@@ -11,7 +11,10 @@ print("Creating data frames of sectors, sources, and states.")
 # state_names (vector): state full names
 # states_and_dc (vector): state postal codes
 
-# Read Data--------------------------------------------------------------
+# Create Filtering Dataframe---------------------------------------------
+
+# EIA provides descriptors for MSNs, but not sources and sectors.
+# Here, we create dataframes of descriptors for sources & sectors of interest.
 
 # Create 'sources' data frame
 sources <- data.frame(
@@ -96,12 +99,49 @@ sectors <- data.frame(
                          "marketed production", 
                          "aviation gasoline blending components consumed by the industrial sector"))
 
+# Scrape MSN Data--------------------------------------------------------
+
+# Scrape MSN from EIA (includes MSN, MSN descriptor, and units)
+
+# URL for the Excel file of MSN data from EIA
+page_url <- "https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx"
+
+# Download the Excel file to a temporary location
+temp_file <- tempfile(fileext = ".xlsx")
+GET(page_url, write_disk(temp_file, overwrite = TRUE))
+
+# Read data from sheet 2, skipping the first 10 empty rows
+msn_data <- read_excel(temp_file, sheet = 2, skip = 10) %>%
+  rename(msn = MSN, msn_description = Description, unit = Unit) %>%
+  mutate(msn_description = str_to_lower(msn_description), 
+         unit = str_to_lower(unit), 
+         # Create source code and sector code 
+         source_code = str_sub(msn, 1, 2),
+         sector_code = str_sub(msn, 3, 4)) %>%
+  # Remove unneeded rows
+  filter(unit == "billion btu")
+
+# Clean up the temporary file
+unlink(temp_file)
+
 # Read in MSN data file and join with 'sources' and 'sectors'
-msn <- read_csv("data/msn_descriptions.csv") %>%
+msn <- msn_data %>%
   left_join(sources, by = "source_code") %>%
   left_join(sectors, by = "sector_code") %>%
-  select(-type)
+  # For national calcs: Add nat gas MSNs not included in SEDS
+  add_row(msn = "NNCCB", sector_description = "commercial sector", 
+          source_description = "natural gas consumed by the commercial sector (excluding supplemental gaseous fuels)") %>%
+  add_row(msn = "NNEIB", sector_description = "electric power sector (generation)", 
+          source_description = "natural gas consumed by the electric power sector (excluding supplemental gaseous fuels)") %>%
+  add_row(msn = "NNICB", sector_description = "industrial sector", 
+          source_description = "natural gas consumed by the industrial sector (excluding supplemental gaseous fuels)") %>%
+  add_row(msn = "NNRCB", sector_description = "residential sector", 
+          source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)") 
 
+
+# State and Territory Names---------------------------------------------
+
+# Create dataframes of states and territories (names & 2-lettter codes)
 
 # US state codes (including DC)
 states_and_dc <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
@@ -141,23 +181,22 @@ territories_names <- c("American Samoa", "Guam", "Puerto Rico",
                        "US Pacific islands", "US Virgin Islands", 
                        "Wake Island")
 
+# Key for matching territory names and codes
 territory_name_key <- tibble(territories, territories_names)
 
 # MSN Lookup for State and National Emissions-------------------------------
 
 
 # # Vector of MSNs to look up in the state summaries:
-# These MSNs are all in billions of BTUs; converted to millions below. 
 msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB", 
                 "CCNIB", "CLICB", "CLKCB", "CLOCB", "CLRCB", "CLACB", 
                 "CLCCB", "CLEIB", "COICB", "DFACB", "DFCCB", "DFEIB",
-                "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB",  "EMICB", "EMTCB", 
-                "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB",  
-                "HLICB", "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB",
-                "KSRCB",
+                "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", "EMTCB", 
+                "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB", "HLICB",
+                "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB", "KSRCB",
                 "LUACB", "LUICB", "MBICB", "MGACB", "MGCCB", 
                 "MGICB", "MSICB", "NGACB", "NGCCB", "NGEIB", "NGRCB", "NGICB", 
-                "NNACB", "NNCCB", "NNEIB", "NNICB", "NNRCB", "PCCCB", "PCEIB",
+                "NNCCB", "NNEIB", "NNICB", "NNRCB", "PCCCB", "PCEIB",
                 "PCICB", "PQACB", "PQCCB", "PQICB", "PPICB", "PQRCB", "PYICB", 
                 "RFACB", "RFCCB", "RFEIB", "RFICB", "SFEIB", "SFCCB", "SFRCB", 
                 "SGICB", "SFINB", "SNICB", "UOICB", "WXICB")
@@ -167,3 +206,8 @@ msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB",
 # Remove unneeded objects from global environment
 rm(sources)
 rm(sectors)
+rm(msn_data)
+rm(page_url)
+rm(temp_file)
+
+
