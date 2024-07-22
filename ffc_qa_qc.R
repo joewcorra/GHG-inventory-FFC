@@ -9,26 +9,30 @@ print("Create functions for QA/QC checks.")
 # Arguments: dataframe + any number of numeric columns
 # Checks for negative values, then NA values
 
-validation_1 <- function(data) {
+
+validation_seds_raw <- function(data) {
   
   data %>%
   verify(nrow(.) > 0) %>%
-    assert(not_na, state:msn, value) %>%
-    assert(within_bounds(0, 5000), value)
+    # SEDS data from RIA should have no NA values anywhere
+    assert(not_na, state:unit) %>%
+    # Should there be a range for values? Some are negative...
+    # Nothing exceeds 5000 bBtu(as of 2023)
+    assert(within_bounds(-1000, 5000), value)
   
 
 }
 
 
-validation_2 <- function(data) {
+validation_fha_raw <- function(data) {
   
-  chain_start(data) %>%
+  data %>%
     verify(nrow(.) > 0) %>%
-    assert(not_na, state:msn, value) %>%
-    assert(within_bounds(0, Inf), value) %>%
-    assert(within_bounds(0, 10000), adjusted_value) %>%
-    chain_end()
-
+    # SEDS data from RIA should have no NA values anywhere
+    assert(not_na, year:state) %>%
+    # All percentages must be between 0 and 1
+    assert(within_bounds(0, 1), ends_with("percent"))
+  
   
 }
 

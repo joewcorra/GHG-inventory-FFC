@@ -1,21 +1,10 @@
 ---
-title: "State-level Methodology Report"
-author: "EPA| OAR | OAP | Climate Change Division | Climate Policy Branch"
+title: "Untitled"
+author: "Joe Corra"
 date: "`r Sys.Date()`"
-output: 
-  pdf_document:
-    keep_tex: true
-header-includes:
-
-  - \usepackage{xcolor} % For font color
-  - \usepackage[dvipsnames]{xcolor}
-  - \usepackage{sectsty} % For section font size
-  - \usepackage{titlesec} % For customizing title spacing
-  - \sectionfont{\color{TealBlue}\LARGE}
-  - \subsectionfont{\color{CornflowerBlue}\Large}
-  - \subsubsectionfont{\color{Aquamarine}\large}
-  
+output: word_document
 ---
+
 
 ```{r setup, include=FALSE}
 
@@ -39,14 +28,7 @@ source("state_ffc_master_script.R")
 ```{r background, echo=FALSE, results='asis'}
 
 table_2_1 %>%
-  kable("latex", booktabs = TRUE, 
-        caption = "Overview of Approaches for Estimating State-Level Energy Sector GHG Emissions") %>%
-  kable_styling(latex_options = "striped") %>% # Removed "scale_down"
-  column_spec(1, width = "3cm") %>% 
-  column_spec(2, width = "3cm") %>% 
-  column_spec(3, width = "4cm") %>%
-  column_spec(4, width = "4cm") 
-  
+  gt()
 
 ```
 
@@ -109,13 +91,7 @@ Ideally, to determine state-level FFC CO2 emissions estimates, the same approach
 ```{r breakout, echo=FALSE, results='asis'}
 
 table_2_2 %>%
-  kable("latex", booktabs = TRUE, 
-        caption = "Comparison of Approaches/Data Sources Used to Determine FFC Emissions") %>%
-  kable_styling(latex_options = "striped") %>% 
-  column_spec(1, width = "3cm") %>% 
-  column_spec(2, width = "3cm") %>% 
-  column_spec(3, width = "4cm") %>%
-  column_spec(4, width = "4cm") 
+ gt()
 
 
 ```
@@ -128,10 +104,9 @@ As discussed above, national-level data on fuel supply/consumption comes from EI
 
 However, the totals across all states (and the District of Columbia) from SEDS do not always match the U.S. total energy data used in the national Inventory, which is based on the EIA February 2023 MER estimates (EIA 2023b). The main differences are for coal and natural gas and primarily in the industrial sector, as shown in Figure 2-2 below. For coal, there are differences in both energy content and short tons, but the differences are not consistent across time or sectors. For natural gas, the difference is mainly in the energy content. The reason for the differences is that SEDS uses state-level energy content conversion factors for coal and natural gas, while the MER uses national-level conversion factors. These different calculations sometimes cause the sums of the SEDS states to be different than the MER values. Although the percentage differences are not large (max 5.2% for coal and 1.4% for natural gas in the industrial sector), they cause noticeable differences when comparing emissions totals across all states to national totals, especially by sector.
 
-```{r plots2, fig.dim = c(12, 12), dpi=300, out.width = '80%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots2, fig.dim = c(16, 12), dpi=300, out.width = '100%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 plot_tags <- list(a = c("Coal", "Natural Gas")) #  Maybe move this to the first code chunk
-# fig_2_2 <-  fig_2_2[[1]] / fig_2_2[[2]] + plot_annotation(tag_levels = plot_tags)
 fig_2_2
 
 ```
@@ -140,7 +115,7 @@ The petroleum categories generally line up well across state-level and national 
 
 </div>
 
-```{r plots3, fig.dim = c(10, 8), dpi=300, out.width = '80%', fig.cap="Figure 2-3. Differences Between State-Level and National Total Energy Use for Petroleum Coke.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots3, fig.dim = c(10, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-3. Differences Between State-Level and National Total Energy Use for Petroleum Coke.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
 fig_2_3
@@ -151,7 +126,7 @@ For diesel fuel and gasoline, the totals generally line up, but there are differ
 
 In addition to the differences in gasoline and diesel fuel across sectors over the time series, there are also differences in some petroleum fuels across sectors, specifically in 2021. This is because the SEDS represents the latest data from EIA in terms of sector breakouts that were not reflected in the national Inventory 2021 values that relied on older EIA data. Again, the totals for the fuels line up, but there are differences across sectors, as shown in Figure 2-4 below. The updated SEDS data were used in the state-level breakout because they represent the latest data available. This results in differences in 2021 results across sectors for the state totals versus the national Inventory. However, the national Inventory numbers will be updated to match the 2021 SEDS data during the next national Inventory cycle.
 
-```{r plots4, fig.dim = c(6, 6), dpi=300, out.width = '80%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots4, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
 fig_2_4
@@ -178,7 +153,7 @@ In the national Inventory, portions of fuel consumption data for several fuel ca
 
 The adjustments vary over time and represent from about 4% to 8% of total unadjusted industrial sector energy use, as shown in Figure 2-5.
 
-```{r plots5, fig.dim = c(6, 6), dpi=300, out.width = '80%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots5, fig.dim = c(6, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
 fig_2_5
@@ -269,3 +244,19 @@ Adjustments for each fuel type were made at the national level based on data and
 • Asphalt and road oil, lubricants (in both the industrial and transportation sectors), naphtha (\<401 °F), other oil (\>401 °F), special naphtha, waxes and miscellaneous products. As per the national Inventory, the total amounts of these fuel products were all assumed to be used in NEUs. Therefore, the total state-level data from SEDS were used to represent NEUs for these fuel products. Appendix A, Tables A-62, A-66 through A-68, A-73, and A-75 through A-77 in the "NEU" Tab, show these state-level breakouts.
 
 Emissions associated with NEUs were calculated and reported separately from FFC emissions. Some further adjustments were made to NEU, and carbon factors were applied; see further discussion in Section 2.1.2 below.
+
+```{r plots11, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-11. Adjustments Made to Transportation Sector Energy Use to Account for IBFs.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+
+fig_2_11
+
+
+```
+
+
+```{r plots12, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+
+fig_2_12 <- fig_2_12a / fig_2_12b
+fig_2_12
+
+
+```

@@ -6,7 +6,7 @@ print("Loading required libraries.")
 
 
 library(assertr)
-# library(gt)
+library(gt)
 library(httr)
 library(janitor)
 library(jsonlite)

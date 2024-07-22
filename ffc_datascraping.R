@@ -85,6 +85,14 @@ diesel_distribution <- read_excel(local_excel_path) %>%
   select(-national_total, -state) %>%
   rename (state = states_and_dc)
 
+# Validate Data-----------------------------------------------------------
+
+# Apply FHA validation functions to diesel and gasoline distribution data
+
+# validation_fha_raw(gasoline_distribution)
+# 
+# validation_fha_raw(diesel_distribution)
+
 # Scrape FWHA Fuel Use National FFC---------------------------------------
 
 
@@ -124,6 +132,8 @@ diesel_use_by_class <- read_excel(local_excel_path) %>%
   # Make data long; i.e., one row per year
   pivot_longer(cols = -1, names_to = "year", 
                values_to = "gasoline_use_gal") %>%
+  # Retain only year and value
+  select(year, gasoline_use_gal) %>%
   # Remove letters from year column 
   mutate(year = str_remove(year, "[a-z]"))
   # Retain only 1990 onward
