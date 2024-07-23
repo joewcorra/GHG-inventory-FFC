@@ -25,10 +25,21 @@ source("state_ffc_master_script.R")
 
 ```
 
-```{r background, echo=FALSE, results='asis'}
+```{r table1, echo=FALSE, results='asis'}
 
+ 
 table_2_1 %>%
-  gt()
+  gt() %>% 
+  tab_source_note(source_note = "This is a source note.") %>% 
+  tab_footnote(
+    footnote = "This is a footnote.",
+    locations = cells_body(columns = 1, rows = 1)
+  ) %>% 
+  tab_header(
+    title = "Overview of Approaches for Estimating State-Level Energy Sector GHG Emissions",
+    subtitle = "The table's subtitle"
+  ) %>% 
+  opt_stylize(style = 6, color = "blue") 
 
 ```
 
@@ -58,7 +69,7 @@ Emissions from FFC include the GHGs CO~2~, CH~4~, and N~2~O. CO~2~ is the primar
 
 The approach for determining national-level FFC emissions is based on multiplying emissions factors times activity data on fuel consumption. The activity data on fuel consumption were taken from national-level energy balances prepared for EIA's Monthly Energy Review (MER) estimates (EIA 2023a). EIA prepares national-level energy statistics that consider energy production imports/exports and stock changes to determine energy supply/consumption. The fuel consumption information is used as a starting point for determining emissions. The approach starts with determining fuel use by fuel type because different types of fuels have different carbon content (C content) and therefore different emissions factors. The information is also broken out by energy‐consuming sectors of U.S. society to provide more detail and information on trends; the sectors included are residential, commercial, industrial, transportation, and electric power. Data from U.S. territories were also included in the analysis per international reporting requirements. Several adjustments were made to the data to account for fuel use and emissions that are either excluded or reported in other parts of the national Inventory, as shown in Figure 2-1.
 
-![Figure 2-1. Adjustments to Energy Consumption for Emissions Estimates](images/paste-4D67E161.png)
+![Figure 2-1. Adjustments to Energy Consumption for Emissions Estimates](images/fig_2-1.png)
 
 This section describes how national-level estimates for FFC were disaggregated to the state level for the following separate sources:
 
@@ -88,10 +99,19 @@ Determining adjusted fuel use activity data is based on the seven steps discusse
 
 Ideally, to determine state-level FFC CO2 emissions estimates, the same approach could be used, and adjusted energy use, as shown in the "National 2021 FFC CO2" Tab of Appendix A, could be developed for each state. However, the national-level emissions were developed based on multiple factors and inputs, some of which were not available or readily published at the state level. Therefore, a Hybrid approach was taken where state-level data were used when available. In cases where state-level data were not available, national-level estimates were used with available surrogate data to determine state-level percentages of each fuel use. Table 2-2 shows a high-level comparison of the different data sources used for the different steps to determine national-level and state-level estimates.
 
-```{r breakout, echo=FALSE, results='asis'}
+```{r table2, echo=FALSE, results='asis'}
 
-table_2_2 %>%
- gt()
+table_2_2 %>% 
+  gt() %>% 
+  tab_source_note(source_note = "This is a source note.") %>% 
+  tab_footnote(
+    footnote = "This is a footnote.",
+    locations = cells_body(columns = 1, rows = 1)) %>% 
+  tab_header(
+    title = "Comparison of Approaches/Data Sources Used to Determine FFC Emissions",
+    subtitle = "The table's subtitle"
+  ) %>% 
+  opt_stylize(style = 6, color = "red")
 
 
 ```
@@ -126,10 +146,11 @@ For diesel fuel and gasoline, the totals generally line up, but there are differ
 
 In addition to the differences in gasoline and diesel fuel across sectors over the time series, there are also differences in some petroleum fuels across sectors, specifically in 2021. This is because the SEDS represents the latest data from EIA in terms of sector breakouts that were not reflected in the national Inventory 2021 values that relied on older EIA data. Again, the totals for the fuels line up, but there are differences across sectors, as shown in Figure 2-4 below. The updated SEDS data were used in the state-level breakout because they represent the latest data available. This results in differences in 2021 results across sectors for the state totals versus the national Inventory. However, the national Inventory numbers will be updated to match the 2021 SEDS data during the next national Inventory cycle.
 
-```{r plots4, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots4, fig.dim = c(4, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-fig_2_4
+fig_2_4 <- fig_2_4a + fig_2_4b
+fig_2_4 
 
 ```
 
@@ -253,10 +274,202 @@ fig_2_11
 ```
 
 
-```{r plots12, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots12, fig.dim = c(8, 6), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 fig_2_12 <- fig_2_12a / fig_2_12b
 fig_2_12
+
+
+```
+
+![Figure 2-13. Mobile Source Non-CO2 Calculation Methodology](images/fig_2-13.png)
+
+The approach to estimate mobile non-CO2 emissions was to develop state-level estimates by fuel 
+type/category and use those estimates to develop the percentage of emissions by state. The percentage of 
+emissions by state were then applied to the national totals from the national Inventory to disaggregate national totals at the state level. Table 23 shows the default data type and source used in developing the state-level estimates. Appendix A, Tables A-105 through A-116 in the “Mobile non-CO2” Tab, show the percentages of emissions by vehicle type by state that were used in the analysis.
+
+
+```{r table3, echo=FALSE, results='asis'}
+
+table_2_3 %>%
+  gt() %>% 
+  tab_source_note(source_note = "This is a source note.") %>% 
+  tab_footnote(
+    footnote = "This is a footnote.",
+    locations = cells_body(columns = 1, rows = 1)) %>% 
+  tab_header(
+    title = "Default Data Sources for Mobile Source Non-CO2 Emissions",
+    subtitle = "The table's subtitle"
+  ) %>% 
+  opt_stylize(style = 6, color = "cyan")
+
+
+```
+
+from the national Inventory to disaggregate national totals at the state level. The approach above could also 
+overestimate or underestimate state emissions by assuming a national average of vehicle age distribution across 
+states when each state could have a different mix of vehicle fleet age distribution. However, the approach is 
+considered reasonable, and the overall impact of these simplifying assumptions on state emissions is expected to be small.
+
+#### 2.1.1.2.14. Breaking Out Data by Economic Sector
+
+The EIA data used for this analysis report fuel use for five sectors (residential, commercial, industrial, 
+transportation, and electric power). The reporting of emissions at the state level in this analysis also included emissions from FFC in the agriculture economic sector (which is not the case with the agriculture sector as defined by the IPCC). Agriculture sector fuel use at the national level was based on supplementary sources of data because EIA includes agriculture equipment in the industrial fuel-consuming sector. State-level agriculture fuel use estimates were obtained from USDA survey data. Agricultural operations are based on annual energy expense data from the Agricultural Resource Management Survey (ARMS) conducted by the National Agricultural Statistics Service (NASS) of the USDA. NASS uses the annual ARMS to collect information on farm production expenditures, including expenditures on diesel fuel, gasoline, LPG, natural gas, and electricity use. A USDA publication (USDA 2020) shows national totals, as well as select states and ARMS production regions. State estimates were surveyderived for 15 states (Alaska, California, Florida, Georgia, Iowa, Illinois, Indiana, Kansas, Minnesota, Missouri, North Carolina, Nebraska, Texas, Washington, and Wisconsin) and model-derived for the remaining states using data and methods developed by the Economic Research Service of USDA.
+
+These supplementary data were subtracted from the industrial fuel use reported by EIA to obtain agriculture 
+fuel use. CO2 emissions from FFC as well as CH4 and N2O emissions from stationary and mobile combustion were 
+then apportioned to the agriculture economic sector based on agricultural fuel use.
+
+### 2.1.1.3 Uncertainty
+
+The overall uncertainty associated with the 2021 national estimates of CO2 and non-CO2 emissions from FFC 
+was calculated using the 2006 IPCC Guidelines Approach 2 methodology (IPCC 2006). As described further in 
+Chapter 3 and Annex 7 of the national Inventory (EPA 2023), levels of uncertainty in the national estimates in 2020for FFC were −2%/+4% for CO2, −34%/+127% for stationary source CH4, −26%/+51% for stationary source N2O, 
+−4%/+29% for mobile source CH4, and −8%/+19% for mobile source N2O.
+
+The uncertainty estimates for the national Inventory largely account for uncertainty in the magnitude of 
+emissions and consider uncertainty in activity data and emissions factors used to develop the national estimates.
+
+State-level estimates of annual emissions will likely have a higher relative uncertainty compared with these 
+national estimates as a result of the additional requirement in some cases of apportioning national emissions to each state using spatial proxy and supplemental surrogate data sets. As discussed above, the steps involved in determining state-level FFC emissions could result in some overestimation or underestimation of state-level 
+emissions. The sources of uncertainty for this category are consistent over time because the same approaches are applied across the entire time series. As with the national Inventory, the state-level uncertainty estimates for this category may change as the understanding of the uncertainty of estimates and the underlying data sets and methodologies improves.
+
+### 2.1.1.4 Recalculations
+
+Consistent with recalculations at the national level, EIA updated energy consumption statistics across the time series relative to the previous Inventory. In addition, consistent with the national Inventory, the current state-level CO2 equivalent emissions of CH4 and N2O from stationary and mobile sources have been revised to reflect the 100-year GWPs provided in the IPCC AR5 (IPCC 2013). AR5 GWP values differ slightly from those presented in the IPCC Fourth Assessment Report (AR4), which was used in the previous inventories (IPCC 2007). The AR5 GWPs have  been applied across the entire time series for consistency. Prior state inventories used GWPs of 25 and 298 for CH4 and N2O, respectively. These values have been updated to 28 and 265, respectively.
+
+2.1.1.5 Planned Improvements
+
+For coking coal, the percentage subtracted by state could be based on other factors like BOF I&S production in 
+each state, as opposed to the percentage of total coking coal use. In some cases, a state could have negative 
+emissions for all fuels if the amount subtracted, as determined from assumed distribution, was greater than 
+consumption data from SEDS for that state. These negative values were corrected to zero, but alternative ways to readjust them across other states will be considered.
+
+For petrochemical feedstocks, natural gas NEU was allocated across states based on GHGRP petrochemicals 
+emissions data per state, while other fuels’ NEUs were allocated based on the underlying SEDS data. Allocating 
+across states based on the underlying SEDS data ensures that in no states is NEU larger than in the original SEDS data, which would result in negative numbers associated with subtracting NEU (it is not an issue for natural gas because use is so high overall compared with NEU). However, EPA will explore different percentages or a way to use GHGRP petrochemical data without resulting in negative use in any given state.
+EPA will look into using state-level bottom-up data for bunkers directly from FOKS, as opposed to basing IBF 
+on top-down estimates from the national Inventory and allocating to states based on the FOKS percentage, taking
+into account how FOKS data line up with national Inventory totals. We will look for better ways to allocate jet fuel bunker data across states as opposed to basing it on percentage of total use (e.g., FAA data, assumptions based on states with international airports and flights). EPA will look into more state-level activity data for different mobile combustion sources to better allocate mobile non-CO2 emissions.
+
+The coal carbon factors in the national Inventory are based in part on state-level data. It might be possible to build out weighted state-level coal carbon factors that would still amount to the national totals. For natural gas, state-level heat content data could be used to develop state-level carbon factors for natural gas, but they would have to be compared with national totals. It might be possible to develop gasoline and distillate fuel factors per state for the transportation sector, but EPA would have to ensure they are consistent with the national-level factors. EPA will look into allocating power sector non-CO2 emissions based on other sources like eGRID and EPA Air Markets Program Data, for instance.
+
+The national Inventory distributes electricity emissions across end-use sectors to present results with 
+electricity distributed by sector. That calculation was not done at the state level. The national Inventory also breaks out transportation sector emissions by vehicle type; that calculation was also not done at the state level. EPA will look into reporting these disaggregated data in future state-level reports.
+
+
+### 2.1.1.6 References
+
+
+## 2.1.2 Carbon Emitted from NEUs of Fossil Fuel (NIR Section 3.2)
+
+### 2.1.2.1 Background
+
+In addition to being combusted for energy, fossil fuels are consumed for NEUs. The fuels used for these 
+purposes and the nonenergy applications of these fuels are diverse, including feedstocks for manufacturing
+plastics, rubber, synthetic fibers, and other materials; reducing agents for producing various metals and inorganic products; and products such as lubricants, waxes, and asphalt. CO2 emissions arise via several pathways. Emissions may occur when manufacturing a product, as is the case in producing plastics or rubber from fuel-derived feedstocks. Additionally, emissions may occur during a product’s lifetime, such as during solvent use. As discussed above in the FFC section, emissions from these NEUs are estimated separately and, therefore, the amount of fuels used for nonenergy purposes are subtracted from fuel consumption data. Given the linkages between NEUs and combustion emissions, the NEU adjustments and calculations are presented here.
+
+### 2.1.2.2 Methods/Approach
+
+FFC CO2 emissions calculations discussed above (as per Step 6) were adjusted for fuels used for NEUs. CO2
+emissions arise from NEUs via several pathways, including emissions from the manufacture of a product and 
+during the product’s useful lifetime and ultimate disposal. The approach for determining national-level NEU 
+emissions is based for the most part on NEU activity data, C contents and assumed C storage factors. The activity data on NEU by fuel were taken from the FFC adjustments. Then, several adjustments were made to the data to account for fuel exports and IPPU emissions that are either excluded or reported in other parts of the national Inventory, as shown in Figure 214. C storage factors are based on the end use of the fuel and assumed fate of the carbon in the products. Appendix A in the “National 2021 NEU CO2” Tab provides more details on an example of the adjustments made to the national-level NEU data to determine adjusted NEU activity data for 2021.
+
+
+![Figure 2-14. Adjustments to Energy Consumption for Emissions Estimates](images/fig_2-14.png)
+
+NEU emissions at the state level were calculated based on the same approach as used to determine nationallevel NEU emissions. The following steps describe the approach used to determine state-level NEU emissions. 
+
+#### 2.1.2.2.1. Step 1: Determine Total NEU by Fuel Type and Sector
+
+State-level NEU energy data by sector and fuel type were calculated from Step 6 of the FFC calculations, as 
+discussed above. The NEU adjustments to the FFC data were used as the input to the NEU calculations. The same 
+state-level breakout of the NEU data used in the FFC calculations was used here.
+
+#### 2.1.2.2.2. Step 2: Adjust for Portions of NEU in Exported Products
+
+State-level NEU energy data calculated from Step 6 above were adjusted to account for exports. Natural gas, 
+HGL, pentanes plus, naphtha (<401 °F), other oil (>401 °F), and special naphtha were adjusted down to subtract 
+out net exports of these products that are not reflected in the raw NEU data from EIA. Consumption values were 
+also adjusted to subtract net exports of HGL components (e.g., propylene, ethane). Similar to exported CO2
+discussed in the FFC calculations, because any potential CO2 emissions from exported products are not emitted to the atmosphere in the United States, the fuel used to create the exported products is subtracted from statistics used to calculate NEU emissions. The national-level total export energy adjustment data were taken from the national Inventory. The export adjustments were allocated to states based on the total amount of NEU fuel use by state from Step 1 under the simplifying assumption that the share of nonenergy fuels exported matched the amount of nonenergy fuels used by a given state. This assumption could lead to an overestimation or underestimation of NEU emissions in a given state based on the actual amount of product exported. However, it 
+was felt to be reasonable given the lack of export data by state and the small overall adjustment made (2021 
+export adjustments represent 5.1% of unadjusted nonenergy fuel use). Appendix A, Tables A-82 through A-86 and 
+Table A-88 in the “NEU Adj” Tab, show these adjusted totals. 
+
+#### 2.1.2.2.3. Step 3: Adjust for Portions of NEU Accounted for in IPPU
+
+State-level NEU energy data were also adjusted down to account for other oil (>401 °F) and petroleum coke 
+use in IPPU. As per Step 2 in the FFC calculations, emissions from fuels used as raw materials presented as part of IPPU were removed from the NEU estimates. Portions of nonenergy fuel use were, therefore, subtracted from the industrial sector nonenergy fuel consumption data before determining NEU emissions. The national-level total IPPU energy adjustment data for NEU were taken from the national Inventory. The IPPU adjustments were 
+allocated to states based on the total amount of nonenergy fuel use by state from Step 1 under the simplifying 
+assumption that the share of nonenergy fuels used in IPPU matched the amount of nonenergy fuels used by a 
+given state. This assumption could lead to an overestimation or underestimation of NEU emissions in a given state based on the actual amount of fuel used in IPPU. However, it was felt to be reasonable given the lack of data by state on NEU fuels used in IPPU and the small overall adjustment made (2021 IPPU adjustments represent 1.0% of unadjusted NEU fuel use). Appendix A, Tables A-86 and A-87 in the “NEU Adj” Tab, show these adjusted totals. 
+
+#### 2.1.2.2.4. Step 4: Determine C Storage Factor by Fuel Type
+
+CO2 emissions can arise from NEUs via several pathways. Emissions may occur when manufacturing a product, 
+as is the case when producing plastics or rubber from fuel-derived feedstocks, or emissions may occur during theproduct’s lifetime, such as during solvent use. Carbon can also be stored from NEUs such as in a final product like plastics or asphalt. Overall, at a national level, about 64% of the total carbon consumed for NEUs is stored in products (e.g., plastics) and not released to the atmosphere. For state-level calculations, the storage factors per fuel type were taken from the national Inventory values and vary across fuel types and, for some fuels, over time. See Annex 2.3 of the national Inventory for more details on storage factors used.
+
+#### 2.1.2.2.5. Step 5: Calculate NEU CO2 Emissions
+
+Emissions from NEUs were calculated based on multiplying the adjusted NEU fuel use by state (from Steps 1–
+3) by the national-level carbon factors by fuel type (same as used in the FFC calculations, including oxidation and molecular weight ratio with the exception that HGLs and still gas have separate carbon factors for combustion and NEUs) and by the fraction of C emitted which is equal to 1 minus the storage factor of each fuel type (from Step 4). See Annex 2.2 of the national Inventory for more details on carbon factors used.
+There are some small differences in the NEU-calculated state-level emissions totals compared with what is 
+reported in the national Inventory, as shown in Figure 2-15 below. As with FFC, these differences represent a very small percentage of total NEU emissions (the maximum percentage difference over time is around 0.015% of total NEU emissions).
+
+
+```{r plots15, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Fig. 2-15. Differences in State-Level and National Total NEU CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+
+
+
+
+```
+
+
+#### 2.1.2.3 Uncertainty
+
+The overall uncertainty associated with the 2020 national estimates of CO2 from NEUs was calculated using 
+the 2006 IPCC Guidelines Approach 2 methodology (IPCC 2006). As described further in Chapter 3 and Annex 7 of 
+the national Inventory (EPA 2023), levels of uncertainty in the national estimates in 2020 were −42%/+46% for CO2. 
+State-level estimates are expected to have a higher uncertainty because some of the national-level data were 
+apportioned to each state. For example, the allocations of export and IPPU adjustments are likely to add to the 
+uncertainty at a state level compared with the national totals.
+
+#### 2.1.2.4 Recalculations
+
+Consistent with national estimates, EIA updated energy consumption statistics across the time series relative 
+to the previous national Inventory. 
+
+#### 2.1.2.5 Planned Improvements
+
+Planned improvements for state level NEU estimates are consistent with those EPA has planned for improving 
+national estimates for NEUs which are discussed in Section 3.2 of the national Inventory report (EPA 2023). EPA will 
+also look into the export and IPPU adjustments to see if they could be done based on state-level data, if these data 
+are available, as opposed to assuming the percentage based on SEDS state-level totals. 
+
+
+```{r table4, echo=FALSE, results='asis'}
+
+table_2_4 %>% 
+  gt() %>% 
+  tab_source_note(source_note = "This is a source note.") %>% 
+  tab_footnote(
+    footnote = "This is a footnote.",
+    locations = cells_body(columns = 1, rows = 1)) %>% 
+  tab_header(
+    title = "Summary of Approaches to Disaggregate Waste Incineration Emissions Across Time Series",
+    subtitle = "The table's subtitle") %>% 
+  opt_stylize(style = 6, color = "cyan")
+
+```
+
+
+```{r table5, echo=FALSE, results='asis'}
+
+# Example State Allocation Factors for the Illinois Coal Basin (Sealed Mines) 
+# table_2_5 %>%
+#  gt()
 
 
 ```

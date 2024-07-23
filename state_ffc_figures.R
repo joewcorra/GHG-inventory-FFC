@@ -161,13 +161,13 @@ fig_2_3 <- state_vs_national_btu %>%
 
 ## Sectoral Differences in Select Fuels-----------------------------------
 
-fig_2_4 <- state_vs_national_btu %>% 
+fig_2_4a <- state_vs_national_btu %>% 
          list_rbind() %>% 
            mutate(sector_description = word(sector_description)) %>%
          filter(year == "2021", 
                 sector_description != "electric", 
                 str_detect(source_description, 
-                           "kerosene|residual|lubricants|lpg")) %>%
+                           "kerosene|residual|lubricants")) %>%
          group_by(dataname, sector_description, source_description, year) %>%
          summarize(total_btu = sum(value, na.rm = TRUE)) %>%
          ungroup() %>%
@@ -180,14 +180,39 @@ fig_2_4 <- state_vs_national_btu %>%
   geom_abline(slope = 0, intercept = 0) + 
   theme(axis.text.x = element_text(size = 12, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
-        axis.title.y = element_text(size = 22),
-        strip.text.x = element_text(size = 26),
+        axis.title.y = element_text(size = 18),
+        strip.text.x = element_text(size = 18),
         legend.position = "none", 
         strip.background = element_blank()) + 
   labs(x = "", y = "Difference: SEDS - national (TBtu) ") +
   # Option 2: facet_wrap to avoid overlapping lines
-  facet_wrap(~ source_description, scales = "free")
+  facet_grid(~ source_description, scales = "free")
 
+
+fig_2_4b <- state_vs_national_btu %>% 
+  list_rbind() %>% 
+  mutate(sector_description = word(sector_description)) %>%
+  filter(year == "2021", 
+         sector_description != "electric", 
+         str_detect(source_description, 
+                    "lpg")) %>%
+  group_by(dataname, sector_description, source_description, year) %>%
+  summarize(total_btu = sum(value, na.rm = TRUE)) %>%
+  ungroup() %>%
+  # Every observation needs both state and national totals
+  pivot_wider(names_from = dataname, values_from = total_btu) %>%
+  ggplot(aes(x = sector_description, y = state_total - national_total)) + 
+  geom_col(linewidth = 0.5, aes(fill = sector_description)) + 
+  theme_classic() +
+  scale_fill_manual(values = okabe_ito_colors) +
+  geom_abline(slope = 0, intercept = 0) + 
+  theme(axis.text.x = element_text(size = 12, angle = 270, vjust = 0.08), 
+        axis.text.y = element_text(size = 12),
+        axis.title.y = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        legend.position = "none", 
+        strip.background = element_blank()) + 
+  labs(x = "", y = "")
 
 ## IPPU Adjustments Made to Industrial Sector Energy Use--------------------
 
@@ -310,9 +335,9 @@ fig_2_12a <- carbon_emissions %>%
   # geom_abline(slope = 0, intercept = 1) + 
   theme_classic() +
   scale_color_manual(values = okabe_ito_colors) +
-  theme(axis.text.x = element_text(size = 16, angle = 270, vjust = 0.08), 
-        axis.text.y = element_text(size = 16), 
-        axis.title.y = element_text(size = 14), 
+  theme(axis.text.x = element_text(size = 14, angle = 270, vjust = 0.08), 
+        axis.text.y = element_text(size = 14), 
+        axis.title.y = element_text(size = 16), 
         legend.text = element_text(size = 14),
         legend.title = element_blank(), 
         legend.position = "bottom") + 
@@ -328,8 +353,32 @@ fig_2_12b <- carbon_emissions %>%
   # geom_abline(slope = 0, intercept = 1) + 
   theme_classic() +
   scale_color_manual(values = okabe_ito_colors) +
-  theme(axis.text.x = element_text(size = 16, angle = 270, vjust = 0.08), 
-        axis.text.y = element_text(size = 16), 
-        axis.title.y = element_text(size = 20), 
+  theme(axis.text.x = element_text(size = 14, angle = 270, vjust = 0.08), 
+        axis.text.y = element_text(size = 14), 
+        axis.title.y = element_text(size = 16), 
         legend.position = "none") + 
   labs(x = "", y = "Difference: SEDS - national (MMT CO2) ")
+
+
+## Differences in State-Level and National Total NEU CO2 Emissions--------
+
+# Not sure what data I'm looking at in this figure--ask Vince
+
+# fig_2_15 <- seds_all_adjusted %>%
+#   filter(!is.na(neu_adjusted_value)) %>%
+#   group_by(year) %>%
+#   summarize(total_neu_adjustments = sum(
+#     neu_adjusted_value, na.rm = TRUE), 
+#     percent_of_unadjusted = total_ibf_adjustments / sum(
+#       value, na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   ggplot(aes(x = year, y = total_ibf_adjustments)) +
+#   geom_col(aes(fill = percent_of_unadjusted * 100)) +
+#   theme_classic() +
+#   scale_fill_gradientn(colours = myPalette(100)) +
+#   theme(axis.text.x = element_text(size = 8, angle = 270, vjust = 0.08), 
+#         axis.text.y = element_text(size = 12),
+#         axis.title.y = element_text(size = 22),
+#         legend.position = "bottom", 
+#         strip.background = element_blank()) + 
+#   labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total")
