@@ -111,3 +111,16 @@ petrochemicals_cb_distribution <- read_excel(
   # No longer need national total
   select(-national_total)
 
+
+# Cleanup-----------------------------------------------------------------
+
+# Append the new tibble to the existing 'corrections' list
+corrections <- append(corrections, lst(is_distribution, 
+                                       ammonia_distribution, 
+                                       petrochemicals_distribution, 
+                                       petrochemicals_cb_distribution))
+
+
+rm(list = c("is_distribution", "ammonia_distribution",
+            "petrochemicals_distribution", "petrochemicals_cb_distribution"))
+

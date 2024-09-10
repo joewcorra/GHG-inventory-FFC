@@ -15,9 +15,9 @@
 # Break SEDS data into list based on MSNs
 seds_tra_adjusted <- lst(
   
-  distillate_fuel = diesel_distribution %>% 
+  distillate_fuel = fhwa_scraped$diesel_distribution %>% 
     # Join with adjustments data
-    left_join(adjustments %>% 
+    left_join(corrections$adjustments %>% 
                 # Can only join by 'year', so a filter is required
                 filter(source_description == "distillate fuel oil", 
                        sector_description == "transportation sector"), 
@@ -25,9 +25,9 @@ seds_tra_adjusted <- lst(
     mutate(adjusted_value = national_value * diesel_percent, 
            msn = "DFACB"), 
   
-  gasoline = gasoline_distribution %>%
+  gasoline = fhwa_scraped$gasoline_distribution %>%
     # Join with adjustments data
-    left_join(adjustments %>% 
+    left_join(corrections$adjustments %>% 
                 # Can only join by 'year', so a filter is required
                 filter(source_description == "motor gasoline", 
                        sector_description == "transportation sector"), 
@@ -71,7 +71,7 @@ seds_tra_adjusted <- lst(
   natural_gas = seds %>%
     filter(msn == "NGACB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments, 
+    left_join(corrections$adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # rename for clarity
     rename(natural_gas_factor = national_value) %>%
@@ -86,15 +86,8 @@ seds_tra_adjusted <- lst(
   list_rbind()
 
 
-# Notes from Review of Excel Workbook------------------------------------
+# Cleanup=---------------------------------------------------------------
 
-# distillate_fuel_factor = value from us compare trans row 47
-# distillate_fuel_adj = distillate_fuel_factor * mystery percentage
+seds_adjusted <- append(seds_adjusted, lst(seds_tra_adjusted))
 
-# gasoline_factor = value from us compare trans row 51
-# gasoline_adj = gasoline_factor * mystery percentage
-
-# natural_gas_factor = value from us compare trans row 45
-# natural_gas = state's NGACB btu/1000
-# sum_natural_gas = sum of all states' natural_gas
-# natural_gas_adj = natural_gas_factor * (natural_gas / sum_natural_gas)
+rm(seds_tra_adjusted)

@@ -50,7 +50,7 @@ gasoline_distribution <- read_excel(local_excel_path) %>%
          # Fix the dumb abbreviation for District of Columbia
          state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
   # Get state codes
-  left_join(state_name_key, by = c("state" = "state_names")) %>%
+  left_join(msn_names$state_name_key, by = c("state" = "state_names")) %>%
   # No longer need national total or full state name
   select(-national_total, -state) %>%
   rename (state = states_and_dc)
@@ -80,7 +80,7 @@ diesel_distribution <- read_excel(local_excel_path) %>%
          # Fix the dumb abbreviation for District of Columbia
          state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
   # Get state codes
-  left_join(state_name_key, by = c("state" = "state_names")) %>%
+  left_join(msn_names$state_name_key, by = c("state" = "state_names")) %>%
   # No longer need national total or full state name
   select(-national_total, -state) %>%
   rename (state = states_and_dc)
@@ -113,7 +113,7 @@ gasoline_use_national <- read_excel(local_excel_path) %>%
   mutate(year = str_remove(year, "[a-z]")) %>%
   # Retain only 1990 onward
   filter(year > 1989) %>%
-  select(-state)
+  select(-state)    
 
 # ------------------------------------------------------------------------
 
@@ -138,3 +138,16 @@ diesel_use_by_class <- read_excel(local_excel_path) %>%
   mutate(year = str_remove(year, "[a-z]"))
   # Retain only 1990 onward
 
+
+# Cleanup-------------------------------------------------------------------
+
+fhwa_scraped <- lst(
+  diesel_distribution,
+  diesel_use_by_class, 
+  gasoline_distribution,
+  gasoline_use_national)
+
+# Remove unneeded objects from global environment
+rm(list = c("diesel_distribution", "diesel_use_by_class", 
+     "gasoline_distribution",  "gasoline_use_national", "local_excel_path", 
+     "special_fuel_url", "diesel_url", "gasoline_url"))

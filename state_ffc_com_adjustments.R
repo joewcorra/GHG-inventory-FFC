@@ -22,7 +22,7 @@ seds_com_adjusted <- lst(
   coal = seds %>%
     filter(msn == "CLCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments, 
+    left_join(corrections$adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -33,7 +33,7 @@ seds_com_adjusted <- lst(
   distillate_fuel = seds %>%
     filter(msn == "DFCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments, 
+    left_join(corrections$adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -50,7 +50,7 @@ seds_com_adjusted <- lst(
     # Supplemental gas no longer needed (and value is now duplicative)
     filter(msn != "SFCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments, 
+    left_join(corrections$adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -71,7 +71,7 @@ seds_com_adjusted <- lst(
     # Ethanol no longer needed (and value is now duplicative)
     filter(msn != "EMCCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments , 
+    left_join(corrections$adjustments , 
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -98,3 +98,10 @@ seds_com_adjusted <- lst(
   
   # Collapse list into a single data frame
   list_rbind()
+
+
+# Cleanup=---------------------------------------------------------------
+
+seds_adjusted <- append(seds_adjusted, lst(seds_com_adjusted))
+
+rm(seds_com_adjusted)

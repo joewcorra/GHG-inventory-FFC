@@ -3,13 +3,6 @@
 
 print("Retrieving national FFC data required to adjust SEDS data.")
 
-# Objects Created--------------------------------------------------------
-
-
-
-# List of objects created in the global environment:
-
-# adjustments: tibble; adjustment factors derived from national data (i think?)
 
 # Read Excel Data--------------------------------------------------------
 
@@ -100,3 +93,15 @@ consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx",
   
   print("This generates a warning about NA values.")
   print("Ignore this warning. These values are not used.")
+
+  
+# Cleanup----------------------------------------------------------------
+  
+corrections <- lst(
+    adjustments, 
+    national_corrections, 
+    consumption_input)
+  
+  rm(list = c("adjustments", "national_corrections", "consumption_input"))
+  
+  

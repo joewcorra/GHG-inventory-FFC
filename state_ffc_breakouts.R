@@ -12,13 +12,12 @@ print("Collating final data set and computing emissions.")
 # State Breakouts (Final)-----------------------------------------------
 
 
-seds_all_adjusted <- bind_rows(
-  seds_com_adjusted, seds_ele_adjusted, seds_ind_adjusted,
-  seds_res_adjusted, seds_tra_adjusted) %>%
-  # 1/29/2024 START WITH A SINGLE STATE to get the formatting right
-  # filter(state == "NY") %>%
+seds_all_adjusted <- list_rbind(seds_adjusted %>% 
+                                  # Remove IBF and NEU data for now
+                                  discard(names(.) %in% 
+                                            c("seds_ibf_adjusted", 
+                                              "seds_neu_adjusted"))) %>%
   select(state:adjusted_value, -msn_description) %>%
-  
   # NOTE: maybe move this to carbon calculations, below
   # standardize source descriptions for join with carbon_factors
   mutate(source_description = case_when(
@@ -54,11 +53,11 @@ seds_all_adjusted <- bind_rows(
   
   # Subtract NEU and IBF adjustments
   # Join with NEU adjusted data
-  left_join(seds_neu_adjusted, 
+  left_join(seds_adjusted$seds_neu_adjusted, 
             by = c("sector_description", "source_description", "year", 
                    "state", "msn")) %>%
   # Join with IBF adjusted data
-  left_join(seds_ibf_adjusted, 
+  left_join(seds_adjusted$seds_ibf_adjusted, 
             by = c("sector_description", "source_description", "year", 
                    "state", "msn")) %>%
   # Get adjusted value - NEU and IBD values = final adjusted tBtu 
@@ -87,16 +86,23 @@ seds_all_adjusted <- bind_rows(
 
 # Calculate Carbon Emissions--------------------------------------------
 
-carbon <- seds_all_adjusted %>% 
-  left_join(carbon_factors, 
+carbon_emissions <- seds_all_adjusted %>% 
+  left_join(carbon$carbon_factors, 
             by =c("source_description", "year")) %>%
   # MMT CO2  = btu * carbon factor/1000 * 44/12
   mutate(mmt_co2 = neu_ibf_adjusted_value * 
-           (carbon_factor/1000) * carbon_ratio, 
+           (carbon_factor/1000) * carbon$carbon_ratio, 
          # Restore original coal source descriptions
          source_description = case_when(
            str_detect(source_description, "coking coal" ) ~ "coking coal", 
            str_detect(source_description, "(?<!coking )coal" ) ~ "coal", 
            .default = source_description))
 
+
+# Cleanup----------------------------------------------------------------
+
+state_ffc_results <- append(state_ffc_results, lst(seds_all_adjusted,
+                                                   carbon_emissions))
+
+rm(list = c("seds_all_adjusted", "carbon_emissions"))
 

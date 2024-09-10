@@ -54,3 +54,9 @@ neu_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
            str_squish()) 
 
 
+# Cleanup-----------------------------------------------------------------
+
+# Append the new tibble to the existing 'corrections' list
+corrections <- append(corrections, lst(neu_corrections))
+
+rm(neu_corrections)

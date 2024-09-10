@@ -50,6 +50,8 @@ source("state_ffc_ippu_distribution_data.R")
 # Read FOKS IBF distribution data (EIA; no longer available as of 2021)
 source("state_ffc_foks_data.R")
 
+# Carbon Factors------------------------------------------------------
+
 # Read carbon factors data
 source("ffc_carbon_factors_data.R")
 
@@ -62,7 +64,6 @@ source("ffc_carbon_factors_data.R")
 # source("state_ffc_qa_qc_precalc.R")
 
 # Apply adjustments to SEDS data---------------------------------------
-
 
 # Apply adjustments to residential fossil fuels
 source("state_ffc_res_adjustments.R")
@@ -104,14 +105,11 @@ source("state_ffc_figures.R")
 source("state_ffc_tables.R")
 
 # # R SHiny Dashboard for viewing data (in-work)
-# source("state_ffc_dashboards.R")
+source("state_ffc_dashboards.R")
 # 
-# # Format data for InvDB; write data to InvDB Excel workbook
-# source("ffc_invdb.R")
+# Format data for InvDB; write data to InvDB Excel workbook
+source("ffc_invdb.R")
 # 
 # R Markdown report
 # source("state_ffc_final_report.Rmd")
-d <- seds_all_adjusted %>% filter(state == "LA", year == "2022") %>% 
-  select(state:msn, source_description, 
-         sector_description, value, adjusted_value:neu_ibf_adjusted_value)  %>% 
-  mutate(r_value = round(neu_ibf_adjusted_value, 1))
+

@@ -2,15 +2,6 @@
 
 print("Creating data frames of sectors, sources, and states.")
 
-# Objects Created--------------------------------------------------------
-
-# Persistent objects created in the global environment:
-
-# msn (tibble): all MSNs with descriptions of MSN, source, and sector
-# msn_lookup (vector): 5-letter codes for all MSNs used in calculations
-# state_names (vector): state full names
-# states_and_dc (vector): state postal codes
-
 # Create Filtering Dataframe---------------------------------------------
 
 # EIA provides descriptors for MSNs, but not sources and sectors.
@@ -141,48 +132,53 @@ msn <- msn_data %>%
 
 # State and Territory Names---------------------------------------------
 
-# Create dataframes of states and territories (names & 2-lettter codes)
-
-# US state codes (including DC)
-states_and_dc <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
-                "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", 
-                "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", 
-                "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", 
-                "SC", "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", 
-                "WY")
+# Create dataframes of states and territories (names & 2-letter codes)
 
 # non_states <- c("X3", "X5", "US")
-
-# US state names (including DC)
-state_names <- c("Alaska", "Alabama", "Arkansas", "Arizona", "California",
-                 "Colorado", "Connecticut", "Delaware", "District of Columbia",
-                 "Florida", "Georgia", "Hawaii", "Iowa", "Idaho", "Illinois",
-                 "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts",
-                 "Maryland", "Maine", "Michigan", "Minnesota", "Missouri",
-                 "Mississippi", "Montana", "North Carolina", "North Dakota",
-                 "Nebraska", "New Hampshire", "New Jersey", "New Mexico",
-                 "Nevada", "New York", "Ohio", "Oklahoma", "Oregon",
-                 "Pennsylvania", "Rhode Island", "South Carolina",
-                 "South Dakota", "Tennessee", "Texas", "Utah", "Virginia",
-                 "Vermont", "Washington", "Wisconsin", "West Virginia",
-                 "Wyoming")
-
 # non_state_names <- c("Federal Offshore, Gulf of Mexico", 
 # "Federal Offshore, Pacific", "United States")
 
-# Key for matching state names and codes
-state_name_key <- tibble(states_and_dc, state_names)
+# US state codes (including DC) and names
+state_name_key <- tibble(states_and_dc = c("AK", "AL", "AR", "AZ", "CA", "CO", 
+                                           "CT", "DC", "DE", "FL", "GA", "HI", 
+                                           "IA", "ID", "IL", "IN", "KS", "KY", 
+                                           "LA", "MA", "MD", "ME", "MI", "MN", 
+                                           "MO", "MS", "MT", "NC", "ND", "NE", 
+                                           "NH", "NJ", "NM", "NV", "NY", "OH", 
+                                           "OK", "OR", "PA", "RI", "SC", "SD", 
+                                           "TN", "TX", "UT", "VA", "VT", "WA", 
+                                           "WI", "WV", "WY"), 
+                         state_names = c("Alaska", "Alabama", "Arkansas", 
+                                          "Arizona", "California",
+                                          "Colorado", "Connecticut", "Delaware", 
+                                          "District of Columbia",
+                                          "Florida", "Georgia", "Hawaii", 
+                                          "Iowa", "Idaho", "Illinois",
+                                          "Indiana", "Kansas", "Kentucky", 
+                                          "Louisiana", "Massachusetts",
+                                          "Maryland", "Maine", "Michigan", 
+                                          "Minnesota", "Missouri",
+                                          "Mississippi", "Montana", 
+                                          "North Carolina", "North Dakota",
+                                          "Nebraska", "New Hampshire", 
+                                          "New Jersey", "New Mexico",
+                                          "Nevada", "New York", "Ohio", 
+                                          "Oklahoma", "Oregon",
+                                          "Pennsylvania", "Rhode Island", 
+                                          "South Carolina",
+                                          "South Dakota", "Tennessee", "Texas", 
+                                          "Utah", "Virginia", "Vermont", 
+                                          "Washington", "Wisconsin", 
+                                          "West Virginia", "Wyoming"))
 
-
-# US territories codes
-territories <- c("ASM", "GUM", "PRI", "USIQ", "VIR", "WAK")
-
-territories_names <- c("American Samoa", "Guam", "Puerto Rico", 
-                       "US Pacific islands", "US Virgin Islands", 
-                       "Wake Island")
-
-# Key for matching territory names and codes
-territory_name_key <- tibble(territories, territories_names)
+# US territory names and codes
+territory_name_key <- tibble(territories = c("ASM", "GUM", "PRI", 
+                                             "USIQ", "VIR", "WAK"), 
+                             territories_names = c("American Samoa", "Guam", 
+                                                   "Puerto Rico", 
+                                                   "US Pacific islands", 
+                                                   "US Virgin Islands", 
+                                                   "Wake Island"))
 
 # MSN Lookup for State and National Emissions-------------------------------
 
@@ -203,11 +199,11 @@ msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB",
 
 # Cleanup-------------------------------------------------------------------
 
+
+msn_names <- lst(msn, msn_lookup, state_name_key, territory_name_key)
+
 # Remove unneeded objects from global environment
-rm(sources)
-rm(sectors)
-rm(msn_data)
-rm(page_url)
-rm(temp_file)
+rm(list = "sources", "sectors", "msn", "msn_data", "msn_lookup", "page_url", 
+   "temp_file",  "state_name_key", "territory_name_key")
 
 

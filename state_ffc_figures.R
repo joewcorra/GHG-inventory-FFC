@@ -33,7 +33,7 @@ myPalette <- colorRampPalette(c("thistle1","slateblue3"), space = "Lab")
 
 state_vs_national_btu <-
   lst(
-    states = seds_all_adjusted %>% 
+    states = state_ffc_results$seds_all_adjusted %>% 
       select(sector_description, source_description, year, value) %>% 
       mutate(value = value / 1000, 
         dataname = "state_total", 
@@ -51,7 +51,7 @@ state_vs_national_btu <-
           "isobutane", "isobutylene"), "lpg",
           source_description)),
     
-    national = adjustments %>% 
+    national = corrections$adjustments %>% 
       rename(value = national_value) %>% 
       mutate(dataname = "national_total", 
              value = value / 1000, 
@@ -74,7 +74,7 @@ energy_use <- state_vs_national_btu %>%
 
 state_vs_national_co2 <-
   lst(
-    states = carbon %>% 
+    states = state_ffc_results$carbon_emissions %>% 
       select(sector_description, year, value = mmt_co2) %>% 
       mutate(dataname = "state_total", 
              ghg = "co2"),
@@ -83,7 +83,7 @@ state_vs_national_co2 <-
       select(-source_description) %>%
       mutate(dataname = "national_total"))
 
-carbon_emissions <- state_vs_national_co2 %>%
+carbon_comparison <- state_vs_national_co2 %>%
   map(\(.x) 
         # Get unadjusted SEDS totals to plot against national totals
         group_by(.x, dataname, sector_description, year) %>%
@@ -100,7 +100,8 @@ carbon_emissions <- state_vs_national_co2 %>%
 # consistent across figures and avoid confusion. 
 
 ## Differences in Coal/NG State Totals vs National Totals-------------------
-
+state_ffc_figures <- lst( 
+  
 fig_2_2 <- energy_use %>% 
   # Ignore coking coal and gasoline
   filter(!str_detect(source_description, "cok|gasoline"), 
@@ -128,7 +129,7 @@ fig_2_2 <- energy_use %>%
         legend.text = element_text(size = 24),
         legend.title = element_blank()) + 
   labs(x = "", y = "Difference: SEDS - national (TBtu) ") +
-  facet_wrap(~ source_description)
+  facet_wrap(~ source_description),
   
 
 
@@ -157,7 +158,7 @@ fig_2_3 <- state_vs_national_btu %>%
               axis.title.y = element_text(size = 24),
               # axis.title.y = 
               legend.position = "none") + 
-        labs(x = "", y = "Difference: SEDS - national (TBtu) ")
+        labs(x = "", y = "Difference: SEDS - national (TBtu) "),
 
 ## Sectoral Differences in Select Fuels-----------------------------------
 
@@ -186,7 +187,7 @@ fig_2_4a <- state_vs_national_btu %>%
         strip.background = element_blank()) + 
   labs(x = "", y = "Difference: SEDS - national (TBtu) ") +
   # Option 2: facet_wrap to avoid overlapping lines
-  facet_grid(~ source_description, scales = "free")
+  facet_grid(~ source_description, scales = "free"),
 
 
 fig_2_4b <- state_vs_national_btu %>% 
@@ -212,12 +213,12 @@ fig_2_4b <- state_vs_national_btu %>%
         strip.text.x = element_text(size = 14),
         legend.position = "none", 
         strip.background = element_blank()) + 
-  labs(x = "", y = "")
+  labs(x = "", y = ""),
 
 ## IPPU Adjustments Made to Industrial Sector Energy Use--------------------
 
 
-fig_2_5 <- seds_ind_adjusted %>%
+fig_2_5 <- seds_adjusted$seds_ind_adjusted %>%
   mutate(ippu_adjustments = case_when(
     msn == "CLKCB" ~ value * ippu_factor,
     msn == "CLOCB" ~ other_coal_coke_adj + other_coal_is_adj,
@@ -243,7 +244,7 @@ fig_2_5 <- seds_ind_adjusted %>%
         legend.position = "bottom", 
         legend.text = ,
         strip.background = element_blank()) + 
-  labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total")
+  labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total"),
 
 # Figures 2-6 and 2-7 are infographics built from tables
 
@@ -272,7 +273,7 @@ fig_2_8 <- ggplot(state_vs_national_btu %>%
         strip.text.x = element_text(size = 20),
         strip.background = element_blank()) + 
   labs(x = "", y = "tBtu") + 
-  facet_grid(~ source_description)
+  facet_grid(~ source_description),
 
 
 # Fig 2-9 requires the full suite of Transport sector data
@@ -280,7 +281,7 @@ fig_2_8 <- ggplot(state_vs_national_btu %>%
 
 ## Adjustments made to Industrial Sector for NEUs---------------------------
 
-fig_2_10 <- seds_all_adjusted %>%
+fig_2_10 <- state_ffc_results$seds_all_adjusted %>%
   filter(sector_description == "industrial sector") %>%
   group_by(year) %>%
   summarize(total_neu_adjustments = sum(
@@ -297,12 +298,12 @@ fig_2_10 <- seds_all_adjusted %>%
         axis.title.y = element_text(size = 22),
         legend.position = "bottom", 
         strip.background = element_blank()) + 
-  labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total")
+  labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total"),
 
 
 ## Adjustments Made to Transportation Sector for IBFs------------------------
 
-fig_2_11 <- seds_all_adjusted %>%
+fig_2_11 <- state_ffc_results$seds_all_adjusted %>%
   filter(sector_description == "transportation sector") %>%
   group_by(year) %>%
   summarize(total_ibf_adjustments = sum(
@@ -319,13 +320,13 @@ fig_2_11 <- seds_all_adjusted %>%
         axis.title.y = element_text(size = 22),
         legend.position = "bottom", 
         strip.background = element_blank()) + 
-  labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total")
+  labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total"),
   
   
 ## Differences in State-Level Total and National Total FFC CO2 Emissions------
 
 
-fig_2_12a <- carbon_emissions %>%
+fig_2_12a <- carbon_comparison %>%
   group_by(year, sector_description, dataname) %>%
   summarize(value = sum(total_co2, na.rm = TRUE)) %>%
   ungroup() %>%
@@ -341,9 +342,9 @@ fig_2_12a <- carbon_emissions %>%
         legend.text = element_text(size = 14),
         legend.title = element_blank(), 
         legend.position = "bottom") + 
-  labs(x = "", y = "Difference: SEDS - national (MMT CO2) ")
+  labs(x = "", y = "Difference: SEDS - national (MMT CO2) "),
 
-fig_2_12b <- carbon_emissions %>%
+fig_2_12b <- carbon_comparison %>%
   group_by(year, dataname) %>%
   summarize(value = sum(total_co2, na.rm = TRUE)) %>%
   ungroup() %>%
@@ -357,7 +358,7 @@ fig_2_12b <- carbon_emissions %>%
         axis.text.y = element_text(size = 14), 
         axis.title.y = element_text(size = 16), 
         legend.position = "none") + 
-  labs(x = "", y = "Difference: SEDS - national (MMT CO2) ")
+  labs(x = "", y = "Difference: SEDS - national (MMT CO2) "),
 
 
 ## Differences in State-Level and National Total NEU CO2 Emissions--------
@@ -382,3 +383,12 @@ fig_2_12b <- carbon_emissions %>%
 #         legend.position = "bottom", 
 #         strip.background = element_blank()) + 
 #   labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total")
+
+)
+
+
+# Cleanup---------------------------------------------------------------
+
+rm(list = c("national_emissions", "okabe_ito_colors", "myPalette", 
+            "state_vs_national_btu", "energy_use", "state_vs_national_co2", 
+            "carbon_comparison"))

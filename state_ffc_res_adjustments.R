@@ -19,7 +19,7 @@ seds_res_adjusted <- lst(
   coal = seds %>%
     filter(msn == "CLRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments,
+    left_join(corrections$adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -39,7 +39,7 @@ seds_res_adjusted <- lst(
     # Supplemental gas no longer needed (and value is now duplicative)
     filter(msn != "SFRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments,  
+    left_join(corrections$adjustments,  
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -54,7 +54,7 @@ seds_res_adjusted <- lst(
   distillate_fuel = seds %>%
     filter(msn == "DFRCB") %>%
     # Join with the adjustment factor data (from national inventory)
-    left_join(adjustments, 
+    left_join(corrections$adjustments, 
               by = c("source_description", "year", "sector_description")) %>%
     # Get sum of all states' value 
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -77,3 +77,9 @@ seds_res_adjusted <- lst(
 
   # Collapse list into a single data frame
   list_rbind()
+
+# Cleanup=---------------------------------------------------------------
+
+seds_adjusted <- lst(seds_res_adjusted)
+
+rm(seds_res_adjusted)

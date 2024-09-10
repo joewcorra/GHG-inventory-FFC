@@ -78,3 +78,13 @@ foks_residual_distribution <- foks_residual_distribution %>%
   bind_rows(foks_residual_distribution %>% filter(year == "2020") %>% 
               mutate(year = "2022"))
 
+
+
+# Cleanup-----------------------------------------------------------------
+
+# Append the new tibble to the existing 'corrections' list
+corrections <- append(corrections, lst(foks_diesel_distribution, 
+                                       foks_residual_distribution))
+
+
+rm(list = c("foks_diesel_distribution","foks_residual_distribution"))

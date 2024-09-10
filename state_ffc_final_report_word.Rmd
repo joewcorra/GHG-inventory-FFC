@@ -11,7 +11,6 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 
 
-
 ```
 
 # 2. Energy (NIR Chapter 3) \newline
@@ -32,9 +31,10 @@ table_2_1 %>%
   gt() %>% 
   tab_source_note(source_note = "This is a source note.") %>% 
   tab_footnote(
-    footnote = "This is a footnote.",
-    locations = cells_body(columns = 1, rows = 1)
-  ) %>% 
+    footnote = " Emissions are not likely occurring in U.S. territories; due to a lack of available data and the nature of this category, territories 
+not listed are not estimated.",
+    locations = cells_body(columns = 1, rows = 1)) %>% 
+    opt_footnote_marks(marks = "letters") %>% 
   tab_header(
     title = "Overview of Approaches for Estimating State-Level Energy Sector GHG Emissions",
     subtitle = "The table's subtitle"
@@ -42,6 +42,13 @@ table_2_1 %>%
   opt_stylize(style = 6, color = "blue") 
 
 ```
+
+^[Emissions from IBFs are not included specifically in summing energy sector totals. The values are presented for informational 
+purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations.]
+
+^[Emissions from wood biomass, ethanol, and biodiesel consumption are not included specifically in summing energy sector 
+totals. The values are presented for informational purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting 
+obligations. Net carbon fluxes from changes in biogenic carbon reservoirs are accounted for in the estimates for LULUCF.]
 
 ## 2.1 Emissions Related to Fuel Use \newline
 
@@ -89,15 +96,18 @@ This section also discusses how energy use data were broken out at the state lev
 
 For IBFs, see Section 2.1.5.
 
+^[The energy balance data include information on all energy sources. Emissions estimates exclude data on non-emitting 
+sources (e.g., nuclear, wind, solar); however, those data are considered when looking at overall energy use and efficiency.]
+
 Disaggregating FFC emissions to the state level largely followed the same process and energy consumption data that are used at the national level. However, in several instances, the data used to develop national estimates are not available at the state level, and additional steps were needed to distribute national-level emissions across the states while maintaining consistency with national-level totals. Therefore, Approach 3, the Hybrid approach as described in Section 1.3 of the Introduction chapter, was used to determine state-level emissions for FFC, including some data that were directly used in the national Inventory and some surrogate data as discussed in the following sections.
 
 ##### 2.1.1.2.1 FFC CO~2~ State-Level Breakout \newline
 
 CO~2~ emissions from FFC at the national level are estimated with a Tier 2 method described by the IPCC in the 2006 IPCC Guidelines for National Greenhouse Gas Inventories (IPCC 2006). As discussed above, this method is based on multiplying activity data on fuel use (that have been adjusted to allocate and report data consistent with UNFCCC reporting guidelines and avoid double counting) by emissions factors to determine emissions. Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO~2~ emissions. In Appendix A to this document (included as separate Excel files), the "National 2021 FFC CO~2~" Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021.
 
-Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO2 emissions. In Appendix A to this document (included as separate Excel files), the "National 2021 FFC CO2" Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021. Three additional steps (Steps 8--10 in Table 2-2) are required to determine CO2 emissions in the national Inventory, also discussed below.
+Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO~2~ emissions. In Appendix A to this document (included as separate Excel files), the "National 2021 FFC CO~2~" Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021. Three additional steps (Steps 8--10 in Table 2-2) are required to determine CO2 emissions in the national Inventory, also discussed below.
 
-Ideally, to determine state-level FFC CO2 emissions estimates, the same approach could be used, and adjusted energy use, as shown in the "National 2021 FFC CO2" Tab of Appendix A, could be developed for each state. However, the national-level emissions were developed based on multiple factors and inputs, some of which were not available or readily published at the state level. Therefore, a Hybrid approach was taken where state-level data were used when available. In cases where state-level data were not available, national-level estimates were used with available surrogate data to determine state-level percentages of each fuel use. Table 2-2 shows a high-level comparison of the different data sources used for the different steps to determine national-level and state-level estimates.
+Ideally, to determine state-level FFC CO~2~ emissions estimates, the same approach could be used, and adjusted energy use, as shown in the "National 2021 FFC CO~2~" Tab of Appendix A, could be developed for each state. However, the national-level emissions were developed based on multiple factors and inputs, some of which were not available or readily published at the state level. Therefore, a Hybrid approach was taken where state-level data were used when available. In cases where state-level data were not available, national-level estimates were used with available surrogate data to determine state-level percentages of each fuel use. Table 2-2 shows a high-level comparison of the different data sources used for the different steps to determine national-level and state-level estimates.
 
 ```{r table2, echo=FALSE, results='asis'}
 
@@ -107,6 +117,7 @@ table_2_2 %>%
   tab_footnote(
     footnote = "This is a footnote.",
     locations = cells_body(columns = 1, rows = 1)) %>% 
+  opt_footnote_marks(marks = "letters") %>% 
   tab_header(
     title = "Comparison of Approaches/Data Sources Used to Determine FFC Emissions",
     subtitle = "The table's subtitle"
@@ -116,7 +127,7 @@ table_2_2 %>%
 
 ```
 
-The following discussion details what data were used for each step in Table 2-2 to determine national- and state-level FFC emissions. Appendix A, Table A-1 in the "State FCC CO2" Tab, provides more details on where state-level data were used directly and where other data were used to make adjustments to disaggregate national numbers across fuel types and sectors for each of the steps identified.
+The following discussion details what data were used for each step in Table 2-2 to determine national- and state-level FFC emissions. Appendix A, Table A-1 in the "State FCC CO~2~" Tab, provides more details on where state-level data were used directly and where other data were used to make adjustments to disaggregate national numbers across fuel types and sectors for each of the steps identified.
 
 ##### 2.1.1.2.2 Step 1: Determine Total Fuel Consumption by Fuel Type and Sector \newline
 
@@ -207,6 +218,9 @@ In the national Inventory, portions of fuel consumption data for several fuel ca
 
 Motor gasoline and diesel fuel are used across all sectors. The total amount of motor gasoline and diesel fuel consumed as reported in the MER is based on petroleum supply data from refineries. Gasoline use is allocated across the sectors in proportion to aggregations of categories reported in the U.S. Department of Transportation's Federal Highway Administration (FHWA) highway statistics data (FHWA 1996--2021).14 Diesel fuel use is allocated to the electric power sector based on industry surveys. The remaining diesel fuel use is allocated across the remaining sectors in a similar way to gasoline use based on sales data to different categories. Through 2020, the allocation was based on data from EIA's fuel oil and kerosene sales (FOKS) data (EIA 2022). EIA suspended the FOKS report after data year 2020. Starting in 2021, diesel fuel use is allocated to sectors based on data from SEDS. For 2021 forward, SEDS uses several external sources, regressions, and historical sector and state shares to estimate the data that were in the FOKS report. For the national Inventory, data are needed on fuel use by vehicle type to determine emissions, so a bottom-up method is used to estimate transportation sector gasoline and diesel fuel use. The national Inventory determines gasoline and diesel fuel use by vehicle type based on FHWA data and outputs from EPA's MOtor Vehicle Emissions Simulator (MOVES) model (EPA 2022). The national Inventory then allocates the remaining fuel use to the remaining sectors based on the proportions in the EIA data. The differences in the EIA and national Inventory gasoline and diesel fuel allocation approach across sectors are shown below in Figure 2-6 and Figure 2-7, including information on the categories of use included in each sector and data for 2021 as an example.
 
+^[FHWA forms MF-21 and MF-24 are used in the calculations. For 2021, form MF-24 is not available yet, so values for 2020 
+were used in the calculations shown.]
+
 INFOGRAPHIC 2-6
 
 INFOGRAPHIC 2-7
@@ -223,6 +237,13 @@ fig_2_8
 The national-level data on gasoline and diesel fuel use by vehicle type used in the bottom-up analysis was not readily available at the state level. Therefore, the following assumptions and adjustments were made to distillate fuel and motor gasoline consumption at the state level across the different sectors to reflect the national Inventory bottom-up transportation fuel use approach:
 
 • Transportation sector. The total amount of distillate fuel and motor gasoline used in the transportation sector was taken from the national Inventory totals (these totals already subtract biofuel use, subtract denaturants if needed, and are based on multiple factors to determine transportation sector fuel use). This total amount of distillate fuel and motor gasoline use and emissions was allocated across states based on the percentage of fuel use by state in gallons from FHWA data (FHWA 2021a, 2021b). For distillate fuel, the total was based on FHWA form MF-225, and the motor gasoline total was based on FHWA form MF-226, both of which have time series of fuel use by state. Appendix A, Tables A-48 and A-49 in the "FFC CO2 Transportation" Tab, describe this adjustment. The FHWA data reflect on-highway fuel use, but, as seen in Figure 2-6 and Figure 2-7 above, the transportation sector fuel use includes some mobile sources that are considered off-highway (e.g., recreational boating, railroads). However, because the majority of the motor gasoline and diesel fuel use is for on-highway purposes, using FHWA data to allocate transportation sector fuel use to the state level is reasonable. Note that FHWA state-level fuel consumption data are representative of the point-of-sale and not the point-of-use, so fuel sold in one state that may be combusted in other states is assigned to the state where the fuel was purchased. This approach is consistent with IPCC Guidelines (IPCC 2006) for country-level reporting that indicate that "where cross-border transfers take place in vehicle tanks, emissions from road vehicles should be attributed to the country where the fuel is loaded into the vehicle." Therefore, when applying the IPCC approach to the state-level inventory, vehicle emissions are attributed to the state where the vehicle fuel is sold. This approach could introduce some differences in state-level transportation sector fuel use and emissions allocations reported here and those reported by individual states. For example, in addition to fuel sales data, state-level vehicle miles traveled (VMT) data are another potential surrogate for allocating fuel use to the state level, but that approach does not account for vehicle and fleet fuel economy variability between states. EPA will consider alternative or complementary approaches to allocate transportation fuel across states, including VMT data and other sources. For example, the National Emissions Inventory (NEI) uses county-level fleet and activity data to generate a bottom-up inventory (EPA 2017).Figure 2-9 shows the transportation sector emissions in 2020 from the top 10 emitting states using different allocation approaches. As seen in the figure, the approach used will lead to different allocations across states.
+
+^[Note the NEI uses a bottom-up method for determining transportation sector fuel use and emissions based on VMT and 
+assumed vehicle fleet fuel efficiency at the county level through the MOVES model. However, applying that approach across all 
+states could lead to differences with national totals. The approach used here is to allocate national totals to states and not 
+perform a bottom-up analysis for each state.]
+
+^[2020 is shown because that is the latest year of NEI data that are produced every three years.]
 
 ```{r plots9, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-9. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -241,7 +262,9 @@ Residential sector. The total amount of distillate fuel used in the residential 
 
 ##### 2.1.1.2.7. Step 6: Subtract Consumption for NEU \newline
 
-The energy statistics include consumption of fossil fuels for nonenergy purposes. Most fossil fuels consumed are combusted to produce heat and power. However, some are used directly for NEU as construction materials, chemical feedstocks, lubricants, solvents, and waxes.17 For example, asphalt and road oil are used for roofing and paving, and hydrocarbon gas liquids are used to create intermediate products. In the national Inventory, emissions from these NEUs are estimated separately under the Carbon Emitted and Stored in Products from NEUs source category. Therefore, the amount of fuels used for nonenergy purposes needs to be subtracted from fuel consumption data for determining combustion emissions. The adjustments vary over time and represent about 25% to 30% of total unadjusted industrial sector energy use, as shown in Figure 2-10.
+The energy statistics include consumption of fossil fuels for nonenergy purposes. Most fossil fuels consumed are combusted to produce heat and power. However, some are used directly for NEU as construction materials, chemical feedstocks, lubricants, solvents, and waxes.17 For example, asphalt and road oil are used for roofing and paving, and hydrocarbon gas liquids are used to create intermediate products. In the national Inventory, emissions from these NEUs are estimated separately under the Carbon Emitted and Stored in Products from NEUs source category. Therefore, the amount of fuels used for nonenergy purposes needs to be subtracted from fuel consumption data for determining combustion emissions. 
+
+The adjustments vary over time and represent about 25% to 30% of total unadjusted industrial sector energy use, as shown in Figure 2-10.
 
 ```{r plots10, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-10. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -297,6 +320,7 @@ table_2_3 %>%
   tab_footnote(
     footnote = "This is a footnote.",
     locations = cells_body(columns = 1, rows = 1)) %>% 
+  opt_footnote_marks(marks = "letters") %>% 
   tab_header(
     title = "Default Data Sources for Mobile Source Non-CO2 Emissions",
     subtitle = "The table's subtitle"
@@ -451,12 +475,16 @@ are available, as opposed to assuming the percentage based on SEDS state-level t
 
 ```{r table4, echo=FALSE, results='asis'}
 
-table_2_4 %>% 
+mtcars %>%
   gt() %>% 
   tab_source_note(source_note = "This is a source note.") %>% 
   tab_footnote(
     footnote = "This is a footnote.",
     locations = cells_body(columns = 1, rows = 1)) %>% 
+    tab_footnote(
+    footnote = "bkabjdfjdfbjdsbodfjbijdbdkj",
+    locations = cells_body(columns = 1, rows = 1)) %>% 
+  opt_footnote_marks(marks = "letters") %>% 
   tab_header(
     title = "Summary of Approaches to Disaggregate Waste Incineration Emissions Across Time Series",
     subtitle = "The table's subtitle") %>% 

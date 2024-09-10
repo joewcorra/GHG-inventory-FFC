@@ -65,7 +65,9 @@ carbon_factors <- read_excel("data/national_inventory_CO2_data.xlsx",
 
 # Cleanup------------------------------------------------------------------
 
-rm(carbon_factors_variable)
+carbon <- lst(carbon_factors, carbon_ratio)
+
+rm(list= c("carbon_factors", "carbon_factors_variable", "carbon_ratio"))
 
 
 

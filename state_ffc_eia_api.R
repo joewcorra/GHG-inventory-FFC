@@ -18,6 +18,11 @@ print("Retreieving SEDS data via EIA's API.")
 # API key generated 11/22/23 
 key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
+# API key check
+eia_api_url <- "https://api.eia.gov/v2/seds/data"
+response <- GET(eia_api_url, query = list(api_key = key))
+# If status = 200, then it's working
+print(response)
 
 # Function for Options 1 & 2---------------------------------------------
 
@@ -30,7 +35,7 @@ get_results <- function(state, year, offset) {
   results <- paste0("https://api.eia.gov/v2/seds/data/?frequency=annual",
                     "&data[0]=value", 
                     "&facets[stateId][]=", state, # state input
-                    "&start=", year, # start and end year are the same
+                    "&start=", year - 1, # start = previous year for some reason
                     "&end=", year,
                     "&sort[0][column]=period&sort[0][direction]=desc&offset=",
                     offset, "&length=5000", # offset (usually 0)
@@ -65,13 +70,13 @@ get_results <- function(state, year, offset) {
 # Apply API data query function across all states and years.
 # Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
 tic()
-api_results <- expand_grid(state = "TX", 
-                           year = 1990:2021, 
+api_results <- expand_grid(state = states_and_dc, 
+                           year = 1990:2022, 
                            offset = 0) %>%
   pmap(function(state, year, offset) get_results(state, year, offset))
 toc()
 
- api_seds <- results %>%
+ api_seds <- api_results %>%
         map(\(.x) pluck(.x, "response", "data")) %>%
   list_rbind()
 
@@ -83,15 +88,32 @@ write_csv(api_seds, "data/api_seds.csv")
 # Option 2: Retrieve New Year of Data Only---------------------------------
 
 api_results_new <- expand_grid(state = states_and_dc, 
-                               year = 2023, 
+                               year = 2022, 
                                offset = 0) %>%
   pmap(function(state, year, offset) get_results(state, year, offset))
 
 api_seds_new <- api_results_new %>%
   map(\(.x) pluck(.x, "response", "data")) %>%
-  list_rbind()
+  list_rbind() %>% mutate(period = as.numeric(period), 
+                          value = as.numeric(value))
 
-# Load existing csc and append new data to it
+# Load existing data
+api_seds <- read_csv("data/api_seds.csv") 
+
+# Check if new data is different from existing data
+new_stuff <- api_seds_new %>% 
+  filter(seriesId %in% msn_lookup) %>%
+  # Remove any superfluous spaces from the character data
+  mutate(across(where(is.character), ~ str_trim(.))) %>%
+  # Filter: only retain new data that's not in the existing dataset
+  anti_join(api_seds %>% 
+              filter (period == "2022",
+                      seriesId %in% msn_lookup))
+
+# View the results
+new_stuff
+
+# If it looks OK, append new data to existing dataset
 api_seds <- read_csv("data/api_seds.csv") %>%
   rbind(api_seds_new)
 
@@ -103,7 +125,7 @@ write_csv(api_seds, "data/api_seds.csv")
 
 # Remove unneeded objects 
 
-rm(c(key, arguments, get_results, api_results, limited_reached))
+rm(c(key, get_results, api_results, limited_reached))
 
 # Notes --------------------------------------------------------------------
 

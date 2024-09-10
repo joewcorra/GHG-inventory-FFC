@@ -13,7 +13,7 @@ key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 # Retrieve Territories FF Consumption from EIA---------------------------
 
 # Get latest data year 
-latest_year <- year(now()) -2
+latest_year <- year(now()) -1
 
 # American Samoa, Guam, Puerto Rico, US Virgin Islands, 
 # US Pacific islands, Wake Island
@@ -157,8 +157,29 @@ ffc_territories <- ff_territories %>%
 # need to figure out which carbon factors to use
 
 carbon_territories <- ffc_territories %>% 
-  left_join(carbon_factors, 
+  left_join(carbon$carbon_factors, 
             by =c("source_description", "year")) %>%
   # MMT CO2  = btu * carbon factor/1000 * 44/12
-  mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon_ratio)
+  mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon$carbon_ratio)
 
+
+# For Vince's spreadsheet------------------------------------------------
+
+territories_csv_format <- ff_territories %>%
+mutate(value = round(value, 4)) %>%
+  arrange(year) %>% 
+  arrange(source_description, state) %>%
+  select(-dataFlagDescription, -source, -state, -unit) %>%
+  group_by(state_name, source_description, year) %>%
+  pivot_wider(names_from = year, names_prefix = "y") 
+
+write_csv(territories_csv_format, "territories_csv_format.csv")
+
+
+# Cleanup----------------------------------------------------------------
+
+state_ffc_results <- lst(carbon_territories)
+
+rm(list = c("latest_year", "key", "api_territories", "ff_territories", 
+            "ffc_territories", "territories_csv_format", "heat_commodities", 
+            "eia_table_a1",  "heat_content_territories", "carbon_territories"))

@@ -32,3 +32,11 @@ ibf_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
            str_detect(source_description, "viation") ~ "jet fuel", 
            str_detect(source_description, "istillate") ~ "distillate fuel oil",
            str_detect(source_description, "esidual") ~ "residual fuel oil"))
+
+
+# Cleanup-----------------------------------------------------------------
+
+# Append the new tibble to the existing 'corrections' list
+corrections <- append(corrections, lst(ibf_corrections))
+
+rm(ibf_corrections)

@@ -50,7 +50,7 @@ seds_ind_adjusted <- lst(
   coking_coal = seds %>%
     filter(msn == "CLKCB") %>%
     # Join with national data corrections
-    left_join(national_corrections, by = "year") %>%
+    left_join(corrections$national_corrections, by = "year") %>%
     mutate(states_sum_value = sum(value), .by = c(msn, year),
            # ippu percent = ippu / sum_states_value as long as ippu is greater
            ippu_factor = if_else(ippu < states_sum_value,
@@ -69,12 +69,12 @@ seds_ind_adjusted <- lst(
                        coking_coal_value = value, year, state),
               by = c("year", "state")) %>%
     # Join with national data corrections
-    left_join(national_corrections, by = "year") %>%
+    left_join(corrections$national_corrections, by = "year") %>%
     # Join with consumption input data
-    left_join(consumption_input,
+    left_join(corrections$consumption_input,
               by = c("year", "source_description", "sector_description")) %>%
     # Join with I & S distribution data
-    left_join(is_distribution, by = c("state", "year")) %>% 
+    left_join(corrections$is_distribution, by = c("state", "year")) %>% 
     mutate(coke_factor = if_else(ippu < sum_coking_coal, 0,
                                  ippu - sum_coking_coal),
            other_coal_coke_adj =
@@ -103,17 +103,17 @@ seds_ind_adjusted <- lst(
     # Supplemental gas no longer needed (and value is now duplicative)
     filter(msn != "SFINB") %>%
     # Join with national data corrections
-    left_join(national_corrections, by = "year") %>%
+    left_join(corrections$national_corrections, by = "year") %>%
     # Change source and MSN to reflect that it's net natural gas
     mutate(source_description = "natural gas",
            msn = "net natural gas") %>%
     # Join with consumption input data
-    left_join(consumption_input,
+    left_join(corrections$consumption_input,
               by = c("year", "source_description", "sector_description")) %>%
     # Join with I & S distribution data
-    left_join(is_distribution, by = c("state", "year")) %>% 
+    left_join(corrections$is_distribution, by = c("state", "year")) %>% 
     # Join with ammonia distribution data
-    left_join(ammonia_distribution, by = c("state", "year")) %>% 
+    left_join(corrections$ammonia_distribution, by = c("state", "year")) %>% 
     # Change MSN identifier. old MSN distinction no longer needed(?)
     # However, MSN can be reconstituted from other _code fields if needed.
     #  Ammonia factor * ammonia distribution = ammonia adjusted value 
@@ -135,12 +135,12 @@ seds_ind_adjusted <- lst(
   residual_fuel = seds %>%
     filter(msn == "RFICB") %>%
     # Join with national data corrections 
-    left_join(national_corrections, by = "year") %>%
+    left_join(corrections$national_corrections, by = "year") %>%
     # Join with consumption input data
-    left_join(consumption_input,
+    left_join(corrections$consumption_input,
               by = c("year", "source_description", "sector_description")) %>%
     # Join with petrochemicals carbon black distribution data
-    left_join(petrochemicals_cb_distribution, by = c("state", "year")) %>% 
+    left_join(corrections$petrochemicals_cb_distribution, by = c("state", "year")) %>% 
     # adjust for cb factor = cb_factor * petrochem cb distribution 
     # adjusted value = value - cb adjusted value (minimum = 0)
     mutate(residual_fuel_cb_adj = if_else(
@@ -157,12 +157,12 @@ seds_ind_adjusted <- lst(
   distillate_fuel = seds %>%
     filter(msn == "DFICB") %>%
     # Join with national data corrections 
-    left_join(national_corrections, by = "year") %>%
+    left_join(corrections$national_corrections, by = "year") %>%
     # Join with consumption input data
-    left_join(consumption_input,
+    left_join(corrections$consumption_input,
               by = c("year", "source_description", "sector_description")) %>%
     # Join with I & S distribution data
-    left_join(is_distribution, by = c("state", "year")) %>% 
+    left_join(corrections$is_distribution, by = c("state", "year")) %>% 
     # distillate_fuel_is_adj = is_distillate_fuel_factor * 
     # mysterious hard-coded % used in the other_coal_is_adj, above
     # distillate_fuel_is_adj (if negative, then 0)
@@ -189,7 +189,7 @@ seds_ind_adjusted <- lst(
     # Get sum of all states' net gasoline
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # get adjustment factor for motor gasoline
-    left_join(adjustments,
+    left_join(corrections$adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
     rename(motor_gas_factor = national_value) %>%
@@ -207,7 +207,7 @@ seds_ind_adjusted <- lst(
     # Get sum of all states' petroleum_coke
     mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
     # get adjustment factor for petroleum coke
-    left_join(adjustments,
+    left_join(corrections$adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity 
     rename(petro_coke_factor = national_value) %>%
@@ -225,7 +225,7 @@ seds_ind_adjusted <- lst(
     # Change source description to reflect new value
     mutate(source_description = "hgl") %>%
     # Join with adjustments to get adjustment factor
-    left_join(adjustments,
+    left_join(corrections$adjustments,
               by = c("source_description", "year", "sector_description")) %>%
     # Rename adjustment factor for clarity
     rename(ind_lpg_factor = national_value) %>%
@@ -249,3 +249,8 @@ seds_ind_adjusted <- lst(
   list_rbind()
 # BTW: distillate_fuel_is_adj is required for neu_adjustments.R
 
+# Cleanup=---------------------------------------------------------------
+
+seds_adjusted <- append(seds_adjusted, lst(seds_ind_adjusted))
+
+rm(seds_ind_adjusted)

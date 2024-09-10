@@ -15,7 +15,7 @@
 # Format InvDB Data-------------------------------------------------------
 
 ffc_invdb <-
-  carbon %>%
+  state_ffc_results$carbon_emissions %>%
   # Create or modify fields to conform to InvDB
   mutate(Sector = "Energy", 
          Source = "Fossil Fuel Combustion", 
