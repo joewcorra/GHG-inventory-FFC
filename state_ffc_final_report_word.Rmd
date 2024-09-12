@@ -2,7 +2,7 @@
 title: "Untitled"
 author: "Joe Corra"
 date: "`r Sys.Date()`"
-output: word_document
+output: html_document
 ---
 
 
@@ -27,19 +27,7 @@ source("state_ffc_master_script.R")
 ```{r table1, echo=FALSE, results='asis'}
 
  
-table_2_1 %>%
-  gt() %>% 
-  tab_source_note(source_note = "This is a source note.") %>% 
-  tab_footnote(
-    footnote = " Emissions are not likely occurring in U.S. territories; due to a lack of available data and the nature of this category, territories 
-not listed are not estimated.",
-    locations = cells_body(columns = 1, rows = 1)) %>% 
-    opt_footnote_marks(marks = "letters") %>% 
-  tab_header(
-    title = "Overview of Approaches for Estimating State-Level Energy Sector GHG Emissions",
-    subtitle = "The table's subtitle"
-  ) %>% 
-  opt_stylize(style = 6, color = "blue") 
+state_ffc_tables$table_2_1 
 
 ```
 
@@ -111,18 +99,7 @@ Ideally, to determine state-level FFC CO~2~ emissions estimates, the same approa
 
 ```{r table2, echo=FALSE, results='asis'}
 
-table_2_2 %>% 
-  gt() %>% 
-  tab_source_note(source_note = "This is a source note.") %>% 
-  tab_footnote(
-    footnote = "This is a footnote.",
-    locations = cells_body(columns = 1, rows = 1)) %>% 
-  opt_footnote_marks(marks = "letters") %>% 
-  tab_header(
-    title = "Comparison of Approaches/Data Sources Used to Determine FFC Emissions",
-    subtitle = "The table's subtitle"
-  ) %>% 
-  opt_stylize(style = 6, color = "red")
+state_ffc_tables$table_2_2 
 
 
 ```
@@ -138,7 +115,7 @@ However, the totals across all states (and the District of Columbia) from SEDS d
 ```{r plots2, fig.dim = c(16, 12), dpi=300, out.width = '100%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 plot_tags <- list(a = c("Coal", "Natural Gas")) #  Maybe move this to the first code chunk
-fig_2_2
+state_ffc_figures$fig_2_2
 
 ```
 
@@ -149,7 +126,7 @@ The petroleum categories generally line up well across state-level and national 
 ```{r plots3, fig.dim = c(10, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-3. Differences Between State-Level and National Total Energy Use for Petroleum Coke.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-fig_2_3
+state_ffc_figures$fig_2_3
 
 ```
 
@@ -160,8 +137,8 @@ In addition to the differences in gasoline and diesel fuel across sectors over t
 ```{r plots4, fig.dim = c(4, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-fig_2_4 <- fig_2_4a + fig_2_4b
-fig_2_4 
+state_ffc_figures$fig_2_4 <- state_ffc_figures$fig_2_4a + state_ffc_figures$fig_2_4b
+state_ffc_figures$fig_2_4 
 
 ```
 
@@ -188,7 +165,7 @@ The adjustments vary over time and represent from about 4% to 8% of total unadju
 ```{r plots5, fig.dim = c(6, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-fig_2_5
+state_ffc_figures$fig_2_5
 
 ```
 
@@ -230,7 +207,7 @@ The bottom-up approach used by the national Inventory to determine transportatio
 ```{r plots8, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-8. Comparison of Transportation Sector Fuel Use.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-fig_2_8
+state_ffc_figures$fig_2_8
 
 ```
 
@@ -268,7 +245,7 @@ The adjustments vary over time and represent about 25% to 30% of total unadjuste
 
 ```{r plots10, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-10. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
-fig_2_10
+state_ffc_figures$fig_2_10
 
 
 ```
@@ -291,7 +268,7 @@ Emissions associated with NEUs were calculated and reported separately from FFC 
 
 ```{r plots11, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-11. Adjustments Made to Transportation Sector Energy Use to Account for IBFs.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
-fig_2_11
+state_ffc_figures$fig_2_11
 
 
 ```
@@ -299,8 +276,8 @@ fig_2_11
 
 ```{r plots12, fig.dim = c(8, 6), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
-fig_2_12 <- fig_2_12a / fig_2_12b
-fig_2_12
+state_ffc_figures$fig_2_12 <- state_ffc_figures$fig_2_12a / state_ffc_figures$fig_2_12b
+state_ffc_figures$fig_2_12
 
 
 ```
@@ -314,18 +291,7 @@ emissions by state were then applied to the national totals from the national In
 
 ```{r table3, echo=FALSE, results='asis'}
 
-table_2_3 %>%
-  gt() %>% 
-  tab_source_note(source_note = "This is a source note.") %>% 
-  tab_footnote(
-    footnote = "This is a footnote.",
-    locations = cells_body(columns = 1, rows = 1)) %>% 
-  opt_footnote_marks(marks = "letters") %>% 
-  tab_header(
-    title = "Default Data Sources for Mobile Source Non-CO2 Emissions",
-    subtitle = "The table's subtitle"
-  ) %>% 
-  opt_stylize(style = 6, color = "cyan")
+state_ffc_tables$table_2_3
 
 
 ```
@@ -475,20 +441,7 @@ are available, as opposed to assuming the percentage based on SEDS state-level t
 
 ```{r table4, echo=FALSE, results='asis'}
 
-mtcars %>%
-  gt() %>% 
-  tab_source_note(source_note = "This is a source note.") %>% 
-  tab_footnote(
-    footnote = "This is a footnote.",
-    locations = cells_body(columns = 1, rows = 1)) %>% 
-    tab_footnote(
-    footnote = "bkabjdfjdfbjdsbodfjbijdbdkj",
-    locations = cells_body(columns = 1, rows = 1)) %>% 
-  opt_footnote_marks(marks = "letters") %>% 
-  tab_header(
-    title = "Summary of Approaches to Disaggregate Waste Incineration Emissions Across Time Series",
-    subtitle = "The table's subtitle") %>% 
-  opt_stylize(style = 6, color = "cyan")
+state_ffc_tables$table_2_4
 
 ```
 
@@ -496,8 +449,7 @@ mtcars %>%
 ```{r table5, echo=FALSE, results='asis'}
 
 # Example State Allocation Factors for the Illinois Coal Basin (Sealed Mines) 
-# table_2_5 %>%
-#  gt()
+# state_ffc_tables$table_2_5 
 
 
 ```

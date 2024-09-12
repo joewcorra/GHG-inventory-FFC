@@ -16,7 +16,7 @@
 # Placeholder value for now
 ethanol_correction <- 0
 
-us_consumption_mogas <- us_consumption %>% 
+us_consumption_mogas <- national_ffc_data$us_consumption %>% 
   filter(msn %in% c("MGCCB", "MGACB", "MGICB")) %>%
   mutate(mogas_ethanol_corrected = (value + ethanol_correction) / 0.001) 
 

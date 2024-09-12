@@ -13,13 +13,13 @@
 us_ind <- lst(
   
   # Asphalt & Road Oil (NEU adjustment: 100%) 
-  asphalt = us_consumption %>%
+  asphalt = national_ffc_data$us_consumption %>%
     filter(msn == "ARICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value),
   
   # Coking Coal (IPPU adjustment)
-  coking_coal = us_consumption %>%
+  coking_coal = national_ffc_data$us_consumption %>%
     # What is the MSN for coking coal?
   filter(msn == "") %>%
     # Subtract IPPU adjustment
@@ -30,7 +30,7 @@ us_ind <- lst(
   # Other Coal (NEU adjustment: Eastman Gas coal gasification; 
   # synthetic natural gas adjustment, coking coal adjustment, 
   # i & s adjustment
-  other_coal = us_consumption %>%
+  other_coal = national_ffc_data$us_consumption %>%
     filter(msn == "CLICB") %>%
     # Subtract adjustments
     mutate(adjusted_value = value - sum(
@@ -40,7 +40,7 @@ us_ind <- lst(
   # coke oven adjustment, biogas adjustment, 
   # ammonia adjustment, and i & s adjustment)
   # Supplemental gas already excluded
-  natural_gas = us_consumption %>%
+  natural_gas = national_ffc_data$us_consumption %>%
     filter(msn == "NNICB") %>%
     # Subtract adjustments
     # Blast furnace, coke oven, and biogas are always zero?
@@ -49,7 +49,7 @@ us_ind <- lst(
       ammonia_adj, is_adj)),
   
   # Residual Fuel (carbon black adjustment) 
-  residual_fuel = us_consumption %>%
+  residual_fuel = national_ffc_data$us_consumption %>%
     filter(msn == "RFICB") %>%
     # Subtract carbon black correction
     mutate(adjusted_value = value - cb_adj, 
@@ -57,75 +57,81 @@ us_ind <- lst(
            adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)),
   
   # Distillate Fuel (i&s adjustment, mogas/df adjustment)
-  distillate_fuel = us_consumption %>%
+  distillate_fuel = national_ffc_data$us_consumption %>%
     filter(msn == "DFICB") %>%
     # Subtract iron & steel correction
     mutate(adusted_value = value - is_adj),
   
   # Motor gasoline (mogas/df adjustment)
-  motor_gasoline = us_consumption %>%
+  motor_gasoline = national_ffc_data$us_consumption %>%
     filter(msn %in% c("MGICB", "EMICB")),
   
   # Kerosene (no adjustment)
-  kerosene = us_consumption %>%
+  kerosene = national_ffc_data$us_consumption %>%
     filter(msn == "KSICB"),
   
   # Petroleum Coke (NEU adjustment: special)
-  petroleum_coke = us_consumption %>%
+  petroleum_coke = national_ffc_data$us_consumption %>%
     filter(msn == "PCICB"),
   
   # LPG (AKA Propane) (no adjustment)
-  lpg = us_consumption %>%
+  lpg = national_ffc_data$us_consumption %>%
     filter(msn == "HLICB"),
   
   # PQICB     PYICB (NEU adjustment: special)
   # Propane and Propylene: Included w/ HLICB ?
   
   # Lubricants (NEU adjustment: 100%) 
-  lubricants = us_consumption %>%
+  lubricants = national_ffc_data$us_consumption %>%
     filter(msn == "LUICB"),
   
   # Misc Products (NEU adjustment: 100%) 
-  misc_products = us_consumption %>%
+  misc_products = national_ffc_data$us_consumption %>%
     filter(msn == "MSICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value),
   
   # Naphtha (<401 deg. F) (NEU adjustment: 100%) 
-  naphtha = us_consumption %>%
+  naphtha = national_ffc_data$us_consumption %>%
     filter(msn == "FNICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value),
   
   # Other Oil (>401 deg. F) (NEU adjustment: 100%) 
-  other_oil = us_consumption %>%
+  other_oil = national_ffc_data$us_consumption %>%
     filter(msn == "FOICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value),
   
   # Pentanes Plus (NEU adjustment: special)
-  pentanes_plus = us_consumption %>%
+  pentanes_plus = national_ffc_data$us_consumption %>%
     filter(msn == "PPICB"),
   
   # Still Gas (NEU adjustment: special)
-  still_gas = us_consumption %>%
+  still_gas = national_ffc_data$us_consumption %>%
     filter(msn == "SGICB"), 
   
   # Special Naphtha (NEU adjustment: 100%) 
-  special_naphtha = us_consumption %>%
+  special_naphtha = national_ffc_data$us_consumption %>%
     filter(msn == "SNICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value), 
   
   # Waxes (NEU adjustment: 100%) 
-  waxes = us_consumption %>%
+  waxes = national_ffc_data$us_consumption %>%
     filter(msn == "WXICB") %>%
     # NEU adjustment is 100% of total
     mutate(adjusted_value = value - value), 
   
   # Unfinished Oils (no adjustment)   
-  unfinished_oils = us_consumption %>%
+  unfinished_oils = national_ffc_data$us_consumption %>%
     filter(msn == "UOICB")) %>%
 
   # Collapse list into a single data frame
   list_rbind()
+
+# Cleanup-----------------------------------------------------------------
+
+national_ffc_adjusted <- append(national_ffc_adjusted, lst(us_ind))
+
+rm(us_res_com_ele)

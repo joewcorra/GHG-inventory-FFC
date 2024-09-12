@@ -79,7 +79,7 @@ dist_fuel_by_class
 
 # For each: com, ind, res, and tra
 
-us_consumption_dist_fuel <- us_consumption %>% 
+us_consumption_dist_fuel <- national_ffc_data$us_consumption %>% 
   filter(msn %in% c("DFRCB", "DFICB", "DFCCB", "DFACB")) %>%
   mutate(meta_sector = case_when(
     sector_description == "commercial sector" ~ "non-trans", 

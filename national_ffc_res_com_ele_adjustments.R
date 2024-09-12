@@ -13,14 +13,14 @@
 
 us_res_com_ele <- lst(
   
-  res = us_consumption %>%
+  res = national_ffc_data$us_consumption %>%
     filter(msn %in% c("CLRCB", "NNRCB", "DFRCB", "HLRCB", "KSRCB")), 
   
-  com = us_consumption %>% 
+  com = national_ffc_data$us_consumption %>% 
     filter(msn %in% c("CLCCB", "NNCCB", "DFCCB", "EMCCB", "HLCCB", 
                       "KSCCB", "MGCCB", "PCCCB", "RFCCB")),
            
-  ele = us_consumption %>% # NNEIB   
+  ele = national_ffc_data$us_consumption %>% # NNEIB   
     filter(msn %in% c("CLEIB", "NNEIB", "DKEIB", "PCEIB", "RFEIB")),   
            
            
@@ -34,4 +34,10 @@ us_res_com_ele <- lst(
   
 
 # Collapse list into a single data frame
-list_rbind()
+list_rbind() 
+
+# Cleanup-----------------------------------------------------------------
+
+national_ffc_adjusted <- lst(us_res_com_ele)
+
+rm(us_res_com_ele)

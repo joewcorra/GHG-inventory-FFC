@@ -37,8 +37,8 @@ eia_national <- pluck(eia_api_consumption, "response", "data") %>%
   select(-unit, -seriesDescription)
 
 us_consumption <- eia_national %>%
-  left_join(msn, by = "msn") %>%
-  filter(msn %in% msn_lookup) %>%
+  left_join(msn_names$msn, by = "msn") %>%
+  filter(msn %in% msn_names$msn_lookup) %>%
   # Remove "(consumption)" from electric power sector description
   mutate(sector_description = if_else(
     str_detect(sector_description, "electric power"), 
@@ -88,3 +88,11 @@ vessel_bunker_dist_fuel <- pluck(eia_api_vessel_bunker, "response", "data") %>%
   # Make fuel consumption value numeric
   mutate(value = as.numeric(value))
 
+# Cleanup-----------------------------------------------------------------
+
+national_ffc_data <- lst(us_consumption, vessel_bunker_dist_fuel)
+
+rm(list = c("us_consumption", "vessel_bunker_dist_fuel", 
+            "eia_api_vessel_bunker", "heat_content", "eia_api_heat", 
+            "key", 'eia_national', "latest_year", 
+   'eia_api_consumption'))
