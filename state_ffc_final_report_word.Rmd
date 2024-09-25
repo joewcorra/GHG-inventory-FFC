@@ -2,9 +2,25 @@
 title: "Untitled"
 author: "Joe Corra"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document
+header-includes:
+   - |
+     <style>
+       h1 {
+         font-size: 12px;
+         color: #D7925D;
+       }
+       h2 {
+         font-size: 12px;
+         color: #D7925D;
+       }
+       h3 {
+         font-size: 12px;
+         color: #D7925D;
+       }
+     </style>
 ---
-
 
 ```{r setup, include=FALSE}
 
@@ -15,7 +31,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # 2. Energy (NIR Chapter 3) \newline
 
-For this methodology report, energy emissions are broken into two main categories: emissions associated with fuel use---including fossil fuel combustion (FFC) and non-energy use (NEU)---and fugitive emissions mainly from fuel production. The energy emissions presented here include some categories that are not added to energy sector totals in the national Inventory but are instead presented as memo items, including international bunker fuels (IBFs) and biomass emissions, consistent with UNFCCC reporting guidelines. This approach directly affects state-level energy sector estimates and, in some cases, may account for differences with official estimates published by individual state governments. For more information on energy sector emissions, see Chapter 3 of the national Inventory. Table 2-1 summarizes the different approaches used to estimate state-level energy emissions and completeness across states. Geographic completeness is consistent with the national Inventory. The sections below provide more detail on each category.
+For this methodology report, energy emissions are broken into two main
+categories: emissions associated with fuel use---including fossil fuel
+combustion (FFC) and non-energy use (NEU)---and fugitive emissions
+mainly from fuel production. The energy emissions presented here include
+some categories that are not added to energy sector totals in the
+national Inventory but are instead presented as memo items, including
+international bunker fuels (IBFs) and biomass emissions, consistent with
+UNFCCC reporting guidelines. This approach directly affects state-level
+energy sector estimates and, in some cases, may account for differences
+with official estimates published by individual state governments. For
+more information on energy sector emissions, see Chapter 3 of the
+national Inventory. Table 2-1 summarizes the different approaches used
+to estimate state-level energy emissions and completeness across states.
+Geographic completeness is consistent with the national Inventory. The
+sections below provide more detail on each category.
 
 ```{r fossil fuels, echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -31,16 +61,26 @@ state_ffc_tables$table_2_1
 
 ```
 
-^[Emissions from IBFs are not included specifically in summing energy sector totals. The values are presented for informational 
-purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations.]
+[^1]
 
-^[Emissions from wood biomass, ethanol, and biodiesel consumption are not included specifically in summing energy sector 
-totals. The values are presented for informational purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting 
-obligations. Net carbon fluxes from changes in biogenic carbon reservoirs are accounted for in the estimates for LULUCF.]
+[^1]: Emissions from IBFs are not included specifically in summing
+    energy sector totals. The values are presented for informational
+    purposes only, in line with the 2006 IPCC Guidelines and UNFCCC
+    reporting obligations.
+
+[^2]
+
+[^2]: Emissions from wood biomass, ethanol, and biodiesel consumption
+    are not included specifically in summing energy sector totals. The
+    values are presented for informational purposes only, in line with
+    the 2006 IPCC Guidelines and UNFCCC reporting obligations. Net
+    carbon fluxes from changes in biogenic carbon reservoirs are
+    accounted for in the estimates for LULUCF.
 
 ## 2.1 Emissions Related to Fuel Use \newline
 
-This section presents the methodology used to estimate the fuel use portion of emissions, which consists of the following sources:
+This section presents the methodology used to estimate the fuel use
+portion of emissions, which consists of the following sources:
 
 -   FFC (CO~2~, CH~4~, N~2~O)
 
@@ -58,15 +98,41 @@ This section presents the methodology used to estimate the fuel use portion of e
 
 #### 2.1.1.1 Background \newline
 
-Emissions from FFC include the GHGs CO~2~, CH~4~, and N~2~O. CO~2~ is the primary gas emitted from FFC and represents the largest share of U.S. total GHG emissions. The methods to estimate CO~2~ emissions from FFC and the methods to estimate CH~4~ and N~2~O emissions from stationary and mobile combustion rely in large part on the same underlying data. However, there are some differences; therefore, the methods used to estimate CO~2~ and non-CO~2~ emissions are presented separately.
+Emissions from FFC include the GHGs CO~2~, CH~4~, and N~2~O. CO~2~ is
+the primary gas emitted from FFC and represents the largest share of
+U.S. total GHG emissions. The methods to estimate CO~2~ emissions from
+FFC and the methods to estimate CH~4~ and N~2~O emissions from
+stationary and mobile combustion rely in large part on the same
+underlying data. However, there are some differences; therefore, the
+methods used to estimate CO~2~ and non-CO~2~ emissions are presented
+separately.
 
 #### 2.1.1.2 Methods/Approach \newline
 
-The approach for determining national-level FFC emissions is based on multiplying emissions factors times activity data on fuel consumption. The activity data on fuel consumption were taken from national-level energy balances prepared for EIA's Monthly Energy Review (MER) estimates (EIA 2023a). EIA prepares national-level energy statistics that consider energy production imports/exports and stock changes to determine energy supply/consumption. The fuel consumption information is used as a starting point for determining emissions. The approach starts with determining fuel use by fuel type because different types of fuels have different carbon content (C content) and therefore different emissions factors. The information is also broken out by energy‐consuming sectors of U.S. society to provide more detail and information on trends; the sectors included are residential, commercial, industrial, transportation, and electric power. Data from U.S. territories were also included in the analysis per international reporting requirements. Several adjustments were made to the data to account for fuel use and emissions that are either excluded or reported in other parts of the national Inventory, as shown in Figure 2-1.
+The approach for determining national-level FFC emissions is based on
+multiplying emissions factors times activity data on fuel consumption.
+The activity data on fuel consumption were taken from national-level
+energy balances prepared for EIA's Monthly Energy Review (MER) estimates
+(EIA 2023a). EIA prepares national-level energy statistics that consider
+energy production imports/exports and stock changes to determine energy
+supply/consumption. The fuel consumption information is used as a
+starting point for determining emissions. The approach starts with
+determining fuel use by fuel type because different types of fuels have
+different carbon content (C content) and therefore different emissions
+factors. The information is also broken out by energy‐consuming sectors
+of U.S. society to provide more detail and information on trends; the
+sectors included are residential, commercial, industrial,
+transportation, and electric power. Data from U.S. territories were also
+included in the analysis per international reporting requirements.
+Several adjustments were made to the data to account for fuel use and
+emissions that are either excluded or reported in other parts of the
+national Inventory, as shown in Figure 2-1.
 
-![Figure 2-1. Adjustments to Energy Consumption for Emissions Estimates](images/fig_2-1.png)
+![Figure 2-1. Adjustments to Energy Consumption for Emissions
+Estimates](images/fig_2-1.png)
 
-This section describes how national-level estimates for FFC were disaggregated to the state level for the following separate sources:
+This section describes how national-level estimates for FFC were
+disaggregated to the state level for the following separate sources:
 
 • FFC CO2
 
@@ -74,7 +140,11 @@ This section describes how national-level estimates for FFC were disaggregated t
 
 • Mobile non-CO2 emissions
 
-This section also discusses how energy use data were broken out at the state level as part of the adjustments noted in Figure 2-1 and then used to report emissions elsewhere in the national Inventory. Emissions from energy use that were excluded from FFC are discussed in other sections of the report as follows:
+This section also discusses how energy use data were broken out at the
+state level as part of the adjustments noted in Figure 2-1 and then used
+to report emissions elsewhere in the national Inventory. Emissions from
+energy use that were excluded from FFC are discussed in other sections
+of the report as follows:
 
 • For energy used in the IPPU sector, see Chapter 3.
 
@@ -84,18 +154,64 @@ This section also discusses how energy use data were broken out at the state lev
 
 For IBFs, see Section 2.1.5.
 
-^[The energy balance data include information on all energy sources. Emissions estimates exclude data on non-emitting 
-sources (e.g., nuclear, wind, solar); however, those data are considered when looking at overall energy use and efficiency.]
+[^3]
 
-Disaggregating FFC emissions to the state level largely followed the same process and energy consumption data that are used at the national level. However, in several instances, the data used to develop national estimates are not available at the state level, and additional steps were needed to distribute national-level emissions across the states while maintaining consistency with national-level totals. Therefore, Approach 3, the Hybrid approach as described in Section 1.3 of the Introduction chapter, was used to determine state-level emissions for FFC, including some data that were directly used in the national Inventory and some surrogate data as discussed in the following sections.
+[^3]: The energy balance data include information on all energy sources.
+    Emissions estimates exclude data on non-emitting sources (e.g.,
+    nuclear, wind, solar); however, those data are considered when
+    looking at overall energy use and efficiency.
+
+Disaggregating FFC emissions to the state level largely followed the
+same process and energy consumption data that are used at the national
+level. However, in several instances, the data used to develop national
+estimates are not available at the state level, and additional steps
+were needed to distribute national-level emissions across the states
+while maintaining consistency with national-level totals. Therefore,
+Approach 3, the Hybrid approach as described in Section 1.3 of the
+Introduction chapter, was used to determine state-level emissions for
+FFC, including some data that were directly used in the national
+Inventory and some surrogate data as discussed in the following
+sections.
 
 ##### 2.1.1.2.1 FFC CO~2~ State-Level Breakout \newline
 
-CO~2~ emissions from FFC at the national level are estimated with a Tier 2 method described by the IPCC in the 2006 IPCC Guidelines for National Greenhouse Gas Inventories (IPCC 2006). As discussed above, this method is based on multiplying activity data on fuel use (that have been adjusted to allocate and report data consistent with UNFCCC reporting guidelines and avoid double counting) by emissions factors to determine emissions. Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO~2~ emissions. In Appendix A to this document (included as separate Excel files), the "National 2021 FFC CO~2~" Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021.
+CO~2~ emissions from FFC at the national level are estimated with a Tier
+2 method described by the IPCC in the 2006 IPCC Guidelines for National
+Greenhouse Gas Inventories (IPCC 2006). As discussed above, this method
+is based on multiplying activity data on fuel use (that have been
+adjusted to allocate and report data consistent with UNFCCC reporting
+guidelines and avoid double counting) by emissions factors to determine
+emissions. Determining adjusted fuel use activity data is based on the
+seven steps discussed in Table 2-2 below. The result of these seven
+steps is an adjusted amount of fuel use activity data that are then used
+to determine FFC CO~2~ emissions. In Appendix A to this document
+(included as separate Excel files), the "National 2021 FFC CO~2~" Tab
+provides more details on an example of the adjustments made to the
+national-level energy use data to determine adjusted fuel use activity
+data for 2021.
 
-Determining adjusted fuel use activity data is based on the seven steps discussed in Table 2-2 below. The result of these seven steps is an adjusted amount of fuel use activity data that are then used to determine FFC CO~2~ emissions. In Appendix A to this document (included as separate Excel files), the "National 2021 FFC CO~2~" Tab provides more details on an example of the adjustments made to the national-level energy use data to determine adjusted fuel use activity data for 2021. Three additional steps (Steps 8--10 in Table 2-2) are required to determine CO2 emissions in the national Inventory, also discussed below.
+Determining adjusted fuel use activity data is based on the seven steps
+discussed in Table 2-2 below. The result of these seven steps is an
+adjusted amount of fuel use activity data that are then used to
+determine FFC CO~2~ emissions. In Appendix A to this document (included
+as separate Excel files), the "National 2021 FFC CO~2~" Tab provides
+more details on an example of the adjustments made to the national-level
+energy use data to determine adjusted fuel use activity data for 2021.
+Three additional steps (Steps 8--10 in Table 2-2) are required to
+determine CO2 emissions in the national Inventory, also discussed below.
 
-Ideally, to determine state-level FFC CO~2~ emissions estimates, the same approach could be used, and adjusted energy use, as shown in the "National 2021 FFC CO~2~" Tab of Appendix A, could be developed for each state. However, the national-level emissions were developed based on multiple factors and inputs, some of which were not available or readily published at the state level. Therefore, a Hybrid approach was taken where state-level data were used when available. In cases where state-level data were not available, national-level estimates were used with available surrogate data to determine state-level percentages of each fuel use. Table 2-2 shows a high-level comparison of the different data sources used for the different steps to determine national-level and state-level estimates.
+Ideally, to determine state-level FFC CO~2~ emissions estimates, the
+same approach could be used, and adjusted energy use, as shown in the
+"National 2021 FFC CO~2~" Tab of Appendix A, could be developed for each
+state. However, the national-level emissions were developed based on
+multiple factors and inputs, some of which were not available or readily
+published at the state level. Therefore, a Hybrid approach was taken
+where state-level data were used when available. In cases where
+state-level data were not available, national-level estimates were used
+with available surrogate data to determine state-level percentages of
+each fuel use. Table 2-2 shows a high-level comparison of the different
+data sources used for the different steps to determine national-level
+and state-level estimates.
 
 ```{r table2, echo=FALSE, results='asis'}
 
@@ -104,13 +220,52 @@ state_ffc_tables$table_2_2
 
 ```
 
-The following discussion details what data were used for each step in Table 2-2 to determine national- and state-level FFC emissions. Appendix A, Table A-1 in the "State FCC CO~2~" Tab, provides more details on where state-level data were used directly and where other data were used to make adjustments to disaggregate national numbers across fuel types and sectors for each of the steps identified.
+The following discussion details what data were used for each step in
+Table 2-2 to determine national- and state-level FFC emissions. Appendix
+A, Table A-1 in the "State FCC CO~2~" Tab, provides more details on
+where state-level data were used directly and where other data were used
+to make adjustments to disaggregate national numbers across fuel types
+and sectors for each of the steps identified.
 
 ##### 2.1.1.2.2 Step 1: Determine Total Fuel Consumption by Fuel Type and Sector \newline
 
-As discussed above, national-level data on fuel supply/consumption comes from EIA's MER. Because not all fuel supplied/consumed directly results in GHG emissions, or it could be included as part of other emissions reporting in the national Inventory, adjustments have to be made as shown above in Table 2-2 and described in the following steps. State-level energy data are available from EIA's State Energy Data System (SEDS). Those data are broken out by fuel type and sector (residential, commercial, industrial, transportation, and electric power) and are available for the years 1960--2021 (EIA 2023b). SEDS estimates energy consumption using data from surveys of energy suppliers that report consumption, sales, or distribution of energy at the state level. Most SEDS estimates rely directly on collected state-level consumption data. For example, SEDS uses state-level sales survey data and other proxies of consumption to allocate the national petroleum product supplied totals to the states. The sums of the state estimates equal the national totals as closely as possible for each energy type and end-use sector, and energy consumption estimates are generally comparable to the national statistics in EIA's MER because both data sets rely largely on the same survey returns for producers and consumers.
+As discussed above, national-level data on fuel supply/consumption comes
+from EIA's MER. Because not all fuel supplied/consumed directly results
+in GHG emissions, or it could be included as part of other emissions
+reporting in the national Inventory, adjustments have to be made as
+shown above in Table 2-2 and described in the following steps.
+State-level energy data are available from EIA's State Energy Data
+System (SEDS). Those data are broken out by fuel type and sector
+(residential, commercial, industrial, transportation, and electric
+power) and are available for the years 1960--2021 (EIA 2023b). SEDS
+estimates energy consumption using data from surveys of energy suppliers
+that report consumption, sales, or distribution of energy at the state
+level. Most SEDS estimates rely directly on collected state-level
+consumption data. For example, SEDS uses state-level sales survey data
+and other proxies of consumption to allocate the national petroleum
+product supplied totals to the states. The sums of the state estimates
+equal the national totals as closely as possible for each energy type
+and end-use sector, and energy consumption estimates are generally
+comparable to the national statistics in EIA's MER because both data
+sets rely largely on the same survey returns for producers and
+consumers.
 
-However, the totals across all states (and the District of Columbia) from SEDS do not always match the U.S. total energy data used in the national Inventory, which is based on the EIA February 2023 MER estimates (EIA 2023b). The main differences are for coal and natural gas and primarily in the industrial sector, as shown in Figure 2-2 below. For coal, there are differences in both energy content and short tons, but the differences are not consistent across time or sectors. For natural gas, the difference is mainly in the energy content. The reason for the differences is that SEDS uses state-level energy content conversion factors for coal and natural gas, while the MER uses national-level conversion factors. These different calculations sometimes cause the sums of the SEDS states to be different than the MER values. Although the percentage differences are not large (max 5.2% for coal and 1.4% for natural gas in the industrial sector), they cause noticeable differences when comparing emissions totals across all states to national totals, especially by sector.
+However, the totals across all states (and the District of Columbia)
+from SEDS do not always match the U.S. total energy data used in the
+national Inventory, which is based on the EIA February 2023 MER
+estimates (EIA 2023b). The main differences are for coal and natural gas
+and primarily in the industrial sector, as shown in Figure 2-2 below.
+For coal, there are differences in both energy content and short tons,
+but the differences are not consistent across time or sectors. For
+natural gas, the difference is mainly in the energy content. The reason
+for the differences is that SEDS uses state-level energy content
+conversion factors for coal and natural gas, while the MER uses
+national-level conversion factors. These different calculations
+sometimes cause the sums of the SEDS states to be different than the MER
+values. Although the percentage differences are not large (max 5.2% for
+coal and 1.4% for natural gas in the industrial sector), they cause
+noticeable differences when comparing emissions totals across all states
+to national totals, especially by sector.
 
 ```{r plots2, fig.dim = c(16, 12), dpi=300, out.width = '100%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -119,7 +274,19 @@ state_ffc_figures$fig_2_2
 
 ```
 
-The petroleum categories generally line up well across state-level and national totals. There are only minor differences in petroleum coke, mainly in the industrial sector, as shown in Figure 2-3 below. For petroleum coke, there are differences in energy content and barrels, but the difference in energy content appears in 2004, which is when petroleum coke heating values were changed from a constant value to values based on marketable and catalyst coke. Again, this difference is because of different national-level and state-level conversion factors. Since 2004, the MER has used an annual national-level "quantity-weighted" average petroleum coke conversion factor (instead of a fixed factor). SEDS applies the marketable and catalyst coke conversion factors to the state-level consumption of each petroleum coke category within each state.
+The petroleum categories generally line up well across state-level and
+national totals. There are only minor differences in petroleum coke,
+mainly in the industrial sector, as shown in Figure 2-3 below. For
+petroleum coke, there are differences in energy content and barrels, but
+the difference in energy content appears in 2004, which is when
+petroleum coke heating values were changed from a constant value to
+values based on marketable and catalyst coke. Again, this difference is
+because of different national-level and state-level conversion factors.
+Since 2004, the MER has used an annual national-level
+"quantity-weighted" average petroleum coke conversion factor (instead of
+a fixed factor). SEDS applies the marketable and catalyst coke
+conversion factors to the state-level consumption of each petroleum coke
+category within each state.
 
 </div>
 
@@ -130,9 +297,22 @@ state_ffc_figures$fig_2_3
 
 ```
 
-For diesel fuel and gasoline, the totals generally line up, but there are differences across sectors. These differences are discussed in Step 5 below. \newline
+For diesel fuel and gasoline, the totals generally line up, but there
+are differences across sectors. These differences are discussed in Step
+5 below. \newline
 
-In addition to the differences in gasoline and diesel fuel across sectors over the time series, there are also differences in some petroleum fuels across sectors, specifically in 2021. This is because the SEDS represents the latest data from EIA in terms of sector breakouts that were not reflected in the national Inventory 2021 values that relied on older EIA data. Again, the totals for the fuels line up, but there are differences across sectors, as shown in Figure 2-4 below. The updated SEDS data were used in the state-level breakout because they represent the latest data available. This results in differences in 2021 results across sectors for the state totals versus the national Inventory. However, the national Inventory numbers will be updated to match the 2021 SEDS data during the next national Inventory cycle.
+In addition to the differences in gasoline and diesel fuel across
+sectors over the time series, there are also differences in some
+petroleum fuels across sectors, specifically in 2021. This is because
+the SEDS represents the latest data from EIA in terms of sector
+breakouts that were not reflected in the national Inventory 2021 values
+that relied on older EIA data. Again, the totals for the fuels line up,
+but there are differences across sectors, as shown in Figure 2-4 below.
+The updated SEDS data were used in the state-level breakout because they
+represent the latest data available. This results in differences in 2021
+results across sectors for the state totals versus the national
+Inventory. However, the national Inventory numbers will be updated to
+match the 2021 SEDS data during the next national Inventory cycle.
 
 ```{r plots4, fig.dim = c(4, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -142,25 +322,79 @@ state_ffc_figures$fig_2_4
 
 ```
 
-Furthermore, some of the fuel use reported in SEDS is different from the reporting in the national Inventory. For example, natural gas reported in SEDS includes supplemental gas, which is included in the national Inventory under the primary fuel used to make the supplemental gas, so including supplemental gas in state level results would result in double counting. Liquefied petroleum gas (LPG) in SEDS is reported differently over time, including as total hydrocarbon gas liquids (HGLs) that include natural gasoline and as a mix of different gases. Natural gasoline (called pentanes plus in the national Inventory) is accounted for separately from other HGLs in the national Inventory. Gasoline and distillate fuels in SEDS include biofuels (fuel ethanol, biodiesel and renewable diesel, and other biofuels are included in the MER but not estimated in SEDS yet), which were reported separately in the national Inventory. These differences make it difficult to use the SEDS data directly to determine state-level fuel use data, in a manner consistent with the national Inventory.
+Furthermore, some of the fuel use reported in SEDS is different from the
+reporting in the national Inventory. For example, natural gas reported
+in SEDS includes supplemental gas, which is included in the national
+Inventory under the primary fuel used to make the supplemental gas, so
+including supplemental gas in state level results would result in double
+counting. Liquefied petroleum gas (LPG) in SEDS is reported differently
+over time, including as total hydrocarbon gas liquids (HGLs) that
+include natural gasoline and as a mix of different gases. Natural
+gasoline (called pentanes plus in the national Inventory) is accounted
+for separately from other HGLs in the national Inventory. Gasoline and
+distillate fuels in SEDS include biofuels (fuel ethanol, biodiesel and
+renewable diesel, and other biofuels are included in the MER but not
+estimated in SEDS yet), which were reported separately in the national
+Inventory. These differences make it difficult to use the SEDS data
+directly to determine state-level fuel use data, in a manner consistent
+with the national Inventory.
 
-Therefore, the following approach was used in determining fuel use by type by sector at the state level:
+Therefore, the following approach was used in determining fuel use by
+type by sector at the state level:
 
-• If SEDS data totals matched the national totals and there were no further adjustments needed (as per Steps 2--7), the SEDS data were used directly to represent state-level energy use.
+• If SEDS data totals matched the national totals and there were no
+further adjustments needed (as per Steps 2--7), the SEDS data were used
+directly to represent state-level energy use.
 
-• For fuels where the SEDS totals did not match the national totals (i.e., coal, natural gas, and petroleum coke), fuel use in each sector was adjusted to match the national totals used in the national Inventory. This calculation was based on the percentage of each fuel used in each state from the SEDS data. For the industrial sector, this adjustment was made after subtracting for uses in the IPPU sector (see Step 2 below).
+• For fuels where the SEDS totals did not match the national totals
+(i.e., coal, natural gas, and petroleum coke), fuel use in each sector
+was adjusted to match the national totals used in the national
+Inventory. This calculation was based on the percentage of each fuel
+used in each state from the SEDS data. For the industrial sector, this
+adjustment was made after subtracting for uses in the IPPU sector (see
+Step 2 below).
 
-• For other fuels where sector totals did not match up (e.g., gasoline and diesel fuel), totals for each fuel type were generally taken from the national Inventory (see Step 5), and the SEDS data or other proxy data sources were used to determine state-level percentages of each fuel use.
+• For other fuels where sector totals did not match up (e.g., gasoline
+and diesel fuel), totals for each fuel type were generally taken from
+the national Inventory (see Step 5), and the SEDS data or other proxy
+data sources were used to determine state-level percentages of each fuel
+use.
 
-This approach generally results in state-level energy use data that are consistent with national totals used in the national Inventory. More details on further adjustments made during the different steps are discussed below.
+This approach generally results in state-level energy use data that are
+consistent with national totals used in the national Inventory. More
+details on further adjustments made during the different steps are
+discussed below.
 
-Appendix A has details on how the SEDS data were adjusted to determine state-level energy use by fuel type and sector. Tables A-2 through A-6 in the "FFC CO2 Residential" Tab describe the residential sector adjustments. Tables A-9 through A-13 in the "FFC CO2 Commercial" Tab describe the commercial sector adjustments. Tables A-44 through A-47 in the "FFC CO2 Industrial" Tab describe the industrial sector adjustments for petroleum coke and HGL; the remaining industrial sector adjustments are described further in Steps 2 and 3 below. Tables A-50 and A-51 in the "FFC CO2 Transportation" Tab describe the transportation sector adjustments. Tables A-52 through A-56 in the "FFC CO2 Electricity" Tab describe the electricity production sector adjustments.
+Appendix A has details on how the SEDS data were adjusted to determine
+state-level energy use by fuel type and sector. Tables A-2 through A-6
+in the "FFC CO2 Residential" Tab describe the residential sector
+adjustments. Tables A-9 through A-13 in the "FFC CO2 Commercial" Tab
+describe the commercial sector adjustments. Tables A-44 through A-47 in
+the "FFC CO2 Industrial" Tab describe the industrial sector adjustments
+for petroleum coke and HGL; the remaining industrial sector adjustments
+are described further in Steps 2 and 3 below. Tables A-50 and A-51 in
+the "FFC CO2 Transportation" Tab describe the transportation sector
+adjustments. Tables A-52 through A-56 in the "FFC CO2 Electricity" Tab
+describe the electricity production sector adjustments.
 
 ##### 2.1.1.2.3. Step 2: Subtract Uses That Are Accounted for in the IPPU Sector \newline
 
-In the national Inventory, portions of fuel consumption data for several fuel categories (coking coal, other coal, natural gas, residual fuel, and distillate fuel) are reallocated from the energy sector to the sector because these portions were consumed as raw materials during nonenergy-related industrial processes. As per IPCC Guidelines that distinguish between the energy and IPPU sector reporting, emissions from fuels used as raw materials are presented as part of IPPU and are removed from the energy use estimates (IPCC 2006, Volume 3, Chapter 1). Portions of fuel use were therefore subtracted from the industrial sector fuel consumption data before determining combustion emissions. Note that other adjustments were also made to the NEU calculations to reflect energy use accounted for under IPPU; see Step 6 and the NEU emissions discussion below.
+In the national Inventory, portions of fuel consumption data for several
+fuel categories (coking coal, other coal, natural gas, residual fuel,
+and distillate fuel) are reallocated from the energy sector to the
+sector because these portions were consumed as raw materials during
+nonenergy-related industrial processes. As per IPCC Guidelines that
+distinguish between the energy and IPPU sector reporting, emissions from
+fuels used as raw materials are presented as part of IPPU and are
+removed from the energy use estimates (IPCC 2006, Volume 3, Chapter 1).
+Portions of fuel use were therefore subtracted from the industrial
+sector fuel consumption data before determining combustion emissions.
+Note that other adjustments were also made to the NEU calculations to
+reflect energy use accounted for under IPPU; see Step 6 and the NEU
+emissions discussion below.
 
-The adjustments vary over time and represent from about 4% to 8% of total unadjusted industrial sector energy use, as shown in Figure 2-5.
+The adjustments vary over time and represent from about 4% to 8% of
+total unadjusted industrial sector energy use, as shown in Figure 2-5.
 
 ```{r plots5, fig.dim = c(6, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -169,40 +403,239 @@ state_ffc_figures$fig_2_5
 
 ```
 
-Adjustments for each fuel type were made based on industry data or assumptions about fuel use based on emissions reported under IPPU. The following bullets discuss the assumptions made regarding the different industrial sector fuel types at the national and state levels to reflect their use in IPPU:
+Adjustments for each fuel type were made based on industry data or
+assumptions about fuel use based on emissions reported under IPPU. The
+following bullets discuss the assumptions made regarding the different
+industrial sector fuel types at the national and state levels to reflect
+their use in IPPU:
 
-• Coking coal. Coking coal is used to make coke that, in turn, is used in industrial processes. The national total amount of coking coal used in IPPU was back-calculated based on the amount of coking coal needed to make the coke used as input to iron and steel (I&S) and lead and zinc production (approximately 94% is used in I&S). National-level coke use in I&S production was based on industry data that are not available at the state level. Coke used in lead and zinc production was based on the amount of carbon emitted from the processes and Is also not available specifically at the state level. Therefore, the national total amount of coking coal used in IPPU was allocated per state based on the percentage of total coking coal used per state from the SEDS data. This approach assumes that coke use in I&S and lead and zinc production is proportional to the amount of coking coal used in a state. This assumption may not be the case because state-level coking coal use is based on coke production in a given state, not necessarily coke use. The coke could be produced in one state and shipped for use in another state. However, given the lack of specific data, coking coal use was determined to be a good surrogate for coke use within a given state because coke production is often integrated with I&S production where the coke is used. As one further adjustment, if the amount of coking coal used in IPPU was greater than the total coking coal reported in the national energy statistics, the amount of coking coal used in the energy sector results were zeroed out to avoid negative values (this only occurs in 1990, 1991, 1992, and 1997), and additional other coal use was subtracted to make up the difference (see "Other coal" below). Appendix A, Tables A-19 and A-20 in the "FFC CO2 Industrial" Tab, describe the coking coal used in IPPU.
+• Coking coal. Coking coal is used to make coke that, in turn, is used
+in industrial processes. The national total amount of coking coal used
+in IPPU was back-calculated based on the amount of coking coal needed to
+make the coke used as input to iron and steel (I&S) and lead and zinc
+production (approximately 94% is used in I&S). National-level coke use
+in I&S production was based on industry data that are not available at
+the state level. Coke used in lead and zinc production was based on the
+amount of carbon emitted from the processes and Is also not available
+specifically at the state level. Therefore, the national total amount of
+coking coal used in IPPU was allocated per state based on the percentage
+of total coking coal used per state from the SEDS data. This approach
+assumes that coke use in I&S and lead and zinc production is
+proportional to the amount of coking coal used in a state. This
+assumption may not be the case because state-level coking coal use is
+based on coke production in a given state, not necessarily coke use. The
+coke could be produced in one state and shipped for use in another
+state. However, given the lack of specific data, coking coal use was
+determined to be a good surrogate for coke use within a given state
+because coke production is often integrated with I&S production where
+the coke is used. As one further adjustment, if the amount of coking
+coal used in IPPU was greater than the total coking coal reported in the
+national energy statistics, the amount of coking coal used in the energy
+sector results were zeroed out to avoid negative values (this only
+occurs in 1990, 1991, 1992, and 1997), and additional other coal use was
+subtracted to make up the difference (see "Other coal" below). Appendix
+A, Tables A-19 and A-20 in the "FFC CO2 Industrial" Tab, describe the
+coking coal used in IPPU.
 
-• Other coal. Two adjustments were made to account for other coal used in the industrial sector. The first adjustment was to subtract the extra amount of coking coal required for years where the coking coal adjustment was more than the coking coal total (see above). Similar to coking coal, this adjustment was based on the percentage of coking coal consumption per state from SEDS. Appendix A, Tables A-21 and A-22 in the "FFC CO2 Industrial" Tab, describe this adjustment. The second adjustment was to subtract coal directly used in the I&S sector. In addition to being used indirectly to produce coke, coal can be used directly as a process input to I&S production; note that this does not include coal combusted at I&S facilities to produce power. Other national-level coal used in I&S production was based on industry data that are not available at the state level. Therefore, this adjustment was based on the percentage of I&S emissions per state. I&S emissions per state were taken from the IPPU breakout for I&S, as described in Section 3.3.1, and the percentage for basic oxygen furnaces (BOFs) was assumed to best represent other coal use in I&S. BOF emissions were determined to be a good surrogate for other coal direct use in I&S because coal is primarily used in the BOF process and would be proportional to emissions from the process. Appendix A, Table A-24 in the "FFC CO2 Industrial" Tab, describes this adjustment. An IPPU-adjusted other coal total was then calculated by subtracting the adjustments described above (note: this also included the adjustments for conversion of fuels and CO2 exports as described in Step 4 below). Appendix A, Table A-25 in the "FFC CO2 Industrial" Tab, shows this total. The total other coal use was then adjusted to match the total other coal from the national Inventory (as per Step 1); this adjustment was based on the percentage of other coal used after the IPPU adjustment. Appendix A, Table A-26 in the "FFC CO2 Industrial" Tab, describes this adjustment.
+• Other coal. Two adjustments were made to account for other coal used
+in the industrial sector. The first adjustment was to subtract the extra
+amount of coking coal required for years where the coking coal
+adjustment was more than the coking coal total (see above). Similar to
+coking coal, this adjustment was based on the percentage of coking coal
+consumption per state from SEDS. Appendix A, Tables A-21 and A-22 in the
+"FFC CO2 Industrial" Tab, describe this adjustment. The second
+adjustment was to subtract coal directly used in the I&S sector. In
+addition to being used indirectly to produce coke, coal can be used
+directly as a process input to I&S production; note that this does not
+include coal combusted at I&S facilities to produce power. Other
+national-level coal used in I&S production was based on industry data
+that are not available at the state level. Therefore, this adjustment
+was based on the percentage of I&S emissions per state. I&S emissions
+per state were taken from the IPPU breakout for I&S, as described in
+Section 3.3.1, and the percentage for basic oxygen furnaces (BOFs) was
+assumed to best represent other coal use in I&S. BOF emissions were
+determined to be a good surrogate for other coal direct use in I&S
+because coal is primarily used in the BOF process and would be
+proportional to emissions from the process. Appendix A, Table A-24 in
+the "FFC CO2 Industrial" Tab, describes this adjustment. An
+IPPU-adjusted other coal total was then calculated by subtracting the
+adjustments described above (note: this also included the adjustments
+for conversion of fuels and CO2 exports as described in Step 4 below).
+Appendix A, Table A-25 in the "FFC CO2 Industrial" Tab, shows this
+total. The total other coal use was then adjusted to match the total
+other coal from the national Inventory (as per Step 1); this adjustment
+was based on the percentage of other coal used after the IPPU
+adjustment. Appendix A, Table A-26 in the "FFC CO2 Industrial" Tab,
+describes this adjustment.
 
-• Natural gas. Two adjustments were made to account for natural gas used in the industrial sector. The first adjustment was to subtract the amount of natural gas consumption that was used in ammonia production from energy sector natural gas use. The national-level natural gas used in ammonia production was back- calculated based on assumed CO2 emissions from ammonia production and calculations on the amount of C content in natural gas needed to produce those CO2 emissions. Therefore, the state-level natural gas used for ammonia was based on the percentage of ammonia emissions per state. Ammonia emissions per state were taken from the IPPU breakout for ammonia, as described in Section 3.2.1. Appendix A, Tables A-27 through A-29 in the "FFC CO2 Industrial" Tab, describe this adjustment. The second adjustment was to subtract natural gas directly used in I&S. National-level natural gas used in I&S production was based on industry data that are not available at the state level. Therefore, similar to other coal, the adjustment was based on the percentage of I&S emissions per state from the IPPU breakout for I&S, as described in Section 3.3.1, and the percentage for BOFs was assumed to best represent natural gas use in I&S. Similar to other coal direct use, BOF emissions were determined to be a good surrogate for natural gas direct use in I&S. Appendix A, Table A-30 in the "FFC CO2 Industrial" Tab, describes this adjustment. An IPPU-adjusted natural gas total was then calculated by subtracting the adjustments described above. Appendix A, Table A-31 in the "FFC CO2 Industrial" Tab, shows this total. The total natural gas use was then adjusted to match the total natural gas use from the national Inventory (as per Step 1); this adjustment was based on the percentage of natural gas used after the IPPU adjustment. Appendix A, Table A-32 in the "FFC CO2 Industrial" Tab, describes this adjustment.
+• Natural gas. Two adjustments were made to account for natural gas used
+in the industrial sector. The first adjustment was to subtract the
+amount of natural gas consumption that was used in ammonia production
+from energy sector natural gas use. The national-level natural gas used
+in ammonia production was back- calculated based on assumed CO2
+emissions from ammonia production and calculations on the amount of C
+content in natural gas needed to produce those CO2 emissions. Therefore,
+the state-level natural gas used for ammonia was based on the percentage
+of ammonia emissions per state. Ammonia emissions per state were taken
+from the IPPU breakout for ammonia, as described in Section 3.2.1.
+Appendix A, Tables A-27 through A-29 in the "FFC CO2 Industrial" Tab,
+describe this adjustment. The second adjustment was to subtract natural
+gas directly used in I&S. National-level natural gas used in I&S
+production was based on industry data that are not available at the
+state level. Therefore, similar to other coal, the adjustment was based
+on the percentage of I&S emissions per state from the IPPU breakout for
+I&S, as described in Section 3.3.1, and the percentage for BOFs was
+assumed to best represent natural gas use in I&S. Similar to other coal
+direct use, BOF emissions were determined to be a good surrogate for
+natural gas direct use in I&S. Appendix A, Table A-30 in the "FFC CO2
+Industrial" Tab, describes this adjustment. An IPPU-adjusted natural gas
+total was then calculated by subtracting the adjustments described
+above. Appendix A, Table A-31 in the "FFC CO2 Industrial" Tab, shows
+this total. The total natural gas use was then adjusted to match the
+total natural gas use from the national Inventory (as per Step 1); this
+adjustment was based on the percentage of natural gas used after the
+IPPU adjustment. Appendix A, Table A-32 in the "FFC CO2 Industrial" Tab,
+describes this adjustment.
 
-• Residual fuel. The residual fuel use was adjusted to subtract the amount of residual fuel used in carbon black production. Carbon black was the only IPPU use of residual oil. The national-level residual oil used in IPPU was based on NEUs of residual oil from EIA data, which are not available at the state level. Therefore, the residual oil IPPU state-level adjustment was based on the percentage of carbon black emissions per state. Carbon black emissions per state were taken from the IPPU breakout for petrochemicals, as described in Section 3.2.9, and the percentage for carbon black specifically was used. Carbon black emissions were determined to be a good surrogate for residual oil use because the emissions from carbon black production would be directly proportional to residual oil use. Appendix A, Tables A-33 and A-34 in the "FFC CO2 Industrial" Tab, describe this adjustment. An IPPU-adjusted residual fuel total was then calculated. Appendix A, Table A-35 in the "FFC CO2 Industrial" Tab, shows this total. The total residual fuel use was then adjusted to match the total residual fuel from the national Inventory (similar to what was done for coal and natural gas in Step 1); this adjustment was based on the percentage of residual fuel used after the IPPU adjustment. After the adjustment, the residual fuel use summed across states did not match the national totals anymore (likely due to the distribution of adjustment based on petrochemical production, which resulted in negative emissions in some states that were then zeroed out). Appendix A, Table A-36 in the "FFC CO2 Industrial" Tab, describes this adjustment.
+• Residual fuel. The residual fuel use was adjusted to subtract the
+amount of residual fuel used in carbon black production. Carbon black
+was the only IPPU use of residual oil. The national-level residual oil
+used in IPPU was based on NEUs of residual oil from EIA data, which are
+not available at the state level. Therefore, the residual oil IPPU
+state-level adjustment was based on the percentage of carbon black
+emissions per state. Carbon black emissions per state were taken from
+the IPPU breakout for petrochemicals, as described in Section 3.2.9, and
+the percentage for carbon black specifically was used. Carbon black
+emissions were determined to be a good surrogate for residual oil use
+because the emissions from carbon black production would be directly
+proportional to residual oil use. Appendix A, Tables A-33 and A-34 in
+the "FFC CO2 Industrial" Tab, describe this adjustment. An IPPU-adjusted
+residual fuel total was then calculated. Appendix A, Table A-35 in the
+"FFC CO2 Industrial" Tab, shows this total. The total residual fuel use
+was then adjusted to match the total residual fuel from the national
+Inventory (similar to what was done for coal and natural gas in Step 1);
+this adjustment was based on the percentage of residual fuel used after
+the IPPU adjustment. After the adjustment, the residual fuel use summed
+across states did not match the national totals anymore (likely due to
+the distribution of adjustment based on petrochemical production, which
+resulted in negative emissions in some states that were then zeroed
+out). Appendix A, Table A-36 in the "FFC CO2 Industrial" Tab, describes
+this adjustment.
 
-• Distillate fuel. Distillate fuel use was adjusted to subtract the amount of distillate fuel directly used in I&S production. National-level diesel fuel used in I&S production was based on industry data that are not available at the state level. Therefore, similar to other coal and natural gas direct use in I&S, the adjustment was based on the percentage of I&S emissions per state from the IPPU breakout for I&S, as described in Section 3.3.1, and the percentage for BOFs was assumed to best represent distillate fuel use. Similar to other coal and natural gas direct use in I&S, BOF emissions were determined to be a good surrogate for diesel fuel direct use in I&S. Appendix A, Tables A-37 and A-38 in the "FFC CO2 Industrial" Tab, describe this adjustment. An IPPU-adjusted distillate fuel total was then calculated. Appendix A, Table A-39 in the "FFC CO2 Industrial" Tab, shows this total. This total was adjusted further based on reallocation of diesel fuel use across sectors, as shown in Step 5 below.
+• Distillate fuel. Distillate fuel use was adjusted to subtract the
+amount of distillate fuel directly used in I&S production.
+National-level diesel fuel used in I&S production was based on industry
+data that are not available at the state level. Therefore, similar to
+other coal and natural gas direct use in I&S, the adjustment was based
+on the percentage of I&S emissions per state from the IPPU breakout for
+I&S, as described in Section 3.3.1, and the percentage for BOFs was
+assumed to best represent distillate fuel use. Similar to other coal and
+natural gas direct use in I&S, BOF emissions were determined to be a
+good surrogate for diesel fuel direct use in I&S. Appendix A, Tables
+A-37 and A-38 in the "FFC CO2 Industrial" Tab, describe this adjustment.
+An IPPU-adjusted distillate fuel total was then calculated. Appendix A,
+Table A-39 in the "FFC CO2 Industrial" Tab, shows this total. This total
+was adjusted further based on reallocation of diesel fuel use across
+sectors, as shown in Step 5 below.
 
 ##### 2.1.1.2.4. Step 3: Adjust for Biofuels and Petroleum Denaturant \newline
 
-Fuel consumption estimates used for CO2 calculations were adjusted downward to exclude fuels with biogenic origins consistent with the IPCC Guidelines. CO2 emissions from ethanol and biodiesel consumption are not included in fuel combustion totals in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations to avoid double counting with net carbon fluxes from changes in biogenic carbon reservoirs accounted for in the estimates for LULUCF. CO2 emissions from biogenic fuels under fuel combustion are estimated separately and reported as memo items for informational purposes under the energy sector. Furthermore, for several years of the time series, denaturant used in ethanol production was double counted in both transportation and industrial sector energy use statistics. It was therefore subtracted from transportation sector energy use to avoid double counting. Fuels with biogenic origins (ethanol and biodiesel) and ethanol denaturant adjustments at the state level are handled by adjusting gasoline and diesel fuel use based on the total non-biogenic components of those fuels only (which also include any adjustments for denaturant), as described in Step 5 below. So, in effect, the state-level energy use calculations used to determine FFC emissions for gasoline and diesel fuel combine this Step 3 with Step 5 below. See Section 2.1.6 for more detail on biofuel use at the state level used to calculate biomass CO2 as a memo item.
+Fuel consumption estimates used for CO2 calculations were adjusted
+downward to exclude fuels with biogenic origins consistent with the IPCC
+Guidelines. CO2 emissions from ethanol and biodiesel consumption are not
+included in fuel combustion totals in line with the 2006 IPCC Guidelines
+and UNFCCC reporting obligations to avoid double counting with net
+carbon fluxes from changes in biogenic carbon reservoirs accounted for
+in the estimates for LULUCF. CO2 emissions from biogenic fuels under
+fuel combustion are estimated separately and reported as memo items for
+informational purposes under the energy sector. Furthermore, for several
+years of the time series, denaturant used in ethanol production was
+double counted in both transportation and industrial sector energy use
+statistics. It was therefore subtracted from transportation sector
+energy use to avoid double counting. Fuels with biogenic origins
+(ethanol and biodiesel) and ethanol denaturant adjustments at the state
+level are handled by adjusting gasoline and diesel fuel use based on the
+total non-biogenic components of those fuels only (which also include
+any adjustments for denaturant), as described in Step 5 below. So, in
+effect, the state-level energy use calculations used to determine FFC
+emissions for gasoline and diesel fuel combine this Step 3 with Step 5
+below. See Section 2.1.6 for more detail on biofuel use at the state
+level used to calculate biomass CO2 as a memo item.
 
 ##### 2.1.1.2.5. Step 4: Adjust for Biofuels and Petroleum Denaturant \newline
 
-Since October 2000, the Dakota Gasification Plant has been exporting CO2 produced in a coal gasification process to Canada by pipeline. Because this CO2 is not emitted to the atmosphere in the United States, the coal that is gasified to create the exported CO2 is subtracted from fuel consumption statistics used to calculate combustion emissions in the national Inventory. Consistent with the approach currently used in the national Inventory, the coal used to produce exported CO2 from the Dakota gas plant to Canada was subtracted from other coal use to determine state-level emissions. This was all assumed to be subtracted from North Dakota, the location of the Dakota gas plant. Appendix A, Table A-23 in the "FFC CO2 Industrial" Tab, describes this adjustment.
+Since October 2000, the Dakota Gasification Plant has been exporting CO2
+produced in a coal gasification process to Canada by pipeline. Because
+this CO2 is not emitted to the atmosphere in the United States, the coal
+that is gasified to create the exported CO2 is subtracted from fuel
+consumption statistics used to calculate combustion emissions in the
+national Inventory. Consistent with the approach currently used in the
+national Inventory, the coal used to produce exported CO2 from the
+Dakota gas plant to Canada was subtracted from other coal use to
+determine state-level emissions. This was all assumed to be subtracted
+from North Dakota, the location of the Dakota gas plant. Appendix A,
+Table A-23 in the "FFC CO2 Industrial" Tab, describes this adjustment.
 
 ##### 2.1.1.2.6. Step 5: Adjust Sectoral Allocation of Distillate Fuel Oil and Motor Gasoline \newline
 
-In the national Inventory, portions of fuel consumption data for several fuel categories (coking coal, other coal, natural gas, residual fuel, and distillate fuel) are reallocated from the energy sector to the sector because these portions were consumed as raw materials during nonenergy-related industrial processes. As per IPCC Guidelines that distinguish between the energy and IPPU sector reporting, emissions from fuels used as raw materials are presented as part of IPPU and are removed from the energy use estimates (IPCC 2006, Volume 3, Chapter 1). Portions of fuel use were therefore subtracted from the industrial sector fuel consumption data before determining combustion emissions. Note that other adjustments were also made to the NEU calculations to reflect energy use accounted for under IPPU; see Step 6 and the NEU emissions discussion below.
+In the national Inventory, portions of fuel consumption data for several
+fuel categories (coking coal, other coal, natural gas, residual fuel,
+and distillate fuel) are reallocated from the energy sector to the
+sector because these portions were consumed as raw materials during
+nonenergy-related industrial processes. As per IPCC Guidelines that
+distinguish between the energy and IPPU sector reporting, emissions from
+fuels used as raw materials are presented as part of IPPU and are
+removed from the energy use estimates (IPCC 2006, Volume 3, Chapter 1).
+Portions of fuel use were therefore subtracted from the industrial
+sector fuel consumption data before determining combustion emissions.
+Note that other adjustments were also made to the NEU calculations to
+reflect energy use accounted for under IPPU; see Step 6 and the NEU
+emissions discussion below.
 
-Motor gasoline and diesel fuel are used across all sectors. The total amount of motor gasoline and diesel fuel consumed as reported in the MER is based on petroleum supply data from refineries. Gasoline use is allocated across the sectors in proportion to aggregations of categories reported in the U.S. Department of Transportation's Federal Highway Administration (FHWA) highway statistics data (FHWA 1996--2021).14 Diesel fuel use is allocated to the electric power sector based on industry surveys. The remaining diesel fuel use is allocated across the remaining sectors in a similar way to gasoline use based on sales data to different categories. Through 2020, the allocation was based on data from EIA's fuel oil and kerosene sales (FOKS) data (EIA 2022). EIA suspended the FOKS report after data year 2020. Starting in 2021, diesel fuel use is allocated to sectors based on data from SEDS. For 2021 forward, SEDS uses several external sources, regressions, and historical sector and state shares to estimate the data that were in the FOKS report. For the national Inventory, data are needed on fuel use by vehicle type to determine emissions, so a bottom-up method is used to estimate transportation sector gasoline and diesel fuel use. The national Inventory determines gasoline and diesel fuel use by vehicle type based on FHWA data and outputs from EPA's MOtor Vehicle Emissions Simulator (MOVES) model (EPA 2022). The national Inventory then allocates the remaining fuel use to the remaining sectors based on the proportions in the EIA data. The differences in the EIA and national Inventory gasoline and diesel fuel allocation approach across sectors are shown below in Figure 2-6 and Figure 2-7, including information on the categories of use included in each sector and data for 2021 as an example.
+Motor gasoline and diesel fuel are used across all sectors. The total
+amount of motor gasoline and diesel fuel consumed as reported in the MER
+is based on petroleum supply data from refineries. Gasoline use is
+allocated across the sectors in proportion to aggregations of categories
+reported in the U.S. Department of Transportation's Federal Highway
+Administration (FHWA) highway statistics data (FHWA 1996--2021).14
+Diesel fuel use is allocated to the electric power sector based on
+industry surveys. The remaining diesel fuel use is allocated across the
+remaining sectors in a similar way to gasoline use based on sales data
+to different categories. Through 2020, the allocation was based on data
+from EIA's fuel oil and kerosene sales (FOKS) data (EIA 2022). EIA
+suspended the FOKS report after data year 2020. Starting in 2021, diesel
+fuel use is allocated to sectors based on data from SEDS. For 2021
+forward, SEDS uses several external sources, regressions, and historical
+sector and state shares to estimate the data that were in the FOKS
+report. For the national Inventory, data are needed on fuel use by
+vehicle type to determine emissions, so a bottom-up method is used to
+estimate transportation sector gasoline and diesel fuel use. The
+national Inventory determines gasoline and diesel fuel use by vehicle
+type based on FHWA data and outputs from EPA's MOtor Vehicle Emissions
+Simulator (MOVES) model (EPA 2022). The national Inventory then
+allocates the remaining fuel use to the remaining sectors based on the
+proportions in the EIA data. The differences in the EIA and national
+Inventory gasoline and diesel fuel allocation approach across sectors
+are shown below in Figure 2-6 and Figure 2-7, including information on
+the categories of use included in each sector and data for 2021 as an
+example.
 
-^[FHWA forms MF-21 and MF-24 are used in the calculations. For 2021, form MF-24 is not available yet, so values for 2020 
-were used in the calculations shown.]
+[^4]
+
+[^4]: FHWA forms MF-21 and MF-24 are used in the calculations. For 2021,
+    form MF-24 is not available yet, so values for 2020 were used in the
+    calculations shown.
 
 INFOGRAPHIC 2-6
 
 INFOGRAPHIC 2-7
 
-The bottom-up approach used by the national Inventory to determine transportation sector fuel use generally results in less allocation of gasoline to the transportation sector (and more to other sectors) and more diesel fuel allocated to the transportation sector (and less to other sectors) compared with the original MER energy balance data, as shown below in Figure 2-8.
+The bottom-up approach used by the national Inventory to determine
+transportation sector fuel use generally results in less allocation of
+gasoline to the transportation sector (and more to other sectors) and
+more diesel fuel allocated to the transportation sector (and less to
+other sectors) compared with the original MER energy balance data, as
+shown below in Figure 2-8.
 
 ```{r plots8, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-8. Comparison of Transportation Sector Fuel Use.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -211,16 +644,69 @@ state_ffc_figures$fig_2_8
 
 ```
 
-The national-level data on gasoline and diesel fuel use by vehicle type used in the bottom-up analysis was not readily available at the state level. Therefore, the following assumptions and adjustments were made to distillate fuel and motor gasoline consumption at the state level across the different sectors to reflect the national Inventory bottom-up transportation fuel use approach:
+The national-level data on gasoline and diesel fuel use by vehicle type
+used in the bottom-up analysis was not readily available at the state
+level. Therefore, the following assumptions and adjustments were made to
+distillate fuel and motor gasoline consumption at the state level across
+the different sectors to reflect the national Inventory bottom-up
+transportation fuel use approach:
 
-• Transportation sector. The total amount of distillate fuel and motor gasoline used in the transportation sector was taken from the national Inventory totals (these totals already subtract biofuel use, subtract denaturants if needed, and are based on multiple factors to determine transportation sector fuel use). This total amount of distillate fuel and motor gasoline use and emissions was allocated across states based on the percentage of fuel use by state in gallons from FHWA data (FHWA 2021a, 2021b). For distillate fuel, the total was based on FHWA form MF-225, and the motor gasoline total was based on FHWA form MF-226, both of which have time series of fuel use by state. Appendix A, Tables A-48 and A-49 in the "FFC CO2 Transportation" Tab, describe this adjustment. The FHWA data reflect on-highway fuel use, but, as seen in Figure 2-6 and Figure 2-7 above, the transportation sector fuel use includes some mobile sources that are considered off-highway (e.g., recreational boating, railroads). However, because the majority of the motor gasoline and diesel fuel use is for on-highway purposes, using FHWA data to allocate transportation sector fuel use to the state level is reasonable. Note that FHWA state-level fuel consumption data are representative of the point-of-sale and not the point-of-use, so fuel sold in one state that may be combusted in other states is assigned to the state where the fuel was purchased. This approach is consistent with IPCC Guidelines (IPCC 2006) for country-level reporting that indicate that "where cross-border transfers take place in vehicle tanks, emissions from road vehicles should be attributed to the country where the fuel is loaded into the vehicle." Therefore, when applying the IPCC approach to the state-level inventory, vehicle emissions are attributed to the state where the vehicle fuel is sold. This approach could introduce some differences in state-level transportation sector fuel use and emissions allocations reported here and those reported by individual states. For example, in addition to fuel sales data, state-level vehicle miles traveled (VMT) data are another potential surrogate for allocating fuel use to the state level, but that approach does not account for vehicle and fleet fuel economy variability between states. EPA will consider alternative or complementary approaches to allocate transportation fuel across states, including VMT data and other sources. For example, the National Emissions Inventory (NEI) uses county-level fleet and activity data to generate a bottom-up inventory (EPA 2017).Figure 2-9 shows the transportation sector emissions in 2020 from the top 10 emitting states using different allocation approaches. As seen in the figure, the approach used will lead to different allocations across states.
+• Transportation sector. The total amount of distillate fuel and motor
+gasoline used in the transportation sector was taken from the national
+Inventory totals (these totals already subtract biofuel use, subtract
+denaturants if needed, and are based on multiple factors to determine
+transportation sector fuel use). This total amount of distillate fuel
+and motor gasoline use and emissions was allocated across states based
+on the percentage of fuel use by state in gallons from FHWA data (FHWA
+2021a, 2021b). For distillate fuel, the total was based on FHWA form
+MF-225, and the motor gasoline total was based on FHWA form MF-226, both
+of which have time series of fuel use by state. Appendix A, Tables A-48
+and A-49 in the "FFC CO2 Transportation" Tab, describe this adjustment.
+The FHWA data reflect on-highway fuel use, but, as seen in Figure 2-6
+and Figure 2-7 above, the transportation sector fuel use includes some
+mobile sources that are considered off-highway (e.g., recreational
+boating, railroads). However, because the majority of the motor gasoline
+and diesel fuel use is for on-highway purposes, using FHWA data to
+allocate transportation sector fuel use to the state level is
+reasonable. Note that FHWA state-level fuel consumption data are
+representative of the point-of-sale and not the point-of-use, so fuel
+sold in one state that may be combusted in other states is assigned to
+the state where the fuel was purchased. This approach is consistent with
+IPCC Guidelines (IPCC 2006) for country-level reporting that indicate
+that "where cross-border transfers take place in vehicle tanks,
+emissions from road vehicles should be attributed to the country where
+the fuel is loaded into the vehicle." Therefore, when applying the IPCC
+approach to the state-level inventory, vehicle emissions are attributed
+to the state where the vehicle fuel is sold. This approach could
+introduce some differences in state-level transportation sector fuel use
+and emissions allocations reported here and those reported by individual
+states. For example, in addition to fuel sales data, state-level vehicle
+miles traveled (VMT) data are another potential surrogate for allocating
+fuel use to the state level, but that approach does not account for
+vehicle and fleet fuel economy variability between states. EPA will
+consider alternative or complementary approaches to allocate
+transportation fuel across states, including VMT data and other sources.
+For example, the National Emissions Inventory (NEI) uses county-level
+fleet and activity data to generate a bottom-up inventory (EPA
+2017).Figure 2-9 shows the transportation sector emissions in 2020 from
+the top 10 emitting states using different allocation approaches. As
+seen in the figure, the approach used will lead to different allocations
+across states.
 
-^[Note the NEI uses a bottom-up method for determining transportation sector fuel use and emissions based on VMT and 
-assumed vehicle fleet fuel efficiency at the county level through the MOVES model. However, applying that approach across all 
-states could lead to differences with national totals. The approach used here is to allocate national totals to states and not 
-perform a bottom-up analysis for each state.]
+[^5]
 
-^[2020 is shown because that is the latest year of NEI data that are produced every three years.]
+[^5]: Note the NEI uses a bottom-up method for determining
+    transportation sector fuel use and emissions based on VMT and
+    assumed vehicle fleet fuel efficiency at the county level through
+    the MOVES model. However, applying that approach across all states
+    could lead to differences with national totals. The approach used
+    here is to allocate national totals to states and not perform a
+    bottom-up analysis for each state.
+
+[^6]
+
+[^6]: 2020 is shown because that is the latest year of NEI data that are
+    produced every three years.
 
 ```{r plots9, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-9. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -229,19 +715,75 @@ perform a bottom-up analysis for each state.]
 
 ```
 
-Residential sector. The total amount of distillate fuel used in the residential sector was taken from the national Inventory totals. It was allocated across states based on the percentage of existing fuel use in the residential sector per state from SEDS. Appendix A, Tables A-7 and A-8 in the "FFC CO2 Residential" Tab, describe this adjustment. Based on the reallocation of sector fuel use, the residential sector fuel use from the national Inventory is different from the value in SEDS; therefore, the state-level allocation from SEDS may not represent exactly the fuel values from the national Inventory. However, residential sector fuel use represented by the national Inventory should be consistent with what is included in SEDS (e.g., home heating); therefore, the SEDS state-level breakout is assumed to be representative.
+Residential sector. The total amount of distillate fuel used in the
+residential sector was taken from the national Inventory totals. It was
+allocated across states based on the percentage of existing fuel use in
+the residential sector per state from SEDS. Appendix A, Tables A-7 and
+A-8 in the "FFC CO2 Residential" Tab, describe this adjustment. Based on
+the reallocation of sector fuel use, the residential sector fuel use
+from the national Inventory is different from the value in SEDS;
+therefore, the state-level allocation from SEDS may not represent
+exactly the fuel values from the national Inventory. However,
+residential sector fuel use represented by the national Inventory should
+be consistent with what is included in SEDS (e.g., home heating);
+therefore, the SEDS state-level breakout is assumed to be
+representative.
 
-• Commercial sector. The total amount of distillate fuel and motor gasoline used in the commercial sector was taken from the national Inventory totals. It was allocated across states based on the percentage of existing fuel use in the commercial sector per state from SEDS. Appendix A, Tables A-14 to A-18 in the "FFC CO2 Commercial" Tab, describe this adjustment. Based on the reallocation of sector fuel use, the commercial sector fuel use from the national Inventory is different from the value in SEDS; therefore, the state-level allocation from SEDS may not represent the exact fuel values from the national Inventory. However, commercial sector fuel use represented by the national Inventory should be consistent with what is included in SEDS (e.g., construction equipment); therefore, the SEDS state-level breakout is assumed to be representative.
+• Commercial sector. The total amount of distillate fuel and motor
+gasoline used in the commercial sector was taken from the national
+Inventory totals. It was allocated across states based on the percentage
+of existing fuel use in the commercial sector per state from SEDS.
+Appendix A, Tables A-14 to A-18 in the "FFC CO2 Commercial" Tab,
+describe this adjustment. Based on the reallocation of sector fuel use,
+the commercial sector fuel use from the national Inventory is different
+from the value in SEDS; therefore, the state-level allocation from SEDS
+may not represent the exact fuel values from the national Inventory.
+However, commercial sector fuel use represented by the national
+Inventory should be consistent with what is included in SEDS (e.g.,
+construction equipment); therefore, the SEDS state-level breakout is
+assumed to be representative.
 
-• Industrial sector. The total amount of distillate fuel and motor gasoline used in the industrial sector was taken from the national Inventory totals. Distillate fuel was allocated across states based on the percentage of existing fuel use in the industrial sector per state after the IPPU adjustments described in Step 2. Motor gasoline was allocated across states based on the percentage of existing fuel use in the industrial sector per state from SEDS. Appendix A, Tables A-40 and A-43 in the "FFC CO2 Industrial" Tab, describe this adjustment. Based on the reallocation of sector fuel use, the industrial sector fuel use from the national Inventory is different from the value in SEDS; therefore, the state-level allocation from SEDS may not represent the exact fuel values from the national Inventory. However, industrial sector fuel use represented by the national Inventory should be consistent with what is included in SEDS (e.g., process energy use); therefore, the SEDS state-level breakout is assumed to be representative.
+• Industrial sector. The total amount of distillate fuel and motor
+gasoline used in the industrial sector was taken from the national
+Inventory totals. Distillate fuel was allocated across states based on
+the percentage of existing fuel use in the industrial sector per state
+after the IPPU adjustments described in Step 2. Motor gasoline was
+allocated across states based on the percentage of existing fuel use in
+the industrial sector per state from SEDS. Appendix A, Tables A-40 and
+A-43 in the "FFC CO2 Industrial" Tab, describe this adjustment. Based on
+the reallocation of sector fuel use, the industrial sector fuel use from
+the national Inventory is different from the value in SEDS; therefore,
+the state-level allocation from SEDS may not represent the exact fuel
+values from the national Inventory. However, industrial sector fuel use
+represented by the national Inventory should be consistent with what is
+included in SEDS (e.g., process energy use); therefore, the SEDS
+state-level breakout is assumed to be representative.
 
-• Electric power sector. The total amount of distillate fuel used in the electric power sector was taken from the national Inventory totals. It was allocated across states based on the percentage of existing fuel use in the electric power sector per state from SEDS. Appendix A, Tables A-57 and A-58 in the "FFC CO2 Electricity" Tab, describe this adjustment. The electric power sector fuel use was not adjusted in the national Inventory compared with what is represented in SEDS; therefore, the SEDS state-level breakout is considered representative.
+• Electric power sector. The total amount of distillate fuel used in the
+electric power sector was taken from the national Inventory totals. It
+was allocated across states based on the percentage of existing fuel use
+in the electric power sector per state from SEDS. Appendix A, Tables
+A-57 and A-58 in the "FFC CO2 Electricity" Tab, describe this
+adjustment. The electric power sector fuel use was not adjusted in the
+national Inventory compared with what is represented in SEDS; therefore,
+the SEDS state-level breakout is considered representative.
 
 ##### 2.1.1.2.7. Step 6: Subtract Consumption for NEU \newline
 
-The energy statistics include consumption of fossil fuels for nonenergy purposes. Most fossil fuels consumed are combusted to produce heat and power. However, some are used directly for NEU as construction materials, chemical feedstocks, lubricants, solvents, and waxes.17 For example, asphalt and road oil are used for roofing and paving, and hydrocarbon gas liquids are used to create intermediate products. In the national Inventory, emissions from these NEUs are estimated separately under the Carbon Emitted and Stored in Products from NEUs source category. Therefore, the amount of fuels used for nonenergy purposes needs to be subtracted from fuel consumption data for determining combustion emissions. 
+The energy statistics include consumption of fossil fuels for nonenergy
+purposes. Most fossil fuels consumed are combusted to produce heat and
+power. However, some are used directly for NEU as construction
+materials, chemical feedstocks, lubricants, solvents, and waxes.17 For
+example, asphalt and road oil are used for roofing and paving, and
+hydrocarbon gas liquids are used to create intermediate products. In the
+national Inventory, emissions from these NEUs are estimated separately
+under the Carbon Emitted and Stored in Products from NEUs source
+category. Therefore, the amount of fuels used for nonenergy purposes
+needs to be subtracted from fuel consumption data for determining
+combustion emissions.
 
-The adjustments vary over time and represent about 25% to 30% of total unadjusted industrial sector energy use, as shown in Figure 2-10.
+The adjustments vary over time and represent about 25% to 30% of total
+unadjusted industrial sector energy use, as shown in Figure 2-10.
 
 ```{r plots10, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-10. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -250,21 +792,96 @@ state_ffc_figures$fig_2_10
 
 ```
 
-Adjustments for each fuel type were made at the national level based on data and assumptions from EIA as used in the national energy balance. More detail on the amount and types of fuels used for NEU at the national level are shown in Appendix A in the "National 2021 NEU CO2" Tab. The following approaches were taken to determine the amounts of different fuels used for NEUs that needed to be subtracted from energy combustion estimates at the state level. The subtractions were all made in the industrial sector except for lubricants; those subtractions were used in both the industrial and transportation sectors and for NEU from territories. The fuels requiring subtraction are:
+Adjustments for each fuel type were made at the national level based on
+data and assumptions from EIA as used in the national energy balance.
+More detail on the amount and types of fuels used for NEU at the
+national level are shown in Appendix A in the "National 2021 NEU CO2"
+Tab. The following approaches were taken to determine the amounts of
+different fuels used for NEUs that needed to be subtracted from energy
+combustion estimates at the state level. The subtractions were all made
+in the industrial sector except for lubricants; those subtractions were
+used in both the industrial and transportation sectors and for NEU from
+territories. The fuels requiring subtraction are:
 
-• Coking coal. As per the national Inventory, the amount of coking coal used for NEUs was determined to be the total of the adjusted coking coal (after subtracting for IPPU use, per Step 2). Therefore, the state-level totals from Step 2 for coking coal were used to represent NEUs. Appendix A, Table A-59 in the "NEU" Tab, shows this state-level breakout.
+• Coking coal. As per the national Inventory, the amount of coking coal
+used for NEUs was determined to be the total of the adjusted coking coal
+(after subtracting for IPPU use, per Step 2). Therefore, the state-level
+totals from Step 2 for coking coal were used to represent NEUs. Appendix
+A, Table A-59 in the "NEU" Tab, shows this state-level breakout.
 
-• Other coal. The coal used to produce synthetic natural gas at the Eastman gas plant (based on data from the national Inventory) was assumed to be used for chemical feedstock and therefore was accounted for under NEU. This other coal NEU was allocated across states by assuming it all occurred in Tennessee, the location of the Eastman facility. Appendix A, Table A-60 in the "NEU" Tab, shows this state-level breakout.
+• Other coal. The coal used to produce synthetic natural gas at the
+Eastman gas plant (based on data from the national Inventory) was
+assumed to be used for chemical feedstock and therefore was accounted
+for under NEU. This other coal NEU was allocated across states by
+assuming it all occurred in Tennessee, the location of the Eastman
+facility. Appendix A, Table A-60 in the "NEU" Tab, shows this
+state-level breakout.
 
-• Natural gas. The total national-level amount of natural gas used for NEUs was taken from the national Inventory (based on data from EIA) and represents natural gas used for chemical plants and other uses. Natural gas used for NEUs was allocated across states based on the percentage of petrochemical emissions per state. This is an area where there was not any specific data on natural gas used for NEU in chemical plants and other uses by state. Using petrochemical emissions to allocate natural gas NEU use by state was considered a reasonable approach as emissions are a good indication of petrochemical production in a state, and therefore a good indication of how much NEU fuel was used in that state. Petrochemical emissions per state were taken from the IPPU breakout for petrochemicals, as described in Section 3.2.9, and the total percentage for all petrochemicals was used. Appendix A, Table A-61 in the "NEU" Tab, shows this state-level breakout.
+• Natural gas. The total national-level amount of natural gas used for
+NEUs was taken from the national Inventory (based on data from EIA) and
+represents natural gas used for chemical plants and other uses. Natural
+gas used for NEUs was allocated across states based on the percentage of
+petrochemical emissions per state. This is an area where there was not
+any specific data on natural gas used for NEU in chemical plants and
+other uses by state. Using petrochemical emissions to allocate natural
+gas NEU use by state was considered a reasonable approach as emissions
+are a good indication of petrochemical production in a state, and
+therefore a good indication of how much NEU fuel was used in that state.
+Petrochemical emissions per state were taken from the IPPU breakout for
+petrochemicals, as described in Section 3.2.9, and the total percentage
+for all petrochemicals was used. Appendix A, Table A-61 in the "NEU"
+Tab, shows this state-level breakout.
 
-• LPG, pentanes plus, still gas, and petroleum coke. The national-level amount of each of these fuels used for NEUs was taken from the national Inventory (from EIA data) and assumed to be used primarily as chemical feedstocks. The amount of NEUs for each fuel was allocated across states based on the percentage of each total fuel use in the industrial sector per the original state-level data from SEDS. The SEDS data includes NEU and fuel combustion uses of fuel so this approach assumes that the percentage of these fuel products used in NEU applications per state are proportional to the fuel combustion uses of these fuel products in a given state. This assumption was considered reasonable as the fuel combustion and NEU applications of these fuel products are likely to be in the same types of chemical facilities. Appendix A, Tables A-63 through A-65 and Tables A-69 through A-72 in the "NEU" Tab, show these state-level breakouts.
+• LPG, pentanes plus, still gas, and petroleum coke. The national-level
+amount of each of these fuels used for NEUs was taken from the national
+Inventory (from EIA data) and assumed to be used primarily as chemical
+feedstocks. The amount of NEUs for each fuel was allocated across states
+based on the percentage of each total fuel use in the industrial sector
+per the original state-level data from SEDS. The SEDS data includes NEU
+and fuel combustion uses of fuel so this approach assumes that the
+percentage of these fuel products used in NEU applications per state are
+proportional to the fuel combustion uses of these fuel products in a
+given state. This assumption was considered reasonable as the fuel
+combustion and NEU applications of these fuel products are likely to be
+in the same types of chemical facilities. Appendix A, Tables A-63
+through A-65 and Tables A-69 through A-72 in the "NEU" Tab, show these
+state-level breakouts.
 
-• Distillate fuel. The total national-level amount of distillate fuel used for NEUs was taken from the national Inventory (based on data from EIA). Distillate fuel used for NEUs was allocated across states based on the percentage of distillate fuel use in the industrial sector per state after IPPU adjustments described in Step 2. As per the previous group of fuel products, this approach assumed that the percentage of distillate fuel used in NEU applications per state is proportional to fuel combustion uses of distillate fuel in a given state. The national-level data on distillate fuel used in NEU applications are based on industry surveys for nonfuel uses in the chemical industry. Therefore, the assumption that NEUs of distillate fuel are proportional to the total industrial sector amount of distillate fuel use in a given state may not be completely representative because fuel or other uses of distillate fuel in the industrial sector could be very broad. However, it was felt to be a reasonable approach because specific state-level distillate fuel used in NEU applications was not readily available and the percentage of NEUs of distillate fuel was a small fraction of overall industrial sector distillate fuel use (less than 1%). EPA will continue to examine other possible sources for distillate fuel NEU state-level data for future reports. Appendix A, Table A-74 in the "NEU" Tab, shows this state-level breakout.
+• Distillate fuel. The total national-level amount of distillate fuel
+used for NEUs was taken from the national Inventory (based on data from
+EIA). Distillate fuel used for NEUs was allocated across states based on
+the percentage of distillate fuel use in the industrial sector per state
+after IPPU adjustments described in Step 2. As per the previous group of
+fuel products, this approach assumed that the percentage of distillate
+fuel used in NEU applications per state is proportional to fuel
+combustion uses of distillate fuel in a given state. The national-level
+data on distillate fuel used in NEU applications are based on industry
+surveys for nonfuel uses in the chemical industry. Therefore, the
+assumption that NEUs of distillate fuel are proportional to the total
+industrial sector amount of distillate fuel use in a given state may not
+be completely representative because fuel or other uses of distillate
+fuel in the industrial sector could be very broad. However, it was felt
+to be a reasonable approach because specific state-level distillate fuel
+used in NEU applications was not readily available and the percentage of
+NEUs of distillate fuel was a small fraction of overall industrial
+sector distillate fuel use (less than 1%). EPA will continue to examine
+other possible sources for distillate fuel NEU state-level data for
+future reports. Appendix A, Table A-74 in the "NEU" Tab, shows this
+state-level breakout.
 
-• Asphalt and road oil, lubricants (in both the industrial and transportation sectors), naphtha (\<401 °F), other oil (\>401 °F), special naphtha, waxes and miscellaneous products. As per the national Inventory, the total amounts of these fuel products were all assumed to be used in NEUs. Therefore, the total state-level data from SEDS were used to represent NEUs for these fuel products. Appendix A, Tables A-62, A-66 through A-68, A-73, and A-75 through A-77 in the "NEU" Tab, show these state-level breakouts.
+• Asphalt and road oil, lubricants (in both the industrial and
+transportation sectors), naphtha (\<401 °F), other oil (\>401 °F),
+special naphtha, waxes and miscellaneous products. As per the national
+Inventory, the total amounts of these fuel products were all assumed to
+be used in NEUs. Therefore, the total state-level data from SEDS were
+used to represent NEUs for these fuel products. Appendix A, Tables A-62,
+A-66 through A-68, A-73, and A-75 through A-77 in the "NEU" Tab, show
+these state-level breakouts.
 
-Emissions associated with NEUs were calculated and reported separately from FFC emissions. Some further adjustments were made to NEU, and carbon factors were applied; see further discussion in Section 2.1.2 below.
+Emissions associated with NEUs were calculated and reported separately
+from FFC emissions. Some further adjustments were made to NEU, and
+carbon factors were applied; see further discussion in Section 2.1.2
+below.
 
 ```{r plots11, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-11. Adjustments Made to Transportation Sector Energy Use to Account for IBFs.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -272,7 +889,6 @@ state_ffc_figures$fig_2_11
 
 
 ```
-
 
 ```{r plots12, fig.dim = c(8, 6), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -282,12 +898,18 @@ state_ffc_figures$fig_2_12
 
 ```
 
-![Figure 2-13. Mobile Source Non-CO2 Calculation Methodology](images/fig_2-13.png)
+![Figure 2-13. Mobile Source Non-CO2 Calculation
+Methodology](images/fig_2-13.png)
 
-The approach to estimate mobile non-CO2 emissions was to develop state-level estimates by fuel 
-type/category and use those estimates to develop the percentage of emissions by state. The percentage of 
-emissions by state were then applied to the national totals from the national Inventory to disaggregate national totals at the state level. Table 23 shows the default data type and source used in developing the state-level estimates. Appendix A, Tables A-105 through A-116 in the “Mobile non-CO2” Tab, show the percentages of emissions by vehicle type by state that were used in the analysis.
-
+The approach to estimate mobile non-CO2 emissions was to develop
+state-level estimates by fuel type/category and use those estimates to
+develop the percentage of emissions by state. The percentage of
+emissions by state were then applied to the national totals from the
+national Inventory to disaggregate national totals at the state level.
+Table 23 shows the default data type and source used in developing the
+state-level estimates. Appendix A, Tables A-105 through A-116 in the
+“Mobile non-CO2” Tab, show the percentages of emissions by vehicle type
+by state that were used in the analysis.
 
 ```{r table3, echo=FALSE, results='asis'}
 
@@ -296,118 +918,267 @@ state_ffc_tables$table_2_3
 
 ```
 
-from the national Inventory to disaggregate national totals at the state level. The approach above could also 
-overestimate or underestimate state emissions by assuming a national average of vehicle age distribution across 
-states when each state could have a different mix of vehicle fleet age distribution. However, the approach is 
-considered reasonable, and the overall impact of these simplifying assumptions on state emissions is expected to be small.
+from the national Inventory to disaggregate national totals at the state
+level. The approach above could also overestimate or underestimate state
+emissions by assuming a national average of vehicle age distribution
+across states when each state could have a different mix of vehicle
+fleet age distribution. However, the approach is considered reasonable,
+and the overall impact of these simplifying assumptions on state
+emissions is expected to be small.
 
 #### 2.1.1.2.14. Breaking Out Data by Economic Sector
 
-The EIA data used for this analysis report fuel use for five sectors (residential, commercial, industrial, 
-transportation, and electric power). The reporting of emissions at the state level in this analysis also included emissions from FFC in the agriculture economic sector (which is not the case with the agriculture sector as defined by the IPCC). Agriculture sector fuel use at the national level was based on supplementary sources of data because EIA includes agriculture equipment in the industrial fuel-consuming sector. State-level agriculture fuel use estimates were obtained from USDA survey data. Agricultural operations are based on annual energy expense data from the Agricultural Resource Management Survey (ARMS) conducted by the National Agricultural Statistics Service (NASS) of the USDA. NASS uses the annual ARMS to collect information on farm production expenditures, including expenditures on diesel fuel, gasoline, LPG, natural gas, and electricity use. A USDA publication (USDA 2020) shows national totals, as well as select states and ARMS production regions. State estimates were surveyderived for 15 states (Alaska, California, Florida, Georgia, Iowa, Illinois, Indiana, Kansas, Minnesota, Missouri, North Carolina, Nebraska, Texas, Washington, and Wisconsin) and model-derived for the remaining states using data and methods developed by the Economic Research Service of USDA.
+The EIA data used for this analysis report fuel use for five sectors
+(residential, commercial, industrial, transportation, and electric
+power). The reporting of emissions at the state level in this analysis
+also included emissions from FFC in the agriculture economic sector
+(which is not the case with the agriculture sector as defined by the
+IPCC). Agriculture sector fuel use at the national level was based on
+supplementary sources of data because EIA includes agriculture equipment
+in the industrial fuel-consuming sector. State-level agriculture fuel
+use estimates were obtained from USDA survey data. Agricultural
+operations are based on annual energy expense data from the Agricultural
+Resource Management Survey (ARMS) conducted by the National Agricultural
+Statistics Service (NASS) of the USDA. NASS uses the annual ARMS to
+collect information on farm production expenditures, including
+expenditures on diesel fuel, gasoline, LPG, natural gas, and electricity
+use. A USDA publication (USDA 2020) shows national totals, as well as
+select states and ARMS production regions. State estimates were
+surveyderived for 15 states (Alaska, California, Florida, Georgia, Iowa,
+Illinois, Indiana, Kansas, Minnesota, Missouri, North Carolina,
+Nebraska, Texas, Washington, and Wisconsin) and model-derived for the
+remaining states using data and methods developed by the Economic
+Research Service of USDA.
 
-These supplementary data were subtracted from the industrial fuel use reported by EIA to obtain agriculture 
-fuel use. CO2 emissions from FFC as well as CH4 and N2O emissions from stationary and mobile combustion were 
-then apportioned to the agriculture economic sector based on agricultural fuel use.
+These supplementary data were subtracted from the industrial fuel use
+reported by EIA to obtain agriculture fuel use. CO2 emissions from FFC
+as well as CH4 and N2O emissions from stationary and mobile combustion
+were then apportioned to the agriculture economic sector based on
+agricultural fuel use.
 
 ### 2.1.1.3 Uncertainty
 
-The overall uncertainty associated with the 2021 national estimates of CO2 and non-CO2 emissions from FFC 
-was calculated using the 2006 IPCC Guidelines Approach 2 methodology (IPCC 2006). As described further in 
-Chapter 3 and Annex 7 of the national Inventory (EPA 2023), levels of uncertainty in the national estimates in 2020for FFC were −2%/+4% for CO2, −34%/+127% for stationary source CH4, −26%/+51% for stationary source N2O, 
-−4%/+29% for mobile source CH4, and −8%/+19% for mobile source N2O.
+The overall uncertainty associated with the 2021 national estimates of
+CO2 and non-CO2 emissions from FFC was calculated using the 2006 IPCC
+Guidelines Approach 2 methodology (IPCC 2006). As described further in
+Chapter 3 and Annex 7 of the national Inventory (EPA 2023), levels of
+uncertainty in the national estimates in 2020for FFC were −2%/+4% for
+CO2, −34%/+127% for stationary source CH4, −26%/+51% for stationary
+source N2O, −4%/+29% for mobile source CH4, and −8%/+19% for mobile
+source N2O.
 
-The uncertainty estimates for the national Inventory largely account for uncertainty in the magnitude of 
-emissions and consider uncertainty in activity data and emissions factors used to develop the national estimates.
+The uncertainty estimates for the national Inventory largely account for
+uncertainty in the magnitude of emissions and consider uncertainty in
+activity data and emissions factors used to develop the national
+estimates.
 
-State-level estimates of annual emissions will likely have a higher relative uncertainty compared with these 
-national estimates as a result of the additional requirement in some cases of apportioning national emissions to each state using spatial proxy and supplemental surrogate data sets. As discussed above, the steps involved in determining state-level FFC emissions could result in some overestimation or underestimation of state-level 
-emissions. The sources of uncertainty for this category are consistent over time because the same approaches are applied across the entire time series. As with the national Inventory, the state-level uncertainty estimates for this category may change as the understanding of the uncertainty of estimates and the underlying data sets and methodologies improves.
+State-level estimates of annual emissions will likely have a higher
+relative uncertainty compared with these national estimates as a result
+of the additional requirement in some cases of apportioning national
+emissions to each state using spatial proxy and supplemental surrogate
+data sets. As discussed above, the steps involved in determining
+state-level FFC emissions could result in some overestimation or
+underestimation of state-level emissions. The sources of uncertainty for
+this category are consistent over time because the same approaches are
+applied across the entire time series. As with the national Inventory,
+the state-level uncertainty estimates for this category may change as
+the understanding of the uncertainty of estimates and the underlying
+data sets and methodologies improves.
 
 ### 2.1.1.4 Recalculations
 
-Consistent with recalculations at the national level, EIA updated energy consumption statistics across the time series relative to the previous Inventory. In addition, consistent with the national Inventory, the current state-level CO2 equivalent emissions of CH4 and N2O from stationary and mobile sources have been revised to reflect the 100-year GWPs provided in the IPCC AR5 (IPCC 2013). AR5 GWP values differ slightly from those presented in the IPCC Fourth Assessment Report (AR4), which was used in the previous inventories (IPCC 2007). The AR5 GWPs have  been applied across the entire time series for consistency. Prior state inventories used GWPs of 25 and 298 for CH4 and N2O, respectively. These values have been updated to 28 and 265, respectively.
+Consistent with recalculations at the national level, EIA updated energy
+consumption statistics across the time series relative to the previous
+Inventory. In addition, consistent with the national Inventory, the
+current state-level CO2 equivalent emissions of CH4 and N2O from
+stationary and mobile sources have been revised to reflect the 100-year
+GWPs provided in the IPCC AR5 (IPCC 2013). AR5 GWP values differ
+slightly from those presented in the IPCC Fourth Assessment Report
+(AR4), which was used in the previous inventories (IPCC 2007). The AR5
+GWPs have been applied across the entire time series for consistency.
+Prior state inventories used GWPs of 25 and 298 for CH4 and N2O,
+respectively. These values have been updated to 28 and 265,
+respectively.
 
 2.1.1.5 Planned Improvements
 
-For coking coal, the percentage subtracted by state could be based on other factors like BOF I&S production in 
-each state, as opposed to the percentage of total coking coal use. In some cases, a state could have negative 
-emissions for all fuels if the amount subtracted, as determined from assumed distribution, was greater than 
-consumption data from SEDS for that state. These negative values were corrected to zero, but alternative ways to readjust them across other states will be considered.
+For coking coal, the percentage subtracted by state could be based on
+other factors like BOF I&S production in each state, as opposed to the
+percentage of total coking coal use. In some cases, a state could have
+negative emissions for all fuels if the amount subtracted, as determined
+from assumed distribution, was greater than consumption data from SEDS
+for that state. These negative values were corrected to zero, but
+alternative ways to readjust them across other states will be
+considered.
 
-For petrochemical feedstocks, natural gas NEU was allocated across states based on GHGRP petrochemicals 
-emissions data per state, while other fuels’ NEUs were allocated based on the underlying SEDS data. Allocating 
-across states based on the underlying SEDS data ensures that in no states is NEU larger than in the original SEDS data, which would result in negative numbers associated with subtracting NEU (it is not an issue for natural gas because use is so high overall compared with NEU). However, EPA will explore different percentages or a way to use GHGRP petrochemical data without resulting in negative use in any given state.
-EPA will look into using state-level bottom-up data for bunkers directly from FOKS, as opposed to basing IBF 
-on top-down estimates from the national Inventory and allocating to states based on the FOKS percentage, taking
-into account how FOKS data line up with national Inventory totals. We will look for better ways to allocate jet fuel bunker data across states as opposed to basing it on percentage of total use (e.g., FAA data, assumptions based on states with international airports and flights). EPA will look into more state-level activity data for different mobile combustion sources to better allocate mobile non-CO2 emissions.
+For petrochemical feedstocks, natural gas NEU was allocated across
+states based on GHGRP petrochemicals emissions data per state, while
+other fuels’ NEUs were allocated based on the underlying SEDS data.
+Allocating across states based on the underlying SEDS data ensures that
+in no states is NEU larger than in the original SEDS data, which would
+result in negative numbers associated with subtracting NEU (it is not an
+issue for natural gas because use is so high overall compared with NEU).
+However, EPA will explore different percentages or a way to use GHGRP
+petrochemical data without resulting in negative use in any given state.
+EPA will look into using state-level bottom-up data for bunkers directly
+from FOKS, as opposed to basing IBF on top-down estimates from the
+national Inventory and allocating to states based on the FOKS
+percentage, taking into account how FOKS data line up with national
+Inventory totals. We will look for better ways to allocate jet fuel
+bunker data across states as opposed to basing it on percentage of total
+use (e.g., FAA data, assumptions based on states with international
+airports and flights). EPA will look into more state-level activity data
+for different mobile combustion sources to better allocate mobile
+non-CO2 emissions.
 
-The coal carbon factors in the national Inventory are based in part on state-level data. It might be possible to build out weighted state-level coal carbon factors that would still amount to the national totals. For natural gas, state-level heat content data could be used to develop state-level carbon factors for natural gas, but they would have to be compared with national totals. It might be possible to develop gasoline and distillate fuel factors per state for the transportation sector, but EPA would have to ensure they are consistent with the national-level factors. EPA will look into allocating power sector non-CO2 emissions based on other sources like eGRID and EPA Air Markets Program Data, for instance.
+The coal carbon factors in the national Inventory are based in part on
+state-level data. It might be possible to build out weighted state-level
+coal carbon factors that would still amount to the national totals. For
+natural gas, state-level heat content data could be used to develop
+state-level carbon factors for natural gas, but they would have to be
+compared with national totals. It might be possible to develop gasoline
+and distillate fuel factors per state for the transportation sector, but
+EPA would have to ensure they are consistent with the national-level
+factors. EPA will look into allocating power sector non-CO2 emissions
+based on other sources like eGRID and EPA Air Markets Program Data, for
+instance.
 
-The national Inventory distributes electricity emissions across end-use sectors to present results with 
-electricity distributed by sector. That calculation was not done at the state level. The national Inventory also breaks out transportation sector emissions by vehicle type; that calculation was also not done at the state level. EPA will look into reporting these disaggregated data in future state-level reports.
-
+The national Inventory distributes electricity emissions across end-use
+sectors to present results with electricity distributed by sector. That
+calculation was not done at the state level. The national Inventory also
+breaks out transportation sector emissions by vehicle type; that
+calculation was also not done at the state level. EPA will look into
+reporting these disaggregated data in future state-level reports.
 
 ### 2.1.1.6 References
-
 
 ## 2.1.2 Carbon Emitted from NEUs of Fossil Fuel (NIR Section 3.2)
 
 ### 2.1.2.1 Background
 
-In addition to being combusted for energy, fossil fuels are consumed for NEUs. The fuels used for these 
-purposes and the nonenergy applications of these fuels are diverse, including feedstocks for manufacturing
-plastics, rubber, synthetic fibers, and other materials; reducing agents for producing various metals and inorganic products; and products such as lubricants, waxes, and asphalt. CO2 emissions arise via several pathways. Emissions may occur when manufacturing a product, as is the case in producing plastics or rubber from fuel-derived feedstocks. Additionally, emissions may occur during a product’s lifetime, such as during solvent use. As discussed above in the FFC section, emissions from these NEUs are estimated separately and, therefore, the amount of fuels used for nonenergy purposes are subtracted from fuel consumption data. Given the linkages between NEUs and combustion emissions, the NEU adjustments and calculations are presented here.
+In addition to being combusted for energy, fossil fuels are consumed for
+NEUs. The fuels used for these purposes and the nonenergy applications
+of these fuels are diverse, including feedstocks for manufacturing
+plastics, rubber, synthetic fibers, and other materials; reducing agents
+for producing various metals and inorganic products; and products such
+as lubricants, waxes, and asphalt. CO2 emissions arise via several
+pathways. Emissions may occur when manufacturing a product, as is the
+case in producing plastics or rubber from fuel-derived feedstocks.
+Additionally, emissions may occur during a product’s lifetime, such as
+during solvent use. As discussed above in the FFC section, emissions
+from these NEUs are estimated separately and, therefore, the amount of
+fuels used for nonenergy purposes are subtracted from fuel consumption
+data. Given the linkages between NEUs and combustion emissions, the NEU
+adjustments and calculations are presented here.
 
 ### 2.1.2.2 Methods/Approach
 
-FFC CO2 emissions calculations discussed above (as per Step 6) were adjusted for fuels used for NEUs. CO2
-emissions arise from NEUs via several pathways, including emissions from the manufacture of a product and 
-during the product’s useful lifetime and ultimate disposal. The approach for determining national-level NEU 
-emissions is based for the most part on NEU activity data, C contents and assumed C storage factors. The activity data on NEU by fuel were taken from the FFC adjustments. Then, several adjustments were made to the data to account for fuel exports and IPPU emissions that are either excluded or reported in other parts of the national Inventory, as shown in Figure 214. C storage factors are based on the end use of the fuel and assumed fate of the carbon in the products. Appendix A in the “National 2021 NEU CO2” Tab provides more details on an example of the adjustments made to the national-level NEU data to determine adjusted NEU activity data for 2021.
+FFC CO2 emissions calculations discussed above (as per Step 6) were
+adjusted for fuels used for NEUs. CO2 emissions arise from NEUs via
+several pathways, including emissions from the manufacture of a product
+and during the product’s useful lifetime and ultimate disposal. The
+approach for determining national-level NEU emissions is based for the
+most part on NEU activity data, C contents and assumed C storage
+factors. The activity data on NEU by fuel were taken from the FFC
+adjustments. Then, several adjustments were made to the data to account
+for fuel exports and IPPU emissions that are either excluded or reported
+in other parts of the national Inventory, as shown in Figure 214. C
+storage factors are based on the end use of the fuel and assumed fate of
+the carbon in the products. Appendix A in the “National 2021 NEU CO2”
+Tab provides more details on an example of the adjustments made to the
+national-level NEU data to determine adjusted NEU activity data for
+2021.
 
+![Figure 2-14. Adjustments to Energy Consumption for Emissions
+Estimates](images/fig_2-14.png)
 
-![Figure 2-14. Adjustments to Energy Consumption for Emissions Estimates](images/fig_2-14.png)
-
-NEU emissions at the state level were calculated based on the same approach as used to determine nationallevel NEU emissions. The following steps describe the approach used to determine state-level NEU emissions. 
+NEU emissions at the state level were calculated based on the same
+approach as used to determine nationallevel NEU emissions. The following
+steps describe the approach used to determine state-level NEU emissions.
 
 #### 2.1.2.2.1. Step 1: Determine Total NEU by Fuel Type and Sector
 
-State-level NEU energy data by sector and fuel type were calculated from Step 6 of the FFC calculations, as 
-discussed above. The NEU adjustments to the FFC data were used as the input to the NEU calculations. The same 
-state-level breakout of the NEU data used in the FFC calculations was used here.
+State-level NEU energy data by sector and fuel type were calculated from
+Step 6 of the FFC calculations, as discussed above. The NEU adjustments
+to the FFC data were used as the input to the NEU calculations. The same
+state-level breakout of the NEU data used in the FFC calculations was
+used here.
 
 #### 2.1.2.2.2. Step 2: Adjust for Portions of NEU in Exported Products
 
-State-level NEU energy data calculated from Step 6 above were adjusted to account for exports. Natural gas, 
-HGL, pentanes plus, naphtha (<401 °F), other oil (>401 °F), and special naphtha were adjusted down to subtract 
-out net exports of these products that are not reflected in the raw NEU data from EIA. Consumption values were 
-also adjusted to subtract net exports of HGL components (e.g., propylene, ethane). Similar to exported CO2
-discussed in the FFC calculations, because any potential CO2 emissions from exported products are not emitted to the atmosphere in the United States, the fuel used to create the exported products is subtracted from statistics used to calculate NEU emissions. The national-level total export energy adjustment data were taken from the national Inventory. The export adjustments were allocated to states based on the total amount of NEU fuel use by state from Step 1 under the simplifying assumption that the share of nonenergy fuels exported matched the amount of nonenergy fuels used by a given state. This assumption could lead to an overestimation or underestimation of NEU emissions in a given state based on the actual amount of product exported. However, it 
-was felt to be reasonable given the lack of export data by state and the small overall adjustment made (2021 
-export adjustments represent 5.1% of unadjusted nonenergy fuel use). Appendix A, Tables A-82 through A-86 and 
-Table A-88 in the “NEU Adj” Tab, show these adjusted totals. 
+State-level NEU energy data calculated from Step 6 above were adjusted
+to account for exports. Natural gas, HGL, pentanes plus, naphtha (\<401
+°F), other oil (\>401 °F), and special naphtha were adjusted down to
+subtract out net exports of these products that are not reflected in the
+raw NEU data from EIA. Consumption values were also adjusted to subtract
+net exports of HGL components (e.g., propylene, ethane). Similar to
+exported CO2 discussed in the FFC calculations, because any potential
+CO2 emissions from exported products are not emitted to the atmosphere
+in the United States, the fuel used to create the exported products is
+subtracted from statistics used to calculate NEU emissions. The
+national-level total export energy adjustment data were taken from the
+national Inventory. The export adjustments were allocated to states
+based on the total amount of NEU fuel use by state from Step 1 under the
+simplifying assumption that the share of nonenergy fuels exported
+matched the amount of nonenergy fuels used by a given state. This
+assumption could lead to an overestimation or underestimation of NEU
+emissions in a given state based on the actual amount of product
+exported. However, it was felt to be reasonable given the lack of export
+data by state and the small overall adjustment made (2021 export
+adjustments represent 5.1% of unadjusted nonenergy fuel use). Appendix
+A, Tables A-82 through A-86 and Table A-88 in the “NEU Adj” Tab, show
+these adjusted totals.
 
 #### 2.1.2.2.3. Step 3: Adjust for Portions of NEU Accounted for in IPPU
 
-State-level NEU energy data were also adjusted down to account for other oil (>401 °F) and petroleum coke 
-use in IPPU. As per Step 2 in the FFC calculations, emissions from fuels used as raw materials presented as part of IPPU were removed from the NEU estimates. Portions of nonenergy fuel use were, therefore, subtracted from the industrial sector nonenergy fuel consumption data before determining NEU emissions. The national-level total IPPU energy adjustment data for NEU were taken from the national Inventory. The IPPU adjustments were 
-allocated to states based on the total amount of nonenergy fuel use by state from Step 1 under the simplifying 
-assumption that the share of nonenergy fuels used in IPPU matched the amount of nonenergy fuels used by a 
-given state. This assumption could lead to an overestimation or underestimation of NEU emissions in a given state based on the actual amount of fuel used in IPPU. However, it was felt to be reasonable given the lack of data by state on NEU fuels used in IPPU and the small overall adjustment made (2021 IPPU adjustments represent 1.0% of unadjusted NEU fuel use). Appendix A, Tables A-86 and A-87 in the “NEU Adj” Tab, show these adjusted totals. 
+State-level NEU energy data were also adjusted down to account for other
+oil (\>401 °F) and petroleum coke use in IPPU. As per Step 2 in the FFC
+calculations, emissions from fuels used as raw materials presented as
+part of IPPU were removed from the NEU estimates. Portions of nonenergy
+fuel use were, therefore, subtracted from the industrial sector
+nonenergy fuel consumption data before determining NEU emissions. The
+national-level total IPPU energy adjustment data for NEU were taken from
+the national Inventory. The IPPU adjustments were allocated to states
+based on the total amount of nonenergy fuel use by state from Step 1
+under the simplifying assumption that the share of nonenergy fuels used
+in IPPU matched the amount of nonenergy fuels used by a given state.
+This assumption could lead to an overestimation or underestimation of
+NEU emissions in a given state based on the actual amount of fuel used
+in IPPU. However, it was felt to be reasonable given the lack of data by
+state on NEU fuels used in IPPU and the small overall adjustment made
+(2021 IPPU adjustments represent 1.0% of unadjusted NEU fuel use).
+Appendix A, Tables A-86 and A-87 in the “NEU Adj” Tab, show these
+adjusted totals.
 
 #### 2.1.2.2.4. Step 4: Determine C Storage Factor by Fuel Type
 
-CO2 emissions can arise from NEUs via several pathways. Emissions may occur when manufacturing a product, 
-as is the case when producing plastics or rubber from fuel-derived feedstocks, or emissions may occur during theproduct’s lifetime, such as during solvent use. Carbon can also be stored from NEUs such as in a final product like plastics or asphalt. Overall, at a national level, about 64% of the total carbon consumed for NEUs is stored in products (e.g., plastics) and not released to the atmosphere. For state-level calculations, the storage factors per fuel type were taken from the national Inventory values and vary across fuel types and, for some fuels, over time. See Annex 2.3 of the national Inventory for more details on storage factors used.
+CO2 emissions can arise from NEUs via several pathways. Emissions may
+occur when manufacturing a product, as is the case when producing
+plastics or rubber from fuel-derived feedstocks, or emissions may occur
+during theproduct’s lifetime, such as during solvent use. Carbon can
+also be stored from NEUs such as in a final product like plastics or
+asphalt. Overall, at a national level, about 64% of the total carbon
+consumed for NEUs is stored in products (e.g., plastics) and not
+released to the atmosphere. For state-level calculations, the storage
+factors per fuel type were taken from the national Inventory values and
+vary across fuel types and, for some fuels, over time. See Annex 2.3 of
+the national Inventory for more details on storage factors used.
 
 #### 2.1.2.2.5. Step 5: Calculate NEU CO2 Emissions
 
-Emissions from NEUs were calculated based on multiplying the adjusted NEU fuel use by state (from Steps 1–
-3) by the national-level carbon factors by fuel type (same as used in the FFC calculations, including oxidation and molecular weight ratio with the exception that HGLs and still gas have separate carbon factors for combustion and NEUs) and by the fraction of C emitted which is equal to 1 minus the storage factor of each fuel type (from Step 4). See Annex 2.2 of the national Inventory for more details on carbon factors used.
-There are some small differences in the NEU-calculated state-level emissions totals compared with what is 
-reported in the national Inventory, as shown in Figure 2-15 below. As with FFC, these differences represent a very small percentage of total NEU emissions (the maximum percentage difference over time is around 0.015% of total NEU emissions).
-
+Emissions from NEUs were calculated based on multiplying the adjusted
+NEU fuel use by state (from Steps 1– 3) by the national-level carbon
+factors by fuel type (same as used in the FFC calculations, including
+oxidation and molecular weight ratio with the exception that HGLs and
+still gas have separate carbon factors for combustion and NEUs) and by
+the fraction of C emitted which is equal to 1 minus the storage factor
+of each fuel type (from Step 4). See Annex 2.2 of the national Inventory
+for more details on carbon factors used. There are some small
+differences in the NEU-calculated state-level emissions totals compared
+with what is reported in the national Inventory, as shown in Figure 2-15
+below. As with FFC, these differences represent a very small percentage
+of total NEU emissions (the maximum percentage difference over time is
+around 0.015% of total NEU emissions).
 
 ```{r plots15, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Fig. 2-15. Differences in State-Level and National Total NEU CO2 Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
@@ -416,35 +1187,39 @@ reported in the national Inventory, as shown in Figure 2-15 below. As with FFC, 
 
 ```
 
-
 #### 2.1.2.3 Uncertainty
 
-The overall uncertainty associated with the 2020 national estimates of CO2 from NEUs was calculated using 
-the 2006 IPCC Guidelines Approach 2 methodology (IPCC 2006). As described further in Chapter 3 and Annex 7 of 
-the national Inventory (EPA 2023), levels of uncertainty in the national estimates in 2020 were −42%/+46% for CO2. 
-State-level estimates are expected to have a higher uncertainty because some of the national-level data were 
-apportioned to each state. For example, the allocations of export and IPPU adjustments are likely to add to the 
+The overall uncertainty associated with the 2020 national estimates of
+CO2 from NEUs was calculated using the 2006 IPCC Guidelines Approach 2
+methodology (IPCC 2006). As described further in Chapter 3 and Annex 7
+of the national Inventory (EPA 2023), levels of uncertainty in the
+national estimates in 2020 were −42%/+46% for CO2. State-level estimates
+are expected to have a higher uncertainty because some of the
+national-level data were apportioned to each state. For example, the
+allocations of export and IPPU adjustments are likely to add to the
 uncertainty at a state level compared with the national totals.
 
 #### 2.1.2.4 Recalculations
 
-Consistent with national estimates, EIA updated energy consumption statistics across the time series relative 
-to the previous national Inventory. 
+Consistent with national estimates, EIA updated energy consumption
+statistics across the time series relative to the previous national
+Inventory.
 
 #### 2.1.2.5 Planned Improvements
 
-Planned improvements for state level NEU estimates are consistent with those EPA has planned for improving 
-national estimates for NEUs which are discussed in Section 3.2 of the national Inventory report (EPA 2023). EPA will 
-also look into the export and IPPU adjustments to see if they could be done based on state-level data, if these data 
-are available, as opposed to assuming the percentage based on SEDS state-level totals. 
-
+Planned improvements for state level NEU estimates are consistent with
+those EPA has planned for improving national estimates for NEUs which
+are discussed in Section 3.2 of the national Inventory report (EPA
+2023). EPA will also look into the export and IPPU adjustments to see if
+they could be done based on state-level data, if these data are
+available, as opposed to assuming the percentage based on SEDS
+state-level totals.
 
 ```{r table4, echo=FALSE, results='asis'}
 
 state_ffc_tables$table_2_4
 
 ```
-
 
 ```{r table5, echo=FALSE, results='asis'}
 

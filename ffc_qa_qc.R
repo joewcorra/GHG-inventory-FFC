@@ -24,52 +24,88 @@ print("Create functions for QA/QC checks.")
 # Checks for negative values, then NA values
 
 
-
-# WHY AM I GETTING AN ERROR?
 validation_seds_raw <- function(data) {
-  
-  # NOTE Must use as.numeric before chain_start or else it throws errors
-  
-    chain_start(data) %>%
-    # Evaluate the entire dataset using verify()
-    # Verify than the dataset isn't empty
-    # verify(nrow(.) > 0) %>%
-    
-    # Evaluate every column element independently using assert()
-    # SEDS data from RIA should have no NA values anywhere
-    # assert(not_na, year:sector_description) %>%
-    
-    # Evaluate every column element as a whole using insist()
 
-    insist(within_n_sds(4), v) %>%
-
-    # Evaluate every row independently using assert_rows()
-    # Nothing exceeds 5000 bBtu(as of 2023)
-    # assert_rows(within_bounds(-1000, 5000), value) %>%
-
-    # Evaluate every row relative to other rows using insist_rows()
-    # Nothing exceeds 5000 bBtu(as of 2023)
-    # insist_rows(maha_dist, within_n_mads(10), everything()) %>%
-    
-    chain_end() 
+  get_errors <- attr_getter("assertr_errors")
   
-}
-validation_seds_raw(data = mydata)
-validation_seds_raw(us_consumption %>% select(msn, value) %>% slice(1:5))
-
-mydata <- us_consumption %>% select(msn, v = value) %>% slice(1:10) %>% mutate(v = as.numeric(v))
-insist(mydata, within_n_sds(3), v)
   
-validation_fha_raw <- function(data) {
+  # Data Grouped by MSN and State (i.e., years combined)
+  errors <- data %>%
+    group_by(msn, state) %>%
+    group_map(~ chain_start(.x) %>%
+          # Evaluate the entire dataset using verify()
+          # Verify than the dataset isn't empty
+          verify(nrow(.) == 32) %>%
+          
+          # Evaluate every column element independently using assert()
+          # SEDS data from RIA should have no NA values anywhere
+          assert(not_na, everything()) %>%
+          
+          # Evaluate every column element as a whole using insist()
+          
+          # insist_rows(maha_dist, within_n_mads(2), everything()) %>%
+          
+          chain_end(success_fun = success_logical, error_fun = error_append),
+          
+          .keep = TRUE) 
   
-  data %>%
-    verify(nrow(.) > 0) %>%
-    # SEDS data from EIA should have no NA values anywhere
-    assert(not_na, year:state) %>%
-    # All percentages must be between 0 and 1
-    assert(within_bounds(0, 1), ends_with("percent"))
+  errors <- errors %>% 
+    keep(\(x) is.list(x)) %>%
+    set_names(map_chr(., ~paste0(.x$state[1], "_", .x$msn[1]))) %>%
+    imap(~ get_errors(.x) %>%
+          pluck(1, 1) %>% 
+          as_tibble() %>%
+           mutate(dataset = .y, .before = 1)) 
   
+  return(errors)
   
 }
 
+errors <- validation_seds_raw(seds) %>% list_rbind()
 
+
+# Check for year-over-year changes with t-tests
+# Data Grouped by MSN and Year (i.e., states combined)
+
+
+
+stats_tests <- function(data) {
+  
+  paired <- data %>%
+    mutate (test_group = case_when(
+      year == latest_year ~ "newest", 
+      year %in% (latest_year - 1:5) ~ "prior",
+      .default = "not_used")) %>%
+    group_by(state, test_group) %>%
+    summarize(value = mean(value, na.rm = TRUE)) %>%
+    ungroup() %>%
+    pivot_wider(names_from = test_group) 
+  
+  # T-test the means
+  t <- t.test(paired$prior, paired$newest, paired = TRUE)
+  
+  # F-test the variances
+  f <- var.test(paired$prior, paired$newest)
+  
+  stats <- tibble(msn = data$msn[1], 
+                  t_stat = t$statistic, t_p_value = t$p.value, 
+                  f_stat = f$statistic, f_p_value = f$p.value)
+  
+  return(stats)
+  
+}
+
+paired <- seds %>%
+  group_by(msn) %>%
+  group_map(~ stats_tests(.x), .keep = TRUE) %>%
+  list_rbind() %>%
+  mutate(significance = case_when(
+    t_p_value < 0.05 & f_p_value < 0.05 ~ "both",
+    t_p_value < 0.05 ~ "t-stat only",
+    f_p_value < 0.05 ~ "f-stat only",
+      .default = "none"))
+
+
+"natural gas consumed by the transportation sector"  
+"aviation gasoline blending components consumed by the industrial sector" 
+"unfinished oils consumed by the industrial sector"   
