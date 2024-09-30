@@ -1,10 +1,24 @@
 # Calculate Motor Gasoline Adjustments
 # Applies to Commercial, Industrial, Transportation
 
+# Read MOVE Data---------------------------------------------------------
 
-# Objects Created--------------------------------------------------------
-
-# List of objects created in the global environment:
+moves <- read_excel("data/moves3.xlsx", sheet = 1) %>%
+  clean_names() %>%
+  pivot_longer(cols = starts_with("x"), 
+               values_to = "vmt_percent", names_to = "year") %>%
+  left_join(read_excel("data/moves3.xlsx", sheet = 2) %>% 
+              clean_names() %>%
+              pivot_longer(cols = starts_with("x"), 
+                           values_to = "fuel_use_percent", names_to = "year"), 
+            by = c("vehicle_type", "year")) %>%
+  mutate(year = str_sub(year, 2, 5), 
+         fuel_type = case_when(
+           vehicle_type %in% c("MC", "LDGV", "LDGT", 
+                               "HDGV", "HDGB") ~ "gasoline",
+           vehicle_type %in% c("LDDV", "LDDT", 
+                               "HDDT", "HDDB") ~ "diesel"))
+  
 
 
 # EIA Mogas------------------------------------------------------------
@@ -23,50 +37,13 @@ us_consumption_mogas <- national_ffc_data$us_consumption %>%
 
 # Total On-Road Mogas-----------------------------------------------------
 
-# Calculate total on-road motor gasoline consumption in order to get the 
-# total NON-road consumption 
 
-# Placeholder values until we obtain data
-fhwa_gas_consumed <- 3
-nonroad_lawn_garden <- 1
-nonroad_recreation <- 1
-tra_ethanol_value <- 1
 # Total ethanol varies annually; obtained from Biomass workbook, ethanol sheet
 total_ethanol <- tra_ethanol_value * 0.001
 
 # Gasoline joules per gallon. Fixed value
 mogas_energy <- 43488 * 2839
 
-# Moves3 ratio is vehicle-specific
-# 'pivots' data comes from emis_g_or_ener_j table--need to ask Sarah
-# pivots data varies by year and vehicle class
-# Here's the table structure w/ fake data for one year only
-moves3_ratio <- tibble(year = "1992", 
-                       vehicle_class = c("motorcycle", "automobile", 
-                                         "light_truck", "light_truck", 
-                                         "other_truck", "other_truck", 
-                                         "other_truck",  "other_truck", 
-                                         "other_truck", "other_truck",
-                                         "bus"), 
-                       vehicle_sub_class = c("motorcycle", "automobile", 
-                                             "light_truck_1", "light_truck_2",
-                                             "other_truck_1", "other_truck_2", 
-                                             "other_truck_3", "other_truck_4", 
-                                             "other_truck_5", "other_truck_6",
-                                             "bus"), 
-                       # Fake number for now
-                       gallons_used = c(500, 18900, 5000, 4900, 1400, 1300, 
-                                        1200, 1100, 1000, 1100, 800)) %>%
-  group_by(vehicle_class, year) %>%
-  summarize(gallons_used = sum(gallons_used)) %>%
-  ungroup() %>%
-  left_join(heat_content %>% filter(msn == "MGTCKUS"), by = "year") %>%
-  mutate(moves3_ratio = (gallons_used / mogas_energy / 1000) / 
-           sum(gallons_used), 
-         gas_consumption_gal_by_vehicle = moves3_ratio * 
-           (fhwa_gas_consumed - nonroad_lawn_garden - nonroad_recreation), 
-         onroad_mogas_by_vehicle = heat_content * 
-           (gas_consumption_gal_by_vehicle / 42))
 
 # Calculate total annual on-road gasoline consumption (including ethanol)
 mogas_annual_totals <- moves3_ratio %>%
@@ -87,6 +64,15 @@ mogas_annual_totals <- moves3_ratio %>%
 # total_onroad_mogas_excl_ethanol is calculated twice, by two different
 # methods(?). The two results are identical (when v2 is summed)
 
+
+# Calculate total on-road motor gasoline consumption in order to get the 
+# total NON-road consumption 
+
+# Placeholder values until we obtain data
+fhwa_gas_consumed <- 3
+nonroad_lawn_garden <- 1
+nonroad_recreation <- 1
+tra_ethanol_value <- 1
 
 # Total Nonroad Mogas--------------------------------------------------
 

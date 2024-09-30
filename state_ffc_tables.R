@@ -29,9 +29,11 @@ table_2_1 <- read_excel("data/state_report_tables.xlsx", sheet = 1) %>%
     row.striping.include_table_body = TRUE,
     row.striping.background_color = "lightsteelblue1") %>%
   tab_style(style = cell_text(align = "left"), 
-            location = list(cells_body())) %>%
+            locations = list(cells_body())) %>%
   tab_style(style = cell_text(align = "center"), 
-            location = list(cells_column_labels())) %>%
+            locations = list(cells_column_labels())) %>%
+  tab_style(style = cell_text(font = "Calibri"), 
+            locations = cells_title()) %>%
   opt_footnote_marks(marks = "letters") %>%
   tab_footnote(footnote = "Emissions are not likely occurring in U.S. territories; due to a lack of available data and the nature of this category, territories not listed are not estimated.", 
                locations = list(cells_column_labels(columns = 4), 
@@ -65,9 +67,11 @@ table_2_2 <- read_excel("data/state_report_tables.xlsx", sheet = 2) %>%
     row.striping.include_table_body = TRUE,
     row.striping.background_color = "lightsteelblue1") %>%
   tab_style(style = cell_text(align = "left"), 
-            location = list(cells_body())) %>%
+            locations = list(cells_body())) %>%
+  tab_style(style = cell_text(font = "Calibri"), 
+            locations = cells_title()) %>%
   tab_style(style = cell_text(align = "center"), 
-            location = list(cells_column_labels(), cells_row_groups())),
+            locations = list(cells_column_labels(), cells_row_groups())),
 
 table_2_3 <- read_excel("data/state_report_tables.xlsx", sheet = 3) %>%
   gt(groupname_col = "Source/Category", row_group_as_column = TRUE) %>%
@@ -94,11 +98,13 @@ table_2_3 <- read_excel("data/state_report_tables.xlsx", sheet = 3) %>%
     row.striping.include_table_body = TRUE,
     row.striping.background_color = "lightsteelblue1") %>%
   tab_style(style = cell_text(align = "left"), 
-            location = list(cells_body())) %>%
+            locations = list(cells_body())) %>%
   tab_style(style = cell_text(align = "center"), 
-            location = list(cells_column_labels(), cells_row_groups())) %>%
+            locations = list(cells_column_labels(), cells_row_groups())) %>%
+  tab_style(style = cell_text(font = "Calibri"), 
+            locations = cells_title()) %>%
   tab_style(style = cell_fill(color = "lightsteelblue1"), 
-            location = list(cells_row_groups())),
+            locations = list(cells_row_groups())),
 
 table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
   gt() %>%
@@ -123,9 +129,11 @@ table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
     row.striping.include_table_body = TRUE,
     row.striping.background_color = "lightsteelblue1") %>%
   tab_style(style = cell_text(align = "left"), 
-            location = list(cells_body())) %>%
+            locations = list(cells_body())) %>%
+  tab_style(style = cell_text(font = "Calibri"), 
+            locations = cells_title()) %>%
   tab_style(style = cell_text(align = "center"), 
-            location = list(cells_column_labels())),
+            locations = list(cells_column_labels())),
 
 table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
   gt() %>%
@@ -150,9 +158,11 @@ table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
     row.striping.include_table_body = TRUE,
     row.striping.background_color = "lightsteelblue1") %>%
   tab_style(style = cell_text(align = "left"), 
-            location = list(cells_body())) %>%
+            locations = list(cells_body())) %>%
+  tab_style(style = cell_text(font = "Calibri"), 
+            locations = cells_title()) %>%
   tab_style(style = cell_text(align = "center"), 
-            location = list(cells_column_labels()))
+            locations = list(cells_column_labels()))
 
 # table 2-5 must be populated with data; 
 # where is this data from? Ask Vince

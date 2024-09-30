@@ -18,7 +18,7 @@ source("ffc_msn_descriptions.R")
 # When implemented, supersedes state_ffc_read_seds_data.R
 # source("state_ffc_eia_api.R")
 
-# Read SEDS data (EIA); last downloaded from EIA in May 2024
+# Read SEDS data (EIA) from local drive
 source("state_ffc_read_seds_data.R")
 
 # Scrape other data from web sources
@@ -104,7 +104,7 @@ source("state_ffc_figures.R")
 # Create tables (for Markdown report)
 source("state_ffc_tables.R")
 
-# # R SHiny Dashboard for viewing data (in-work)
+# # R SHiny Dashboard for viewing data 
 # source("state_ffc_dashboards.R")
 # 
 # Format data for InvDB; write data to InvDB Excel workbook

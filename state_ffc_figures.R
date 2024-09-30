@@ -5,8 +5,8 @@
 # Read National Emissions Data (for Figures)------------------------------
 
 national_emissions <- read_excel("data/national_inventory_CO2_data.xlsx", 
-                                sheet = "InvDB", 
-                                skip = 0, range = "C16:BA32") %>%
+                                 sheet = "InvDB", 
+                                 skip = 0, range = "C16:BA32") %>%
   clean_names() %>%
   select(sector_description = category, source_description = fuel1, ghg, 
          starts_with("x")) %>%
@@ -15,15 +15,26 @@ national_emissions <- read_excel("data/national_inventory_CO2_data.xlsx",
          source_description = str_to_lower(source_description), 
          ghg = str_to_lower(ghg), 
          value = parse_number(value), 
-         sector_description = str_to_lower(sector_description) %>% str_c(" sector"), 
-         sector_description = if_else(str_detect(sector_description, "electric"), 
-                                      "electric power sector", sector_description))
+         sector_description = str_to_lower(sector_description) %>% 
+           str_c(" sector"), 
+         sector_description = if_else(
+           str_detect(sector_description, "electric"), 
+           "electric power sector", sector_description))
 
 # Color Palettes-----------------------------------------------------------
 
-# Create colorblind-friendly palette
-okabe_ito_colors <- c("#E69F00", "#000000", "#56B4E9", "#009E73",
-                      "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+# Hex	Gas	Sector	Economic Sectors
+#4F81BD	Carbon Dioxide	Energy	Residential
+#C0504D	Methane	Agriculture	Agriculture
+#4198AF	Nitrous Oxide	IPPU	Industry
+#9BBB59	HFCs, PFCs, SF6, NF3	LULUF Emissions	Transportation
+#D7925D	 	Waste	Commercial
+#7F63A1	Net CO2 Flux from LULUCF	LULUCF Removals	Electric Power Industry
+#49525E	Net Emissions	Net Emissions	 
+
+# Style Guide Palette
+ghg_palette <- c("#4F81BD", "#C0504D", "#4198AF", "#9BBB59",
+                      "#D7925D", "#7F63A1", "#49525E")
 
 myPalette <- colorRampPalette(c("thistle1","slateblue3"), space = "Lab")
 
@@ -119,13 +130,15 @@ fig_2_2 <- energy_use %>%
             linewidth = 2.8) + 
   # geom_abline(slope = 0, intercept = 1) + 
   theme_classic() +
-  scale_color_manual(values = okabe_ito_colors) +
+  scale_color_manual(values = ghg_palette) +
   scale_x_continuous(n.breaks = 20) + 
   theme(axis.text.x = element_text(size = 18, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 18), 
         axis.title.y = element_text(size = 20), 
         strip.background = element_blank(), 
         strip.text.x = element_text(size = 38),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.text = element_text(size = 24),
         legend.title = element_blank()) + 
   labs(x = "", y = "Difference: SEDS - national (TBtu) ") +
@@ -151,12 +164,14 @@ fig_2_3 <- state_vs_national_btu %>%
                   linewidth = 3) + 
         # geom_abline(slope = 0, intercept = 1) + 
         theme_classic() +
-        scale_color_manual(values = okabe_ito_colors) +
+        scale_color_manual(values = ghg_palette) +
         scale_x_continuous(n.breaks = 20) + 
         theme(axis.text.x = element_text(size = 18, angle = 270, vjust = 0.08),
               axis.text.y = element_text(size = 18),
               axis.title.y = element_text(size = 24),
               # axis.title.y = 
+              plot.title = element_text(family = "Calibri"),
+              text = element_text(family = "Calibri"),
               legend.position = "none") + 
         labs(x = "", y = "Difference: SEDS - national (TBtu) "),
 
@@ -177,12 +192,14 @@ fig_2_4a <- state_vs_national_btu %>%
   ggplot(aes(x = sector_description, y = state_total - national_total)) + 
   geom_col(linewidth = 0.5, aes(fill = sector_description)) + 
   theme_classic() +
-  scale_fill_manual(values = okabe_ito_colors) +
+  scale_fill_manual(values = ghg_palette) +
   geom_abline(slope = 0, intercept = 0) + 
   theme(axis.text.x = element_text(size = 12, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 18),
         strip.text.x = element_text(size = 18),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "none", 
         strip.background = element_blank()) + 
   labs(x = "", y = "Difference: SEDS - national (TBtu) ") +
@@ -205,12 +222,14 @@ fig_2_4b <- state_vs_national_btu %>%
   ggplot(aes(x = sector_description, y = state_total - national_total)) + 
   geom_col(linewidth = 0.5, aes(fill = sector_description)) + 
   theme_classic() +
-  scale_fill_manual(values = okabe_ito_colors) +
+  scale_fill_manual(values = ghg_palette) +
   geom_abline(slope = 0, intercept = 0) + 
   theme(axis.text.x = element_text(size = 12, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 14),
         strip.text.x = element_text(size = 14),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "none", 
         strip.background = element_blank()) + 
   labs(x = "", y = ""),
@@ -241,6 +260,8 @@ fig_2_5 <- seds_adjusted$seds_ind_adjusted %>%
   theme(axis.text.x = element_text(size = 12, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 22),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "bottom", 
         legend.text = ,
         strip.background = element_blank()) + 
@@ -263,11 +284,13 @@ fig_2_8 <- ggplot(state_vs_national_btu %>%
   geom_line(aes(color = dataname), linewidth = 1) +
   geom_point(aes(color = dataname), size = 1.9) +
   theme_classic() +
-  scale_color_manual(values = okabe_ito_colors) +
+  scale_color_manual(values = ghg_palette) +
   scale_x_continuous(n.breaks = 20) + 
   theme(axis.text.x = element_text(size = 10, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 22),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "bottom", 
         legend.title = element_blank(), 
         strip.text.x = element_text(size = 20),
@@ -296,6 +319,8 @@ fig_2_10 <- state_ffc_results$seds_all_adjusted %>%
   theme(axis.text.x = element_text(size = 8, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 22),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "bottom", 
         strip.background = element_blank()) + 
   labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total"),
@@ -318,6 +343,8 @@ fig_2_11 <- state_ffc_results$seds_all_adjusted %>%
   theme(axis.text.x = element_text(size = 8, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 12),
         axis.title.y = element_text(size = 22),
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "bottom", 
         strip.background = element_blank()) + 
   labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total"),
@@ -335,10 +362,12 @@ fig_2_12a <- carbon_comparison %>%
   geom_col(aes(fill = sector_description), position = "dodge", width = 2) + 
   # geom_abline(slope = 0, intercept = 1) + 
   theme_classic() +
-  scale_color_manual(values = okabe_ito_colors) +
+  scale_color_manual(values = ghg_palette) +
   theme(axis.text.x = element_text(size = 14, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 14), 
         axis.title.y = element_text(size = 16), 
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.text = element_text(size = 14),
         legend.title = element_blank(), 
         legend.position = "bottom") + 
@@ -353,10 +382,12 @@ fig_2_12b <- carbon_comparison %>%
   geom_col(fill = "darkgreen", color = "green", width = 0.9) + 
   # geom_abline(slope = 0, intercept = 1) + 
   theme_classic() +
-  scale_color_manual(values = okabe_ito_colors) +
+  scale_color_manual(values = ghg_palette) +
   theme(axis.text.x = element_text(size = 14, angle = 270, vjust = 0.08), 
         axis.text.y = element_text(size = 14), 
         axis.title.y = element_text(size = 16), 
+        plot.title = element_text(family = "Calibri"),
+        text = element_text(family = "Calibri"),
         legend.position = "none") + 
   labs(x = "", y = "Difference: SEDS - national (MMT CO2) "),
 
@@ -389,6 +420,7 @@ fig_2_12b <- carbon_comparison %>%
 
 # Cleanup---------------------------------------------------------------
 
-rm(list = c("national_emissions", "okabe_ito_colors", "myPalette", 
+rm(list = c("national_emissions", "ghg_palette", "myPalette", 
             "state_vs_national_btu", "energy_use", "state_vs_national_co2", 
             "carbon_comparison"))
+

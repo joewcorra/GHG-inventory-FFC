@@ -78,7 +78,7 @@ seds_res_adjusted <- lst(
   # Collapse list into a single data frame
   list_rbind()
 
-# Cleanup=---------------------------------------------------------------
+# Cleanup---------------------------------------------------------------
 
 seds_adjusted <- lst(seds_res_adjusted)
 
