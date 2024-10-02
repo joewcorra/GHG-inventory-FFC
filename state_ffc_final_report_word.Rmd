@@ -3,7 +3,7 @@ title: "Untitled"
 author: "Joe Corra"
 date: "`r Sys.Date()`"
 output: 
-  word_document
+  html_document
 ---
 
 ```{r setup, include=FALSE}

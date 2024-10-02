@@ -88,11 +88,29 @@ vessel_bunker_dist_fuel <- pluck(eia_api_vessel_bunker, "response", "data") %>%
   # Make fuel consumption value numeric
   mutate(value = as.numeric(value))
 
+
+# Read EIA Ethanol (Transportation) Data----------------------------------
+
+eia_api_ethanol <- paste0(
+  "https://api.eia.gov/v2/total-energy/data/?frequency", 
+  "=annual&data[0]=value&start=1990&end=2022&sort[0][column]", 
+  "=period&sort[0][direction]", 
+  "https://api.eia.gov/v2/total-energy/data/?frequency", 
+  "=annual&data[0]=value&facets[msn][]=EMACBUS&start=1990&end=2023&sort[0]",
+  "[column]=period&sort[0][direction]=desc&offset=0&length=5000&api_key=", key) %>%
+  GET() %>% # retrieve page from url
+  content("raw") %>% # extract content as a raw vector
+  rawToChar() %>% # convert to character data
+  fromJSON() # convert from JSON to R object
+
+ethanol_tra <- pluck(eia_api_ethanol, "response", "data") %>%
+  mutate(msn = str_sub(msn, 1, 5), value = as.numeric(value)) %>%
+  select(-unit, -seriesDescription, year = period, ethanol = value) 
+
 # Cleanup-----------------------------------------------------------------
 
 national_ffc_data <- lst(us_consumption, vessel_bunker_dist_fuel)
 
 rm(list = c("us_consumption", "vessel_bunker_dist_fuel", 
             "eia_api_vessel_bunker", "heat_content", "eia_api_heat", 
-            "key", 'eia_national', "latest_year", 
-   'eia_api_consumption'))
+            "key", "eia_national", "eia_api_consumption"))

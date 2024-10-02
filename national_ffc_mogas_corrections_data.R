@@ -23,56 +23,40 @@ moves <- read_excel("data/moves3.xlsx", sheet = 1) %>%
 
 # EIA Mogas------------------------------------------------------------
 
-# For each: mogas_com, mogas_ind, mogas_tra
-
-# ethanol correction for 1990-92 only
-# ethanol_correction <- biomass hidden sheet data  
-# Placeholder value for now
-ethanol_correction <- 0
 
 us_consumption_mogas <- national_ffc_data$us_consumption %>% 
   filter(msn %in% c("MGCCB", "MGACB", "MGICB")) %>%
-  mutate(mogas_ethanol_corrected = (value + ethanol_correction) / 0.001) 
+  mutate(mogas_ethanol_corrected = value / 0.001)
 
 
 # Total On-Road Mogas-----------------------------------------------------
 
 
-# Total ethanol varies annually; obtained from Biomass workbook, ethanol sheet
-total_ethanol <- tra_ethanol_value * 0.001
-
 # Gasoline joules per gallon. Fixed value
 mogas_energy <- 43488 * 2839
+# Nonroad : For now I'm using 1990 values as placeholders
+nonroad_lawn_garden <-  2280381389 
+nonroad_recreational <-  725907978 
 
 
-# Calculate total annual on-road gasoline consumption (including ethanol)
-mogas_annual_totals <- moves3_ratio %>%
-  mutate(onroad_mogas_incl_ethanol = sum(
-    onroad_mogas_by_vehicle) / 10^9, .by = year) %>%
-  # Get non-ethanol total by subtracting the ethanol 
-  mutate(onroad_mogas_excl_ethanol_v1 = 
-           onroad_mogas_incl_ethanol - total_ethanol / 10^3) %>%
-  # non-ethanol total version 2
-  mutate(onroad_mogas_excl_ethanol_v2 = 
-           (onroad_mogas_excl_ethanol_v1 / onroad_mogas_incl_ethanol) * 
-           (onroad_mogas_by_vehicle / 10^9)) %>%
-  group_by(year) %>%
-  summarize(onroad_mogas_excl_ethanol_v1 = mean(onroad_mogas_excl_ethanol_v1), 
-            onroad_mogas_excl_ethanol_v2 = sum(onroad_mogas_excl_ethanol_v2), 
-            onroad_mogas_incl_ethanol = mean(onroad_mogas_incl_ethanol))
+# THIS WORKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# total_onroad_mogas_excl_ethanol is calculated twice, by two different
-# methods(?). The two results are identical (when v2 is summed)
+mogas <- moves %>%
+  filter(fuel_type == "gasoline") %>%
+  left_join(fhwa_scraped$gasoline_use_national, by = "year") %>%
+  left_join(heat_content %>% 
+              filter(msn == "MGTCKUS") %>% 
+              select(year, heat_content), 
+            by = "year") %>%
+  left_join(ethanol_tra, by = "year") %>%
+  mutate(nonroad_lawn_garden = nonroad_lawn_garden, 
+         nonroad_recreational = nonroad_recreational, 
+         gas_use = fuel_use_percent * (gasoline_use_gal * 1000 - nonroad_lawn_garden - nonroad_recreational), 
+         tbtu = (gas_use / 42 * heat_content) / 10^9) %>%
+  mutate(tbtu_sum = sum(tbtu), .by = year) %>%
+  mutate(ethanol_adjustment_factor = 1 - (ethanol / 1000 / tbtu_sum), 
+         tbtu_adjusted = tbtu * ethanol_adjustment_factor)
 
-
-# Calculate total on-road motor gasoline consumption in order to get the 
-# total NON-road consumption 
-
-# Placeholder values until we obtain data
-fhwa_gas_consumed <- 3
-nonroad_lawn_garden <- 1
-nonroad_recreation <- 1
-tra_ethanol_value <- 1
 
 # Total Nonroad Mogas--------------------------------------------------
 
@@ -144,7 +128,8 @@ mogas <- us_consumption_mogas %>%
       remaining_mogas * mogas_ethanol_corrected / sum(mogas_ethanol_corrected),
     # Transportation = on-road total + rec boat total
     meta_sector == "trans" ~ 
-      onroad_mogas_excl_ethanol_v1 + rec_boat_mogas), .by = c(year, meta_sector)) 
+      onroad_mogas_excl_ethanol_v1 + rec_boat_mogas), 
+    .by = c(year, meta_sector)) 
 
 
 
