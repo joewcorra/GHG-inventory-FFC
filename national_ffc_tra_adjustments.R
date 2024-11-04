@@ -45,4 +45,9 @@ us_tra <- lst(
   
   # Collapse list into a single data frame
   list_rbind()
-  
+
+# Cleanup-----------------------------------------------------------------
+
+national_ffc_adjusted <- append(national_ffc_adjusted, lst(us_tra))
+
+rm(us_tra)

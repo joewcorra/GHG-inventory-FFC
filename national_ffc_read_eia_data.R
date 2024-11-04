@@ -109,8 +109,10 @@ ethanol_tra <- pluck(eia_api_ethanol, "response", "data") %>%
 
 # Cleanup-----------------------------------------------------------------
 
-national_ffc_data <- lst(us_consumption, vessel_bunker_dist_fuel)
+national_ffc_data <- lst(us_consumption, vessel_bunker_dist_fuel,
+                         heat_content, ethanol_tra)
 
 rm(list = c("us_consumption", "vessel_bunker_dist_fuel", 
+            "ethanol_tra", "eia_api_ethanol", 
             "eia_api_vessel_bunker", "heat_content", "eia_api_heat", 
             "key", "eia_national", "eia_api_consumption"))

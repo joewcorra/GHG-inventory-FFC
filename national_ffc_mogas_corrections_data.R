@@ -28,6 +28,8 @@ us_consumption_mogas <- national_ffc_data$us_consumption %>%
   filter(msn %in% c("MGCCB", "MGACB", "MGICB")) %>%
   mutate(mogas_ethanol_corrected = value / 0.001)
 
+us_consumption_diesel <- national_ffc_data$us_consumption %>% 
+  filter(msn %in% c("DFACB", "DFCCB", "DFICB", "DFRCB", "DKEIB")) 
 
 # Total On-Road Mogas-----------------------------------------------------
 
@@ -44,11 +46,11 @@ nonroad_recreational <-  725907978
 mogas <- moves %>%
   filter(fuel_type == "gasoline") %>%
   left_join(fhwa_scraped$gasoline_use_national, by = "year") %>%
-  left_join(heat_content %>% 
+  left_join(national_ffc_data$heat_content %>% 
               filter(msn == "MGTCKUS") %>% 
               select(year, heat_content), 
             by = "year") %>%
-  left_join(ethanol_tra, by = "year") %>%
+  left_join(national_ffc_data$ethanol_tra, by = "year") %>%
   mutate(nonroad_lawn_garden = nonroad_lawn_garden, 
          nonroad_recreational = nonroad_recreational, 
          gas_use = fuel_use_percent * (gasoline_use_gal * 1000 - nonroad_lawn_garden - nonroad_recreational), 
@@ -57,6 +59,15 @@ mogas <- moves %>%
   mutate(ethanol_adjustment_factor = 1 - (ethanol / 1000 / tbtu_sum), 
          tbtu_adjusted = tbtu * ethanol_adjustment_factor)
 
+# Incomplete as of 10/3/24
+diesel <- moves %>%
+  filter(fuel_type == "diesel") %>%
+  # This might not be the right diesel data..........
+  left_join(fhwa_scraped$diesel_use_by_class, by = "year") %>%
+  left_join(national_ffc_data$heat_content %>% 
+              filter(msn == "DMTCKUS") %>% 
+              select(year, heat_content), 
+            by = "year") 
 
 # Total Nonroad Mogas--------------------------------------------------
 

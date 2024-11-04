@@ -128,7 +128,7 @@ For diesel fuel and gasoline, the totals generally line up, but there are differ
 
 In addition to the differences in gasoline and diesel fuel across sectors over the time series, there are also differences in some petroleum fuels across sectors, specifically in 2021. This is because the SEDS represents the latest data from EIA in terms of sector breakouts that were not reflected in the national *Inventory* 2021 values that relied on older EIA data. Again, the totals for the fuels line up, but there are differences across sectors, as shown in Figure 2-4 below. The updated SEDS data were used in the state-level breakout because they represent the latest data available. This results in differences in 2021 results across sectors for the state totals versus the national *Inventory*. However, the national *Inventory* numbers will be updated to match the 2021 SEDS data during the next national *Inventory* cycle.
 
-```{r plots4, fig.dim = c(4, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r plots4, fig.dim = c(12, 12), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
 state_ffc_figures$fig_2_4 <- state_ffc_figures$fig_2_4a + state_ffc_figures$fig_2_4b
