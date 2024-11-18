@@ -7,6 +7,10 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(gt)
+library(janitor)
 ```
 
 ## Data Harmonization
@@ -17,9 +21,13 @@ When you click the **Knit** button a document will be generated that includes bo
 
 ```{r conventions}
 
-tibble(key_standard = c("conventions", "variable names", "value names")
-       
-       ) %>%
+tibble(standard = c("capitalization", "punctuation", 
+                    "naming convention (case)", "numbers", "acronyms"),
+       variable_names = c(), 
+       value_names = c("sectors", "sources", "EIA MSN descriptions", 
+                  "booleans (y/n or T/F)", "unit names", 
+                  "US state and territory codes"), 
+       metadata = c()) 
   
 gt() %>% 
   gt::tab_header(title = "Key Data Standards for Harmonization") %>%

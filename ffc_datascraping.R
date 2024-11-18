@@ -115,6 +115,23 @@ gasoline_use_national <- read_excel(local_excel_path) %>%
   filter(year > 1989) %>%
   select(-state)    
 
+
+# Scrape EPA Flight solid waste combustion data---------------------------
+
+# Temporary file storage path
+local_excel_path <- tempfile(fileext = ".xls")
+
+# URL for SWC data by year and facility
+swc_url <- paste0(
+  "https://ghgdata.epa.gov/ghgp/service/export?q=&tr=current&ds=E&ryr=2023&cyr=2023&lowE=-20000&highE=23000000&st=&fc=&mc=&rs=ALL&sc=0&is=11&et=&tl=&pn=undefined&ol=0&sl=0&bs=&g1=1&g2=1&g3=1&g4=1&g5=1&g6=0&g7=1&g8=1&g9=1&g10=1&g11=1&g12=1&s1=0&s2=1&s3=0&s4=0&s5=0&s6=0&s7=0&s8=0&s9=0&s10=0&s201=0&s202=0&s203=0&s204=1&s301=0&s302=0&s303=0&s304=0&s305=0&s306=0&s307=0&s401=0&s402=0&s403=0&s404=0&s405=0&s601=0&s602=0&s701=0&s702=0&s703=0&s704=0&s705=0&s706=0&s707=0&s708=0&s709=0&s710=0&s711=0&s801=0&s802=0&s803=0&s804=0&s805=0&s806=0&s807=0&s808=0&s809=0&s810=0&s901=0&s902=0&s903=0&s904=0&s905=0&s906=0&s907=0&s908=0&s909=0&s910=0&s911=0&sf=11001100&allReportingYears=yes&listExport=false")
+
+# Retrieve gasoline Excel file data
+GET(swc_url, write_disk(local_excel_path, overwrite = TRUE))
+# Read from temp file 
+
+swc <- read_excel(local_excel_path, skip = 6) %>%
+  clean_names() 
+
 # ------------------------------------------------------------------------
 
 # URL for table VM-1, diesel fuel by class
