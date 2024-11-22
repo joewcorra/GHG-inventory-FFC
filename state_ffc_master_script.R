@@ -8,7 +8,7 @@ source("ffc_libraries.R")
 
 # Build local datasets---------------------------------
 
-# EIA SEDS code MSN descriptors, US state postal codes
+# GHGI variables, EIA SEDS code MSN descriptors, US state postal codes
 source("ffc_msn_descriptions.R")
 
 

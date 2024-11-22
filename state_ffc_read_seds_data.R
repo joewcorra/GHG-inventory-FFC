@@ -27,6 +27,14 @@ seds <- read_csv("data/api_seds.csv") %>%
   # Convert to millions of BTUs
   mutate(value = value / 1000) 
 
+# Add variable labels
+seds <- seds %>%
+  set_variable_labels(.labels = deframe(ghgi_variables %>% 
+                                          filter(variable %in% 
+                                                   colnames(seds)) %>% 
+                                          select(-data_type)) %>% 
+                        as.list())
+
 
 
 

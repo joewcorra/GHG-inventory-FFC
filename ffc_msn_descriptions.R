@@ -2,6 +2,29 @@
 
 print("Creating data frames of sectors, sources, and states.")
 
+# Read GHGI harmonization data---------------------------------------------
+
+ghgi_values <- read_excel("data_harmonization.xlsx", 
+                          sheet = "values") %>%
+  map(\(.x) na.omit(.x) %>% 
+        as.vector())
+
+
+ghgi_variables <- read_excel("data_harmonization.xlsx", 
+                             sheet = "variables") 
+
+
+ghgi_invdb_values <- read_excel("data_harmonization.xlsx", 
+                                sheet = "invdb") 
+
+# Add variable labels
+ghgi_invdb_values <- ghgi_invdb_values %>%
+  set_variable_labels( .labels = deframe(ghgi_variables %>% 
+                                           filter(variable %in% 
+                                                    colnames(ghgi_invdb_values)) %>% 
+                                           select(-data_type)) %>% 
+                         as.list())
+
 # Create Filtering Dataframe---------------------------------------------
 
 # EIA provides descriptors for MSNs, but not sources and sectors.
@@ -108,15 +131,14 @@ msn_data <- read_excel(temp_file, sheet = 2, skip = 10) %>%
          unit = str_to_lower(unit), 
          # Create source code and sector code 
          source_code = str_sub(msn, 1, 2),
-         sector_code = str_sub(msn, 3, 4)) %>%
-  # Remove unneeded rows
-  filter(unit == "billion btu")
+         sector_code = str_sub(msn, 3, 4)) 
 
 # Clean up the temporary file
 unlink(temp_file)
 
 # Read in MSN data file and join with 'sources' and 'sectors'
 msn <- msn_data %>%
+  filter(unit == "billion btu") %>%
   left_join(sources, by = "source_code") %>%
   left_join(sectors, by = "sector_code") %>%
   # For national calcs: Add nat gas MSNs not included in SEDS
@@ -129,56 +151,25 @@ msn <- msn_data %>%
   add_row(msn = "NNRCB", sector_description = "residential sector", 
           source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)") 
 
+# Add variable labels
+msn <- msn %>%
+  set_variable_labels(.labels = deframe(ghgi_variables %>% 
+                                          filter(variable %in% 
+                                                   colnames(msn)) %>% 
+                                          select(-data_type)) %>% 
+                        as.list())
+
+
 
 # State and Territory Names---------------------------------------------
 
 # Create dataframes of states and territories (names & 2-letter codes)
 
-# non_states <- c("X3", "X5", "US")
-# non_state_names <- c("Federal Offshore, Gulf of Mexico", 
-# "Federal Offshore, Pacific", "United States")
+state_name_key <- tibble(state = ghgi_values$state, 
+                         state_name = ghgi_values$state_name) %>%
+  # Identify territories
+  mutate(territory = if_else(str_length(state) > 2, TRUE, FALSE))
 
-# US state codes (including DC) and names
-state_name_key <- tibble(states_and_dc = c("AK", "AL", "AR", "AZ", "CA", "CO", 
-                                           "CT", "DC", "DE", "FL", "GA", "HI", 
-                                           "IA", "ID", "IL", "IN", "KS", "KY", 
-                                           "LA", "MA", "MD", "ME", "MI", "MN", 
-                                           "MO", "MS", "MT", "NC", "ND", "NE", 
-                                           "NH", "NJ", "NM", "NV", "NY", "OH", 
-                                           "OK", "OR", "PA", "RI", "SC", "SD", 
-                                           "TN", "TX", "UT", "VA", "VT", "WA", 
-                                           "WI", "WV", "WY"), 
-                         state_names = c("Alaska", "Alabama", "Arkansas", 
-                                          "Arizona", "California",
-                                          "Colorado", "Connecticut", "Delaware", 
-                                          "District of Columbia",
-                                          "Florida", "Georgia", "Hawaii", 
-                                          "Iowa", "Idaho", "Illinois",
-                                          "Indiana", "Kansas", "Kentucky", 
-                                          "Louisiana", "Massachusetts",
-                                          "Maryland", "Maine", "Michigan", 
-                                          "Minnesota", "Missouri",
-                                          "Mississippi", "Montana", 
-                                          "North Carolina", "North Dakota",
-                                          "Nebraska", "New Hampshire", 
-                                          "New Jersey", "New Mexico",
-                                          "Nevada", "New York", "Ohio", 
-                                          "Oklahoma", "Oregon",
-                                          "Pennsylvania", "Rhode Island", 
-                                          "South Carolina",
-                                          "South Dakota", "Tennessee", "Texas", 
-                                          "Utah", "Virginia", "Vermont", 
-                                          "Washington", "Wisconsin", 
-                                          "West Virginia", "Wyoming"))
-
-# US territory names and codes
-territory_name_key <- tibble(territories = c("ASM", "GUM", "PRI", 
-                                             "USIQ", "VIR", "WAK"), 
-                             territories_names = c("American Samoa", "Guam", 
-                                                   "Puerto Rico", 
-                                                   "US Pacific islands", 
-                                                   "US Virgin Islands", 
-                                                   "Wake Island"))
 
 # MSN Lookup for State and National Emissions-------------------------------
 
@@ -200,10 +191,10 @@ msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB",
 # Cleanup-------------------------------------------------------------------
 
 
-msn_names <- lst(msn, msn_lookup, state_name_key, territory_name_key)
+msn_names <- lst(msn, msn_lookup, state_name_key)
 
 # Remove unneeded objects from global environment
 rm(list = "sources", "sectors", "msn", "msn_data", "msn_lookup", "page_url", 
-   "temp_file",  "state_name_key", "territory_name_key")
+   "temp_file",  "state_name_key")
 
 

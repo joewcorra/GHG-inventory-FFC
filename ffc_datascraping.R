@@ -48,12 +48,15 @@ gasoline_distribution <- read_excel(local_excel_path) %>%
   # Get gasoline percentage for each state 
   mutate(gasoline_percent = gasoline_percent / national_total, 
          # Fix the dumb abbreviation for District of Columbia
-         state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
+         state = if_else(str_detect(state, "Dist"), 
+                         "District of Colombia", state)) %>%
+  rename(state_name = state) %>%
   # Get state codes
-  left_join(msn_names$state_name_key, by = c("state" = "state_names")) %>%
+  left_join(msn_names$state_name_key %>% 
+              filter(territory == FALSE), 
+            by = "state_name") %>%
   # No longer need national total or full state name
-  select(-national_total, -state) %>%
-  rename (state = states_and_dc)
+  select(-national_total, -state_name)
   
 
 # Retrieve diesel Excel file data
@@ -79,11 +82,13 @@ diesel_distribution <- read_excel(local_excel_path) %>%
   mutate(diesel_percent = diesel_percent / national_total, 
          # Fix the dumb abbreviation for District of Columbia
          state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
+  rename(state_name = state) %>%
   # Get state codes
-  left_join(msn_names$state_name_key, by = c("state" = "state_names")) %>%
+  left_join(msn_names$state_name_key %>% 
+              filter(territory == FALSE), 
+            by = "state_name") %>%
   # No longer need national total or full state name
-  select(-national_total, -state) %>%
-  rename (state = states_and_dc)
+  select(-national_total, -state_name)
 
 # Validate Data-----------------------------------------------------------
 
@@ -135,12 +140,15 @@ swc <- read_excel(local_excel_path, skip = 6) %>%
 # ------------------------------------------------------------------------
 
 # URL for table VM-1, diesel fuel by class
+
+# Temporary file storage path
+local_excel_path <- tempfile(fileext = ".xlsx")
+
 diesel_url <- paste0(
   "https://www.fhwa.dot.gov/policyinformation/statistics/", 
   latest_year, "/xls/vm1.xlsx") 
 # https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
 GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
-
 
 diesel_use_by_class <- read_excel(local_excel_path) %>%
   clean_names() %>%
@@ -162,9 +170,11 @@ fhwa_scraped <- lst(
   diesel_distribution,
   diesel_use_by_class, 
   gasoline_distribution,
-  gasoline_use_national)
+  gasoline_use_national, 
+  swc)
 
 # Remove unneeded objects from global environment
 rm(list = c("diesel_distribution", "diesel_use_by_class", 
      "gasoline_distribution",  "gasoline_use_national", "local_excel_path", 
-     "special_fuel_url", "diesel_url", "gasoline_url"))
+     "special_fuel_url", "diesel_url", "gasoline_url", "swc_url"))
+
