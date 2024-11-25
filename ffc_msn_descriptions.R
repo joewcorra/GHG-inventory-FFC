@@ -2,6 +2,21 @@
 
 print("Creating data frames of sectors, sources, and states.")
 
+# Create function to add labels (with 'labelled')--------------------------
+
+# Function: add variable labels to dataframes
+apply_variable_labels <- function(data) {
+  
+  set_variable_labels(data, 
+                      .labels = deframe(ghgi_variables %>% 
+                                          filter(variable %in% 
+                                                   colnames(data)) %>% 
+                                          select(-data_type)) %>% 
+                        as.list())
+  
+}
+
+
 # Read GHGI harmonization data---------------------------------------------
 
 ghgi_values <- read_excel("data_harmonization.xlsx", 
@@ -18,12 +33,7 @@ ghgi_invdb_values <- read_excel("data_harmonization.xlsx",
                                 sheet = "invdb") 
 
 # Add variable labels
-ghgi_invdb_values <- ghgi_invdb_values %>%
-  set_variable_labels( .labels = deframe(ghgi_variables %>% 
-                                           filter(variable %in% 
-                                                    colnames(ghgi_invdb_values)) %>% 
-                                           select(-data_type)) %>% 
-                         as.list())
+ghgi_invdb_values <- apply_variable_labels(ghgi_invdb_values)
 
 # Create Filtering Dataframe---------------------------------------------
 
@@ -152,12 +162,7 @@ msn <- msn_data %>%
           source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)") 
 
 # Add variable labels
-msn <- msn %>%
-  set_variable_labels(.labels = deframe(ghgi_variables %>% 
-                                          filter(variable %in% 
-                                                   colnames(msn)) %>% 
-                                          select(-data_type)) %>% 
-                        as.list())
+msn <- apply_variable_labels(msn)
 
 
 

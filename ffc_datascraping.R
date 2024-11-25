@@ -57,11 +57,14 @@ gasoline_distribution <- read_excel(local_excel_path) %>%
             by = "state_name") %>%
   # No longer need national total or full state name
   select(-national_total, -state_name)
-  
+
+# Add variable labels
+gasoline_distribution <- apply_variable_labels(gasoline_distribution) 
 
 # Retrieve diesel Excel file data
 GET(special_fuel_url, write_disk(local_excel_path, overwrite = TRUE)) 
 # Read from temp file 
+
 diesel_distribution <- read_excel(local_excel_path) %>%
   clean_names() %>%
   # Remove unneeded rows
@@ -89,6 +92,9 @@ diesel_distribution <- read_excel(local_excel_path) %>%
             by = "state_name") %>%
   # No longer need national total or full state name
   select(-national_total, -state_name)
+
+# Apply metadata labels to variables 
+diesel_distribution <- apply_variable_labels(diesel_distribution)
 
 # Validate Data-----------------------------------------------------------
 
@@ -120,6 +126,8 @@ gasoline_use_national <- read_excel(local_excel_path) %>%
   filter(year > 1989) %>%
   select(-state)    
 
+# Apply metadata labels to variables 
+gasoline_use_national <- apply_variable_labels(gasoline_use_national)
 
 # Scrape EPA Flight solid waste combustion data---------------------------
 
@@ -136,6 +144,9 @@ GET(swc_url, write_disk(local_excel_path, overwrite = TRUE))
 
 swc <- read_excel(local_excel_path, skip = 6) %>%
   clean_names() 
+
+# Apply variable labels 
+swc <- apply_variable_labels(swc)
 
 # ------------------------------------------------------------------------
 
@@ -163,6 +174,8 @@ diesel_use_by_class <- read_excel(local_excel_path) %>%
   mutate(year = str_remove(year, "[a-z]"))
   # Retain only 1990 onward
 
+# Apply variable labels 
+diesel_use_by_class <- apply_variable_labels(diesel_use_by_class)
 
 # Cleanup-------------------------------------------------------------------
 
@@ -170,8 +183,7 @@ fhwa_scraped <- lst(
   diesel_distribution,
   diesel_use_by_class, 
   gasoline_distribution,
-  gasoline_use_national, 
-  swc)
+  gasoline_use_national)
 
 # Remove unneeded objects from global environment
 rm(list = c("diesel_distribution", "diesel_use_by_class", 

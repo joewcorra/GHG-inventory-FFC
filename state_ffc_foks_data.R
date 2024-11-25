@@ -31,7 +31,7 @@ foks_diesel_distribution <- read_excel(
   # Rename state column
   rename(state = x1) %>%
   # Get FOKS diesel percentage for each state 
-  mutate(diesel_percent = diesel_percent / national_total) %>%
+  mutate(foks_diesel_percent = diesel_percent / national_total) %>%
   # No longer need national total
   select(-national_total)
 
@@ -63,7 +63,7 @@ foks_residual_distribution <- read_excel(
   # Rename state column
   rename(state = x1) %>%
   # Get FOKS residual fuel percentage for each state 
-  mutate(residual_percent = residual_percent / national_total) %>%
+  mutate(foks_residual_percent = residual_percent / national_total) %>%
   # No longer need national total
   select(-national_total)
 

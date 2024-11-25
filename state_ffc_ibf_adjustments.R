@@ -26,7 +26,7 @@ seds_ibf_adjusted <- lst(
       source_description == "distillate fuel oil"), 
       by = "year") %>% 
      # Calculate adjusted value (factor * percent)
-    mutate(ibf_adjusted_value = ibf_value * diesel_percent,
+    mutate(ibf_adjusted_value = ibf_value * foks_diesel_percent,
            # Add the MSN & sector  for transportation distillate fuel
            msn = "DFACB", 
            sector_description = "transportation sector"),
@@ -36,7 +36,7 @@ seds_ibf_adjusted <- lst(
       source_description == "residual fuel oil"), 
       by = "year") %>% 
     # Calculate adjusted value (factor * percent)
-    mutate(ibf_adjusted_value = ibf_value * residual_percent, 
+    mutate(ibf_adjusted_value = ibf_value * foks_residual_percent, 
            # Add the MSN & sector for transportation residual fuel
            msn = "RFACB", 
            sector_description = "transportation sector"),

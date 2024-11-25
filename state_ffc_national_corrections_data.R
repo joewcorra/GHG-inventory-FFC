@@ -20,7 +20,9 @@ adjustments <- read_csv("data/us_compare.csv") %>%
          source_description = if_else(
            source_description == "hydrocarbon gas liquids", 
            "hgl", source_description)) 
-# This is excessively complex! Source file needs to be formatted differently
+
+# Apply labels to variables
+adjustments <- apply_variable_labels(adjustments)
 
 
 national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
@@ -49,10 +51,12 @@ national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
      is_distillate_fuel_factor = distillate_fuel, 
      is_coal_factor = coal)
 
+# Apply labels to variables
+national_corrections <- apply_variable_labels(national_corrections)
+
 
 # Consumption input is the 'US compare' data with corrections factors applied. 
 # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
-
 
 consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                 sheet = "Consumption Input", 
@@ -88,7 +92,8 @@ consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx",
            if_else(source_description == "other coal", "coal", 
                    source_description))
   
-  
+# Apply labels to variables
+consumption_input <- apply_variable_labels(consumption_input)
   
   
   print("This generates a warning about NA values.")
