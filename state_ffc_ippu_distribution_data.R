@@ -61,7 +61,6 @@ ammonia_distribution <- read_excel(
   # No longer need national total
   select(-national_total)
 
-
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_distribution <- read_excel(
   "data/ippu_petrochemicals_percent.xlsx", 
@@ -85,7 +84,6 @@ petrochemicals_distribution <- read_excel(
            petrochemical_percent / national_total) %>%
   # No longer need national total
   select(-national_total)
-
 
 # Read in petrochemical carbon black data from FFC excel workbook
 petrochemicals_cb_distribution <- read_excel(
@@ -111,6 +109,11 @@ petrochemicals_cb_distribution <- read_excel(
   # No longer need national total
   select(-national_total)
 
+# Apply labels to variables
+is_distribution <- apply_variable_labels(is_distribution)
+ammonia_distribution <- apply_variable_labels(ammonia_distribution)
+petrochemicals_distribution <- apply_variable_labels(petrochemicals_distribution)
+petrochemicals_cb_distribution <- apply_variable_labels(petrochemicals_cb_distribution)
 
 # Cleanup-----------------------------------------------------------------
 

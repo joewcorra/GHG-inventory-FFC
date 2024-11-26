@@ -4,9 +4,16 @@ print("Creating data frames of sectors, sources, and states.")
 
 # Create function to add labels (with 'labelled')--------------------------
 
-# Function: add variable labels to dataframes
+# Function: add variable labels to dataframes and convert 'year' to factor
 apply_variable_labels <- function(data) {
   
+  # If 'year' column exists, convert to factor
+  if ("year" %in% colnames(data)) { 
+    data <- data %>% 
+      mutate(year = as_factor(year))
+    }
+  
+  # Filter the variables dataframe and apply metadata as variable labels
   set_variable_labels(data, 
                       .labels = deframe(ghgi_variables %>% 
                                           filter(variable %in% 
@@ -136,8 +143,8 @@ GET(page_url, write_disk(temp_file, overwrite = TRUE))
 
 # Read data from sheet 2, skipping the first 10 empty rows
 msn_data <- read_excel(temp_file, sheet = 2, skip = 10) %>%
-  rename(msn = MSN, msn_description = Description, unit = Unit) %>%
-  mutate(msn_description = str_to_lower(msn_description), 
+  rename(msn = MSN, eia_description = Description, unit = Unit) %>%
+  mutate(eia_description = str_to_lower(eia_description), 
          unit = str_to_lower(unit), 
          # Create source code and sector code 
          source_code = str_sub(msn, 1, 2),

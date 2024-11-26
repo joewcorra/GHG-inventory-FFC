@@ -9,7 +9,7 @@ source("ffc_libraries.R")
 # Build local datasets---------------------------------
 
 # GHGI variables, EIA SEDS code MSN descriptors, US state postal codes
-source("ffc_msn_descriptions.R")
+source("ffc_data_setup.R")
 
 
 # API and datascraping------------------------------------------------
@@ -73,7 +73,7 @@ source("state_ffc_com_adjustments.R")
 
 # Apply adjustments to industrial fossil fuels
 source("state_ffc_ind_adjustments.R")
-# 
+ 
 # Apply adjustments to transportation fossil fuels
 source("state_ffc_tra_adjustments.R")
 

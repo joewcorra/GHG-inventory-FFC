@@ -16,7 +16,8 @@
 # Alternatively, read SEDS data from EIA API file pulled with epa_api.R
 seds <- read_csv("data/api_seds.csv") %>%
   clean_names() %>%
-  select( state = state_id, year = period, msn = series_id, value, unit) %>%
+  select( state = state_id, year = period, msn = series_id, 
+          value, unit) %>%
   filter(unit == "Billion Btu") %>%
   filter(msn %in% msn_names$msn_lookup) %>%
   mutate(unit = str_to_lower(unit), 
@@ -28,13 +29,7 @@ seds <- read_csv("data/api_seds.csv") %>%
   mutate(value = value / 1000) 
 
 # Add variable labels
-seds <- seds %>%
-  set_variable_labels(.labels = deframe(ghgi_variables %>% 
-                                          filter(variable %in% 
-                                                   colnames(seds)) %>% 
-                                          select(-data_type)) %>% 
-                        as.list())
-
+seds <- apply_variable_labels(seds) 
 
 
 

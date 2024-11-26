@@ -96,7 +96,7 @@ nonroad_4_stroke <- 2
 # First compute rec boat mogas by the bottom-up method
 rec_boat_mogas_bottom_up <- heat_content %>% 
   # Motor gasoline only 
-  filter(str_detect(msn_description, "asoline")) %>%
+  filter(str_detect(eia_description, "asoline")) %>%
   select(year, heat_content) %>%
   # Will need a left_join here once we get the nonroad engine data
   mutate(rec_boat_mogas_bottom_up = heat_content * ((nonroad_2_stroke + 

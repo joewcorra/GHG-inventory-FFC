@@ -45,7 +45,11 @@ us_consumption <- eia_national %>%
       "electric power sector", sector_description), 
     # Make btu value numeric and remove non-numeric data (generates warning)
    value = parse_number(value)) %>%
-  rename(year = period)
+  rename(year = period) 
+
+# Apply labels to variables 
+us_consumption <- apply_variable_labels(us_consumption)
+
 
 # Read EIA Heat Content Data----------------------------------------------
 
@@ -64,7 +68,7 @@ eia_api_heat <- paste0(
 # Units in Millions of Btu / Barrel
 heat_content <- pluck(eia_api_heat, "response", "data") %>%
   select(year = period, msn, 
-         msn_description = seriesDescription, heat_content = value) %>%
+         eia_description = seriesDescription, heat_content = value) %>%
   # Make heat content value numeric
   mutate(heat_content = as.numeric(heat_content))
 
@@ -84,10 +88,12 @@ eia_api_vessel_bunker <- paste0(
 
 # Units in Millions of Gallons
 vessel_bunker_dist_fuel <- pluck(eia_api_vessel_bunker, "response", "data") %>%
-  select(year = period, description = 'series-description', value) %>%
+  select(year = period, eia_description = 'series-description', value) %>%
   # Make fuel consumption value numeric
   mutate(value = as.numeric(value))
 
+# Apply labels to variables
+vessel_bunker_dist_fuel <- apply_variable_labels(vessel_bunker_dist_fuel)
 
 # Read EIA Ethanol (Transportation) Data----------------------------------
 
@@ -105,7 +111,10 @@ eia_api_ethanol <- paste0(
 
 ethanol_tra <- pluck(eia_api_ethanol, "response", "data") %>%
   mutate(msn = str_sub(msn, 1, 5), value = as.numeric(value)) %>%
-  select(-unit, -seriesDescription, year = period, ethanol = value) 
+  select(-unit, eia_description = seriesDescription, year = period, ethanol = value) 
+
+# Apply labels to variables
+ethanol_tra <- apply_variable_labels(ethanol_tra)
 
 # Cleanup-----------------------------------------------------------------
 

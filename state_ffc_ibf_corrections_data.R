@@ -33,6 +33,9 @@ ibf_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
            str_detect(source_description, "istillate") ~ "distillate fuel oil",
            str_detect(source_description, "esidual") ~ "residual fuel oil"))
 
+# Apply labels to variables
+ibf_corrections <- apply_variable_labels(ibf_corrections)
+
 
 # Cleanup-----------------------------------------------------------------
 

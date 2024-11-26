@@ -14,7 +14,7 @@ vessel_bunker_dist_fuel
 # Data needed for vessel fuel and rail 
 dist_fuel_vessel <- vessel_bunker_dist_fuel %>%
   # Dist fuel only
-  filter(str_detect(description, "istillate")) %>%
+  filter(str_detect(eia_description, "istillate")) %>%
   # Convert units to million gallons
   mutate(value = value * 1000)
 
@@ -104,7 +104,7 @@ dist_fuel_excl_biodiesel <- dist_fuel_vessel %>%
   # Join with heat content data for distillate fuel
   left_join(heat_content %>% 
               # Distillate fuel only
-              filter(str_detect(msn_description, "istillate")), by = "year") %>%
+              filter(str_detect(eia_description, "istillate")), by = "year") %>%
   # Convert to barrels and multiply by heat content to get mmbtu
   mutate(total_dist_fuel = (total_dist_fuel / 42) * heat_content, 
          bottom_up_trans = total_dist_fuel / 1000)

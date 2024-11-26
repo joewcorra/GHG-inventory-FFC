@@ -46,6 +46,9 @@ foks_diesel_distribution <- foks_diesel_distribution %>%
   bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>% 
               mutate(year = "2022"))
 
+# Apply labels to variables
+foks_diesel_distribution <- apply_variable_labels(foks_diesel_distribution)
+
 
 # Read in residual fuel data from FOKS excel workbook
 foks_residual_distribution <- read_excel(
@@ -78,7 +81,8 @@ foks_residual_distribution <- foks_residual_distribution %>%
   bind_rows(foks_residual_distribution %>% filter(year == "2020") %>% 
               mutate(year = "2022"))
 
-
+# Apply labels to variables
+foks_residual_distribution <- apply_variable_labels(foks_residual_distribution)
 
 # Cleanup-----------------------------------------------------------------
 

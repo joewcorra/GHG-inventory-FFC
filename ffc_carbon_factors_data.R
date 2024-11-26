@@ -6,7 +6,13 @@ print("Retrieving carbon factors data.")
 # Objects Created--------------------------------------------------------
 
 # Ratio of the molecular weight of carbon dioxide to carbon
-carbon_ratio = 44/12
+carbon_ratio <- 44/12
+
+# Apply label to variable
+carbon_ratio <- carbon_ratio %>% 
+  set_variable_labels(.labels = ghgi_variables %>% 
+                        filter(variable == "carbon_ratio") %>% 
+                        pull(metadata))
 
 # List of objects created in the global environment:
 
@@ -62,6 +68,9 @@ carbon_factors <- read_excel("data/national_inventory_CO2_data.xlsx",
   # Remove x and make values numeric
   mutate(year = str_remove(year, "x"),
     carbon_factor = as.numeric(carbon_factor))
+
+# Apply labels to variables
+carbon_factors <- apply_variable_labels(carbon_factors)
 
 # Cleanup------------------------------------------------------------------
 

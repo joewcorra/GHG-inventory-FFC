@@ -17,7 +17,7 @@ seds_all_adjusted <- list_rbind(seds_adjusted %>%
                                   discard(names(.) %in% 
                                             c("seds_ibf_adjusted", 
                                               "seds_neu_adjusted"))) %>%
-  select(state:adjusted_value, -msn_description) %>%
+  select(state:adjusted_value, -eia_description) %>%
   # NOTE: maybe move this to carbon calculations, below
   # standardize source descriptions for join with carbon_factors
   mutate(source_description = case_when(
@@ -83,6 +83,8 @@ seds_all_adjusted <- list_rbind(seds_adjusted %>%
     source_description == "unfinished oils" ~ 0, 
     .default = neu_ibf_adjusted_value))
 
+# Apply labels to variables
+seds_all_adjusted <- apply_variable_labels(seds_all_adjusted)
 
 # Calculate Carbon Emissions--------------------------------------------
 
@@ -98,6 +100,8 @@ carbon_emissions <- seds_all_adjusted %>%
            str_detect(source_description, "(?<!coking )coal" ) ~ "coal", 
            .default = source_description))
 
+# Apply labels to variables
+carbon_emissions <- apply_variable_labels(carbon_emissions)
 
 # Cleanup----------------------------------------------------------------
 

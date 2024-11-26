@@ -162,6 +162,8 @@ carbon_territories <- ffc_territories %>%
   # MMT CO2  = btu * carbon factor/1000 * 44/12
   mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon$carbon_ratio)
 
+# Apply labels to variables
+carbon_territories <- apply_variable_labels(carbon_territories)
 
 # For Vince's spreadsheet------------------------------------------------
 

@@ -53,6 +53,8 @@ neu_corrections <- read_excel("data/national_inventory_CO2_data.xlsx",
            # Remove extra spaces from source
            str_squish()) 
 
+# Apply labels to variables
+neu_corrections <- apply_variable_labels(neu_corrections)
 
 # Cleanup-----------------------------------------------------------------
 

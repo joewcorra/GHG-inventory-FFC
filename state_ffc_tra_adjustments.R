@@ -57,8 +57,8 @@ seds_tra_adjusted <- lst(
   
   # LPGs (propane and/or HGL)
   lpg = seds %>%
-    filter(case_when(year < 2010 ~ msn == "HLACB", 
-                     year >= 2010 ~ msn == "PQACB")) %>% 
+    filter(case_when(as.integer(year) < 2010 ~ msn == "HLACB", 
+                     as.integer(year) >= 2010 ~ msn == "PQACB")) %>% 
     # Adjusted = original value
     mutate(msn = "combined lpg", 
            adjusted_value = value), 
