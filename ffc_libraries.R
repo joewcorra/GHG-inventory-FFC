@@ -25,6 +25,7 @@ library(readxl)
 # library(reticulate)
 library(rvest)
 library(shiny)
+library(showtext)
 library(tictoc)
 library(tidyverse)
 

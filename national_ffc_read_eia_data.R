@@ -32,7 +32,7 @@ eia_api_consumption <- paste0(
 
 eia_national <- pluck(eia_api_consumption, "response", "data") %>%
   mutate(msn = str_sub(msn, 1, 5)) %>%
-  filter(str_detect(unit, "Btu"), 
+  filter(unit == "Trillion Btu", 
          str_sub(msn, 3,4) %in% c("AC", "IC", "RC", "CC", "EI")) %>%
   select(-unit, -seriesDescription)
 
@@ -45,7 +45,8 @@ us_consumption <- eia_national %>%
       "electric power sector", sector_description), 
     # Make btu value numeric and remove non-numeric data (generates warning)
    value = parse_number(value)) %>%
-  rename(year = period) 
+  rename(year = period) %>%
+  mutate(unit = "Trillion Btu")
 
 # Apply labels to variables 
 us_consumption <- apply_variable_labels(us_consumption)
