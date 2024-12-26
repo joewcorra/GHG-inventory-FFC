@@ -1,11 +1,12 @@
+# Data setup 
+
+data_setup <- function() {
 # Create Dataframes of MSNs and descriptions and state codes
 
-print("Creating data frames of sectors, sources, and states.")
-
-# Create function to add labels (with 'labelled')--------------------------
+# Create function to add labels (with 'labelled')
 
 # Function: add variable labels to dataframes and convert 'year' to factor
-apply_variable_labels <- function(data) {
+apply_variable_labels <<- function(data) {
   
   # If 'year' column exists, convert to factor
   if ("year" %in% colnames(data)) { 
@@ -26,21 +27,21 @@ apply_variable_labels <- function(data) {
 
 # Read GHGI harmonization data---------------------------------------------
 
-ghgi_values <- read_excel("data_harmonization.xlsx", 
+ghgi_values <<- read_excel("data_harmonization.xlsx", 
                           sheet = "values") %>%
   map(\(.x) na.omit(.x) %>% 
         as.vector())
 
 
-ghgi_variables <- read_excel("data_harmonization.xlsx", 
+ghgi_variables <<- read_excel("data_harmonization.xlsx", 
                              sheet = "variables") 
 
 
-ghgi_invdb_values <- read_excel("data_harmonization.xlsx", 
+ghgi_invdb_values <<- read_excel("data_harmonization.xlsx", 
                                 sheet = "invdb") 
 
 # Add variable labels
-ghgi_invdb_values <- apply_variable_labels(ghgi_invdb_values)
+ghgi_invdb_values <<- apply_variable_labels(ghgi_invdb_values)
 
 # Create Filtering Dataframe---------------------------------------------
 
@@ -200,13 +201,7 @@ msn_lookup <- c("ABICB", "ARICB", "AVACB", "BDACB", "BDTCB", "BQICB", "BYICB",
                 "RFACB", "RFCCB", "RFEIB", "RFICB", "SFEIB", "SFCCB", "SFRCB", 
                 "SGICB", "SFINB", "SNICB", "UOICB", "WXICB")
 
-# Cleanup-------------------------------------------------------------------
 
+msn_names <<- lst(msn, msn_lookup, state_name_key)
 
-msn_names <- lst(msn, msn_lookup, state_name_key)
-
-# Remove unneeded objects from global environment
-rm(list = "sources", "sectors", "msn", "msn_data", "msn_lookup", "page_url", 
-   "temp_file",  "state_name_key")
-
-
+}

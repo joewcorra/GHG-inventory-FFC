@@ -1,10 +1,7 @@
-# Calculate State and National CO2 Emissions
+
 # Carbon Factors
-
-print("Retrieving carbon factors data.")
-
-# Objects Created--------------------------------------------------------
-
+get_carbon_factors <- function () {
+  
 # Ratio of the molecular weight of carbon dioxide to carbon
 carbon_ratio <- 44/12
 
@@ -13,12 +10,6 @@ carbon_ratio <- carbon_ratio %>%
   set_variable_labels(.labels = ghgi_variables %>% 
                         filter(variable == "carbon_ratio") %>% 
                         pull(metadata))
-
-# List of objects created in the global environment:
-
-# carbon_factors: tibble; factors for carbon content of fuels
-
-# Read Excel Data-----------------------------------------------
 
 # Read in variable carbon factors data from FFC excel workbook
 carbon_factors_variable <- read_excel("data/national_inventory_CO2_data.xlsx", 
@@ -72,65 +63,8 @@ carbon_factors <- read_excel("data/national_inventory_CO2_data.xlsx",
 # Apply labels to variables
 carbon_factors <- apply_variable_labels(carbon_factors)
 
-# Cleanup------------------------------------------------------------------
-
 carbon <- lst(carbon_factors, carbon_ratio)
 
-rm(list= c("carbon_factors", "carbon_factors_variable", "carbon_ratio"))
+return(carbon)
 
-
-
-# In work: Computing the Carbon Coefficients------------------------------
-
-# Mogas and Dist fuel
-  # Source: Motor Gasoline and distillate fuel oil carbon contents from EPA 
- # (2020) Memo: "Updated Gasoline and Diesel Fuel CO2 Emission Factors". 
-
-# Natural Gas
-# =((J31*$J$74)+$J$73)/J31*1000
-# J31 = nat gas annually variable heat content
-# J74 = X Variable 1 Source: Natural Gas Carbon Content Updates_3_5_20.xls
-# J73 = Intercept Source: Natural Gas Carbon Content Updates_3_5_20.xls
-
-# Residential Coal
-# [Annually Variable C Contents_Coal_12-12-2023.xls]Summary Coal'
-
-# Commercial Coal
-# [Annually Variable C Contents_Coal_12-12-2023.xls]Summary Coal'
-
-# Industrial Other Coal
-# [Annually Variable C Contents_Coal_12-12-2023.xls]Summary Coal'
-
-# Industrial Coking Coal
-# [Annually Variable C Contents_Coal_12-12-2023.xls]Summary Coal'
-
-# Electric Power Coal
-# [Annually Variable C Contents_Coal_12-12-2023.xls]Summary Coal'
-
-# LPG (Propane)
-# [HGL Factors_Update Methodology_12_12_23.xlsx]Weighted Factors'
-
-# HGL (Energy Use)
-# [HGL Factors_Update Methodology_12_12_23.xlsx]Weighted Factors'
-
-# HGL (Non-Energy Use)
-# [HGL Factors_Update Methodology_12_12_23.xlsx]Weighted Factors'
-
-# Jet Fuel
-# hard-coded into 'Factors' sheet
-
-# MoGas Blend Components
-# hard-coded into 'Factors' sheet
-
-# Misc. Products
-# hard-coded into 'Factors' sheet
-
-# Unfinished Oils
-# hard-coded into 'Factors' sheet
-
-# Crude Oil
-# hard-coded into 'Factors' sheet
-
-
-
-
+}

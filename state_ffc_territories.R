@@ -3,7 +3,7 @@
 # The procedure for retrieving and collating the FFC data for US territories
 # differs from the procedure for states. 
 
-
+get_territories_data <- function() {
 # API Key----------------------------------------------------------------
 
 # API key generated 11/22/23 
@@ -177,11 +177,6 @@ mutate(value = round(value, 4)) %>%
 
 write_csv(territories_csv_format, "territories_csv_format.csv")
 
+return(carbon_territories)
 
-# Cleanup----------------------------------------------------------------
-
-state_ffc_results <- lst(carbon_territories)
-
-rm(list = c("latest_year", "key", "api_territories", "ff_territories", 
-            "ffc_territories", "territories_csv_format", "heat_commodities", 
-            "eia_table_a1",  "heat_content_territories", "carbon_territories"))
+}

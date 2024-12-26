@@ -1,7 +1,7 @@
-# FIGURES
+# Create state FFC ggplot figures
 
-# We may integrate this script into a Markdown report
-
+state_ffc_figures <- function(seds_all_adjusted, corrections) {
+  
 # Read National Emissions Data (for Figures)------------------------------
 
 national_emissions <- read_excel("data/national_inventory_CO2_data.xlsx", 
@@ -44,7 +44,7 @@ myPalette <- colorRampPalette(c("thistle1","slateblue3"), space = "Lab")
 
 state_vs_national_btu <-
   lst(
-    states = state_ffc_results$seds_all_adjusted %>% 
+    states = seds_all_adjusted %>% 
       select(sector_description, source_description, year, value) %>% 
       mutate(value = value / 1000, 
         dataname = "state_total", 
@@ -416,11 +416,6 @@ fig_2_12b <- carbon_comparison %>%
 #   labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total")
 
 )
+ return(state_ffc_figures)
 
-
-# Cleanup---------------------------------------------------------------
-
-rm(list = c("national_emissions", "ghg_palette", "myPalette", 
-            "state_vs_national_btu", "energy_use", "state_vs_national_co2", 
-            "carbon_comparison"))
-
+}
