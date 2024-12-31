@@ -1,39 +1,36 @@
 ---
-title: "Untitled"
-author: "Joe Corra"
-date: "`r Sys.Date()`"
-output: 
-  html_document
+title: "State FFC Report"
+author: "CCD-CPB"
+format: html
+execute:
+  enabled: true
 ---
 
-```{r setup, include=FALSE}
+```{r setup, echo=FALSE, results='asis'}
 
-knitr::opts_chunk$set(echo = TRUE)
+library(patchwork)
+library(tidyverse)
 
+# Load ggplot figures and gt tables
+figures <- readRDS("saved_state_ffc_figures.rds")
+tables <- readRDS("saved_state_ffc_tables.rds")
 
 ```
 
 # 2. Energy (NIR Chapter 3)
 
-For this methodology report, energy emissions are broken into two main categories: emissions associated with fuel use---including fossil fuel combustion (FFC) and non-energy use (NEU)---and fugitive emissions mainly from fuel production. The energy emissions presented here include some categories that are not added to energy sector totals in the national *Inventory* but are instead presented as memo items, including international bunker fuels (IBFs)[^1] and biomass emissions,[^2] consistent with UNFCCC reporting guidelines. This approach directly affects state-level energy sector estimates and, in some cases, may account for differenceswith official estimates published by individual state governments. For more information on energy sector emissions, see Chapter 3 of the national *Inventory*. Table 2-1 summarizes the different approaches used to estimate state-level energy emissions and completeness across states. Geographic completeness is consistent with the national *Inventory*. The sections below provide more detail on each category.
+For this methodology report, energy emissions are broken into two main categories: emissions associated with fuel use---including fossil fuel combustion (FFC) and non-energy use (NEU)---and fugitive emissions mainly from fuel production. The energy emissions presented here include some categories that are not added to energy sector totals in the national *Inventory* but are instead presented as memo items, including international bunker fuels (IBFs)[^1] and biomass emissions,[^2] consistent with UNFCCC reporting guidelines. This approach directly affects state-level energy sector estimates and, in some cases, may account for differences with official estimates published by individual state governments. For more information on energy sector emissions, see Chapter 3 of the national *Inventory*. Table 2-1 summarizes the different approaches used to estimate state-level energy emissions and completeness across states. Geographic completeness is consistent with the national *Inventory*. The sections below provide more detail on each category.
 
 [^1]: Emissions from IBFs are not included specifically in summing energy sector totals. The values are presented for informational purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations.
 
 [^2]: Emissions from wood biomass, ethanol, and biodiesel consumption are not included specifically in summing energy sector totals. The values are presented for informational purposes only, in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations. Net carbon fluxes from changes in biogenic carbon reservoirs are accounted for in the estimates for LULUCF.
 
-```{r fossil fuels, echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r table2-1, echo=FALSE, results='asis'}
 
-source("state_ffc_master_script.R")
-
-
-```
-
-```{r table1, echo=FALSE, results='asis'}
-
- 
-state_ffc_tables$table_2_1 
+tables$table_2_1
 
 ```
+
 
 ## 2.1 Emissions Related to Fuel Use
 
@@ -65,7 +62,7 @@ The approach for determining national-level FFC emissions is based on multiplyin
 
 ![Figure 2-1. Adjustments to Energy Consumption for Emissions Estimates](images/fig_2-1.png)
 
-This section describes how national-level estimates for FFC were disaggregated to the state level for the following separate sources:
+his section describes how national-level estimates for FFC were disaggregated to the state level for the following separate sources:
 
 -   FFC CO~2~
 
@@ -93,10 +90,9 @@ Determining adjusted fuel use activity data is based on the seven steps discusse
 
 Ideally, to determine state-level FFC CO~2~ emissions estimates, the same approach could be used, and adjusted energy use, as shown in the "National 2021 FFC CO~2~" Tab of Appendix A, could be developed for each state. However, the national-level emissions were developed based on multiple factors and inputs, some of which were not available or readily published at the state level. Therefore, a Hybrid approach was taken where state-level data were used when available. In cases where state-level data were not available, national-level estimates were used with available surrogate data to determine state-level percentages of each fuel use. Table 2-2 shows a high-level comparison of the different data sources used for the different steps to determine national-level and state-level estimates.
 
-```{r table2, echo=FALSE, results='asis'}
+```{r table2-2, echo=FALSE, results='asis'}
 
-state_ffc_tables$table_2_2 
-
+tables$table_2_2
 
 ```
 
@@ -108,19 +104,21 @@ As discussed above, national-level data on fuel supply/consumption comes from EI
 
 However, the totals across all states (and the District of Columbia) from SEDS do not always match the U.S. total energy data used in the national *Inventory*, which is based on the EIA February 2023 MER estimates (EIA 2023b). The main differences are for coal and natural gas and primarily in the industrial sector, as shown in Figure 2-2 below. For coal, there are differences in both energy content and short tons, but the differences are not consistent across time or sectors. For natural gas, the difference is mainly in the energy content. The reason for the differences is that SEDS uses state-level energy content conversion factors for coal and natural gas, while the MER uses national-level conversion factors. These different calculations sometimes cause the sums of the SEDS states to be different than the MER values. Although the percentage differences are not large (max `r 2`% for coal and `r 2`% for natural gas in the industrial sector), they cause noticeable differences when comparing emissions totals across all states to national totals, especially by sector.
 
-```{r plots2, fig.dim = c(16, 12), dpi=300, out.width = '100%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r}
 
-plot_tags <- list(a = c("Coal", "Natural Gas")) #  Maybe move this to the first code chunk
-state_ffc_figures$fig_2_2
+# plots2, fig.dim = c(16, 12), dpi=300, out.width = '100%', fig.retina = 3, fig.cap="Figure 2-2. Differences Between State-Level and National Total Energy Use for Coal and Natural Gas.", echo=FALSE, warning=FALSE, results=FALSE, message=FALS
+# plot_tags <- list(a = c("Coal", "Natural Gas")) #  Maybe move this to the first code chunk
+# fig_2_2
 
 ```
 
 The petroleum categories generally line up well across state-level and national totals. There are only minor differences in petroleum coke, mainly in the industrial sector, as shown in Figure 2-3 below. For petroleum coke, there are differences in energy content and barrels, but the difference in energy content appears in 2004, which is when petroleum coke heating values were changed from a constant value to values based on marketable and catalyst coke. Again, this difference is because of different national-level and state-level conversion factors. Since 2004, the MER has used an annual national-level "quantity-weighted" average petroleum coke conversion factor (instead of a fixed factor). SEDS applies the marketable and catalyst coke conversion factors to the state-level consumption of each petroleum coke category within each state.
 
+
 ```{r plots3, fig.dim = c(10, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-3. Differences Between State-Level and National Total Energy Use for Petroleum Coke.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-state_ffc_figures$fig_2_3
+# state_ffc_figures$fig_2_3
 
 ```
 
@@ -128,11 +126,20 @@ For diesel fuel and gasoline, the totals generally line up, but there are differ
 
 In addition to the differences in gasoline and diesel fuel across sectors over the time series, there are also differences in some petroleum fuels across sectors, specifically in 2021. This is because the SEDS represents the latest data from EIA in terms of sector breakouts that were not reflected in the national *Inventory* 2021 values that relied on older EIA data. Again, the totals for the fuels line up, but there are differences across sectors, as shown in Figure 2-4 below. The updated SEDS data were used in the state-level breakout because they represent the latest data available. This results in differences in 2021 results across sectors for the state totals versus the national *Inventory*. However, the national *Inventory* numbers will be updated to match the 2021 SEDS data during the next national *Inventory* cycle.
 
-```{r plots4, fig.dim = c(12, 12), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r}
+#| label: figure2-4
+#| fig-width: 12
+#| fig-height: 12
+#| dpi: 300
+#| out-width: 100%
+#| fig-cap: "Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory)."
+#| echo: false
+#| warning: false
+#| results: false
+#| message: false
 
-
-state_ffc_figures$fig_2_4 <- state_ffc_figures$fig_2_4a + state_ffc_figures$fig_2_4b
-state_ffc_figures$fig_2_4 
+figures$fig_2_4 <- figures$fig_2_4a + figures$fig_2_4b
+figures$fig_2_4
 
 ```
 
@@ -156,10 +163,19 @@ In the national *Inventory*, portions of fuel consumption data for several fuel 
 
 The adjustments vary over time and represent from about `r 3`% to `r 3`% of total unadjusted industrial sector energy use, as shown in Figure 2-5.
 
-```{r plots5, fig.dim = c(6, 8), dpi=300, out.width = '100%', fig.cap="Figure 2-4. 2021 Differences Between Sectors for Petroleum Fuels (SEDS—National Inventory).", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r} 
+#| label: figure2-5
+#| fig-width: 12
+#| fig-height: 12
+#| dpi: 300
+#| out-width: 100%
+#| fig-cap: "Figure 2-5............................"
+#| echo: false
+#| warning: false
+#| results: false
+#| message: false
 
-
-state_ffc_figures$fig_2_5
+figures$fig_2_5
 
 ```
 
@@ -179,7 +195,7 @@ Adjustments for each fuel type were made based on industry data or assumptions a
 
 Fuel consumption estimates used for CO~2~ calculations were adjusted downward to exclude fuels with biogenic origins consistent with the IPCC Guidelines. CO~2~ emissions from ethanol and biodiesel consumption are not included in fuel combustion totals in line with the 2006 IPCC Guidelines and UNFCCC reporting obligations to avoid double counting with net carbon fluxes from changes in biogenic carbon reservoirs accounted for in the estimates for LULUCF. CO~2~ emissions from biogenic fuels under fuel combustion are estimated separately and reported as memo items for informational purposes under the energy sector. Furthermore, for several years of the time series, denaturant used in ethanol production was double counted in both transportation and industrial sector energy use statistics. It was therefore subtracted from transportation sector energy use to avoid double counting. Fuels with biogenic origins (ethanol and biodiesel) and ethanol denaturant adjustments at the state level are handled by adjusting gasoline and diesel fuel use based on the total non-biogenic components of those fuels only (which also include any adjustments for denaturant), as described in Step 5 below. So, in effect, the state-level energy use calculations used to determine FFC emissions for gasoline and diesel fuel combine this Step 3 with Step 5 below. See Section 2.1.6 for more detail on biofuel use at the state level used to calculate biomass CO~2~ as a memo item.
 
-##### 2.1.1.2.5. *Step 4: Adjust for Biofuels and Petroleum Denaturant*
+##### *2.1.1.2.5. Step 4: Adjust for Biofuels and Petroleum Denaturant*
 
 Since October 2000, the Dakota Gasification Plant has been exporting CO~2~ produced in a coal gasification process to Canada by pipeline. Because this CO~2~ is not emitted to the atmosphere in the United States, the coal that is gasified to create the exported CO~2~ is subtracted from fuel consumption statistics used to calculate combustion emissions in the national *Inventory*. Consistent with the approach currently used in the national *Inventory*, the coal used to produce exported CO~2~ from the Dakota gas plant to Canada was subtracted from other coal use to determine state-level emissions. This was all assumed to be subtracted from North Dakota, the location of the Dakota gas plant. Appendix A, Table A-23 in the "FFC CO~2~ Industrial" Tab, describes this adjustment.
 
@@ -189,16 +205,16 @@ Motor gasoline and diesel fuel are used across all sectors. The total amount of 
 
 [^4]: FHWA forms MF-21 and MF-24 are used in the calculations. For 2021, form MF-24 is not available yet, so values for 2020 were used in the calculations shown.
 
-![Figure 2-6. Comparison of Gasoline Sector Allocation](images/.png)
+<!-- ![Figure 2-6. Comparison of Gasoline Sector Allocation](images/.png) -->
 
-![Figure 2-7. Comparison of Diesel Fuel Sector Allocation](images/.png)
+<!-- ![Figure 2-7. Comparison of Diesel Fuel Sector Allocation](images/.png) -->
 
 The bottom-up approach used by the national *Inventory* to determine transportation sector fuel use generally results in less allocation of gasoline to the transportation sector (and more to other sectors) and more diesel fuel allocated to the transportation sector (and less to other sectors) compared with the original MER energy balance data, as shown below in Figure 2-8.
 
 ```{r plots8, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-8. Comparison of Transportation Sector Fuel Use.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
 
-state_ffc_figures$fig_2_8
+figures$fig_2_8
 
 ```
 
@@ -235,7 +251,7 @@ The adjustments vary over time and represent about 25% to 30% of total unadjuste
 
 ```{r plots10, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-10. Transportation Sector State-Level Allocation Examples.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
 
-state_ffc_figures$fig_2_10
+# state_ffc_figures$fig_2_10
 
 
 ```
@@ -262,9 +278,20 @@ Emissions associated with NEUs were calculated and reported separately from FFC 
 
 The energy statistics include consumption of fossil fuels that are ultimately used for international bunkers. In the national Inventory, emissions from IBF consumption are not included in national totals and are instead reported separately as a memo item, as required by the IPCC and UNFCCC inventory reporting guidelines. There are other international organizations, including the International Civil Aviation Organization and the International Maritime Organization, that consider global action from these sectors. Therefore, the amount of each fuel type used for international bunkers was subtracted from fuel consumption data when determining fuel combustion emissions. The adjustments vary over time and represent about 4% to 7% of total unadjusted transportation sector energy use, as shown in Figure 2-11.
 
-```{r plots11, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Figure 2-11. Adjustments Made to Transportation Sector Energy Use to Account for IBFs.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r}
+#| label: figure2-11
+#| fig-width: 6
+#| fig-height: 4
+#| dpi: 300
+#| out-width: 100%
+#| fig-cap: "Figure 2-11. Adjustments Made to Transportation Sector Energy Use to Account for IBFs."
+#| echo: false
+#| warning: false
+#| results: false
+#| message: false
 
-state_ffc_figures$fig_2_11
+
+figures$fig_2_11
 
 
 ```
@@ -295,10 +322,20 @@ As discussed in Step 5 above, fuel use at the national level was determined by s
 
 The above calculations resulted in state-level GHG estimates that generally add up to the total estimates in the national *Inventory*, with small differences occurring at the more disaggregated sector level, as shown below in Figure 2-12 for FFC CO~2~ emissions. The differences are due to the vintage of the different data sources used. As discussed above in Step 1, the national *Inventory* was based on the February 2023 MER, while the state-level values were based on the June 2023 SEDS. The SEDS used updated information on the sector allocation of some fuels, which will be reflected in the next national *Inventory* report. There is also a minor difference in total emissions due to the differences in emissions factors for LPG across sectors. The updated SEDS data shows more LPG in the industrial sector, which has a higher emissions factor than LPG use in other sectors, so the result is slightly higher total emissions in the state-level estimates. The percentage differences in the 2021 sector totals are small: a 0.2% difference in the residential sector, 0.4% in the commercial sector, 0.1% in the industrial sector, and 0.3% in the transportation sector. The percentage difference in total emissions is also very minor, a 0.007% difference.
 
-```{r plots12, fig.dim = c(8, 6), dpi=300, out.width = '100%', fig.cap="Figure 2-12. Differences in State-Level Total and National Total FFC CO~2~ Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r}
+#| label: figure2-12
+#| fig-width: 8
+#| fig-height: 6
+#| dpi: 300
+#| out-width: 100%
+#| fig-cap: "Figure 2-12. Differences in State-Level Total and National Total FFC CO~2~ Emissions."
+#| echo: false
+#| warning: false
+#| results: false
+#| message: false
 
-state_ffc_figures$fig_2_12 <- state_ffc_figures$fig_2_12a / state_ffc_figures$fig_2_12b
-state_ffc_figures$fig_2_12
+figures$fig_2_12 <- figures$fig_2_12a / figures$fig_2_12b
+figures$fig_2_12
 
 
 ```
@@ -317,9 +354,9 @@ Mobile non-CO~2~ emissions include CH~4~ and N~2~O emissions. National-level est
 
 The approach to estimate mobile non-CO~2~ emissions was to develop state-level estimates by fuel type/category and use those estimates to develop the percentage of emissions by state. The percentage of emissions by state were then applied to the national totals from the national *Inventory* to disaggregate national totals at the state level. Table 23 shows the default data type and source used in developing the state-level estimates. Appendix A, Tables A-105 through A-116 in the “Mobile non-CO~2~” Tab, show the percentages of emissions by vehicle type by state that were used in the analysis. from the national *Inventory* to disaggregate national totals at the state level. The approach above could also overestimate or underestimate state emissions by assuming a national average of vehicle age distribution across states when each state could have a different mix of vehicle fleet age distribution. However, the approach is considered reasonable, and the overall impact of these simplifying assumptions on state emissions is expected to be small.
 
-```{r table3, echo=FALSE, results='asis'}
+```{r table2-3, echo=FALSE, results='asis'}
 
-state_ffc_tables$table_2_3
+tables$table_2_3
 
 
 ```
@@ -416,7 +453,17 @@ CO~2~ emissions can arise from NEUs via several pathways. Emissions may occur wh
 
 Emissions from NEUs were calculated based on multiplying the adjusted NEU fuel use by state (from Steps 1–3) by the national-level carbon factors by fuel type (same as used in the FFC calculations, including oxidation and molecular weight ratio with the exception that HGLs and still gas have separate carbon factors for combustion and NEUs) and by the fraction of C emitted which is equal to 1 minus the storage factor of each fuel type (from Step 4). See Annex 2.2 of the national *Inventory* for more details on carbon factors used. There are some small differences in the NEU-calculated state-level emissions totals compared with what is reported in the national *Inventory*, as shown in Figure 2-15 below. As with FFC, these differences represent a very small percentage of total NEU emissions (the maximum percentage difference over time is around 0.015% of total NEU emissions).
 
-```{r plots15, fig.dim = c(6, 4), dpi=300, out.width = '100%', fig.cap="Fig. 2-15. Differences in State-Level and National Total NEU CO~2~ Emissions.", echo=FALSE, warning=FALSE, results=FALSE, message=FALSE}
+```{r}
+#| label: figure2-15
+#| fig-width: 8
+#| fig-height: 6
+#| dpi: 300
+#| out-width: 100%
+#| fig-cap: "Figure 2-15. Differences in State-Level Total and National Total FFC CO~2~ Emissions."
+#| echo: false
+#| warning: false
+#| results: false
+#| message: false
 
 
 
@@ -480,9 +527,9 @@ The different categories of national-level waste incinerations emissions include
 
 National emissions from all the categories were allocated to states based on the percentage of total MSW combusted. The amount of waste combusted by state was estimated based on several different sources depending on the year of data, as shown in Table 2-4. This is the same approach as currently used in the national *Inventory* (EPA 2023a). The national *Inventory* has more information on the data sources used.
 
-```{r table4, echo=FALSE, results='asis'}
+```{r table2-4, echo=FALSE, results='asis'}
 
-state_ffc_tables$table_2_4
+tables$table_2_4
 
 ```
 
@@ -728,10 +775,10 @@ For pre-1972 emissions,^[Because of limited data availability for mines abandone
 
 As an example, Table 2-5 presents the state allocation factors for liberated CH~4~ for all states in the Illinois Basin with sealed abandoned mines for year 2019 in the time series
 
-```{r table5, echo=FALSE, results='asis'}
+```{r table2-5, echo=FALSE, results='asis'}
 
 # Example State Allocation Factors for the Illinois Coal Basin (Sealed Mines) 
-# state_ffc_tables$table_2_5 
+tables$table_2_5
 
 
 ```

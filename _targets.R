@@ -1,6 +1,8 @@
 # Load packages 
 library(targets)
 library(visNetwork)
+library(quarto)
+library(tarchetypes)
 
 tar_option_set(packages = c("extrafont", "gt", "gtExtras", "httr", "janitor", 
                             "jsonlite", "knitr", "labelled", "openxlsx", 
@@ -31,12 +33,26 @@ list(
     universal_data$msn_names), 
   
   tar_target(
-    seds,
-    state_ffc_get_seds_data(msn_names)),
-  
-  tar_target(
     scraped_data,
     scrape_data(msn_names)), 
+  
+  tar_target(
+    national_ffc_data, 
+    national_ffc_read_eia_data(msn_names)), 
+  
+  # Mobile is in-work 
+  # tar_target(
+  #   mobile_corrections,  
+  #   get_mobile_corrections_data(national_ffc_data, 
+  #                               scraped_data)), 
+  
+  tar_target(
+    national_ffc_adjusted, 
+    national_ffc_adjust_data(national_ffc_data)),
+  
+  tar_target(
+    seds,
+    state_ffc_get_seds_data(msn_names)),
   
   tar_target(
     corrections, 
@@ -82,17 +98,21 @@ list(
                                       corrections,
                                       carbon_emissions)),
   
-  tar_target(state_ffc_tables,
-             state_ffc_gt_tables()), 
+  tar_target(saved_state_ffc_figures, 
+             {saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
+               "saved_state_ffc_figures.rds"}, format = "file"),
   
-  tar_target(
-    state_ffc_report, 
-    rmarkdown::render("state_ffc_final_report.Rmd", 
-                      params = list(data = carbon_emissions, 
-                                    figures = state_ffc_figures), 
-                      output_file = "state_ffc_final_report.html"))
-  )
-
+  tar_target(state_ffc_tables,
+             state_ffc_gt_tables()),
+  
+  tar_target(saved_state_ffc_tables, 
+             {saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
+               "saved_state_ffc_tables.rds"}, format = "file"),
+  
+  tar_quarto(
+    state_ffc_final_report,
+    path = "state_ffc_final_report.qmd")
+)
 
 
 # tar_make()
