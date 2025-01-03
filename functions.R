@@ -4,7 +4,7 @@
 data_setup <- function() {
   # Create Dataframes of MSNs and descriptions and state codes
   
-  # Create function to add labels (with 'labelled')
+  # Create function to add labels (with 'labelled')-------------------
   
   # Function: add variable labels to dataframes and convert 'year' to factor
   apply_variable_labels <- function(data, ghgi_variables) {
@@ -26,7 +26,7 @@ data_setup <- function() {
   }
   
   
-  # Read GHGI harmonization data---------------------------------------------
+  # Read GHGI harmonization data-------------------------------------------
   
   ghgi_values <- read_excel("data_harmonization.xlsx", 
                             sheet = "values") %>%
@@ -44,7 +44,7 @@ data_setup <- function() {
   # Add variable labels
   ghgi_invdb_values <- apply_variable_labels(ghgi_invdb_values, ghgi_variables)
   
-  # Create Filtering Dataframe---------------------------------------------
+  # Create Filtering Dataframe-------------------------------------------
   
   # EIA provides descriptors for MSNs, but not sources and sectors.
   # Here, we create dataframes of descriptors for sources & sectors of interest.
@@ -171,7 +171,8 @@ data_setup <- function() {
             source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)") 
   
   # Add variable labels
-  msn <- apply_variable_labels(msn, ghgi_variables)
+  msn <- apply_variable_labels(msn, 
+                               ghgi_variables)
   
   # State and Territory Names---------------------------------------------
   
@@ -180,7 +181,9 @@ data_setup <- function() {
   state_name_key <- tibble(state = ghgi_values$state, 
                            state_name = ghgi_values$state_name) %>%
     # Identify territories
-    mutate(territory = if_else(str_length(state) > 2, TRUE, FALSE))
+    mutate(territory = if_else(state %in% c("AS", "GU", "PR", 
+                                            "VI","USIQ", "WAK"), 
+                               TRUE, FALSE))
   
   
   # MSN Lookup for State and National Emissions-------------------------------
@@ -215,12 +218,12 @@ data_setup <- function() {
 
 
 # Read national consumption data from EIA's API
-national_ffc_read_eia_data <- function(msn_names) {
+national_ffc_read_eia_data <- function(universal_data) {
   # API key generated 11/22/23 
   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
   
   # Change to match most recent available year (current year minus two)
-  latest_year <- year(Sys.Date()) -2
+  latest_year <- year(Sys.Date()) -3
   
   # Read EIA Consumption Data----------------------------------------------
   
@@ -241,8 +244,8 @@ national_ffc_read_eia_data <- function(msn_names) {
     select(-unit, -seriesDescription)
   
   us_consumption <- eia_national %>%
-    left_join(msn_names$msn, by = "msn") %>%
-    filter(msn %in% msn_names$msn_lookup) %>%
+    left_join(universal_data$msn_names$msn, by = "msn") %>%
+    filter(msn %in% universal_data$msn_names$msn_lookup) %>%
     # Remove "(consumption)" from electric power sector description
     mutate(sector_description = if_else(
       str_detect(sector_description, "electric power"), 
@@ -320,7 +323,7 @@ national_ffc_read_eia_data <- function(msn_names) {
 
 
 # National Motor Gasoline and Diesel Fuel Adjustments
-get_mobile_corrections_data <- function (national_ffc_data, 
+get_mobile_adjustments_data <- function (national_ffc_data, 
                                          scraped_data) {
   
   # Applies to Commercial, Industrial, Transportation
@@ -350,7 +353,7 @@ get_mobile_corrections_data <- function (national_ffc_data,
   
   us_consumption_mogas <- national_ffc_data$us_consumption %>% 
     filter(msn %in% c("MGCCB", "MGACB", "MGICB")) %>%
-    mutate(mogas_ethanol_corrected = value / 0.001)
+    mutate(mogas_ethanol_adjusted = value / 0.001)
   
   us_consumption_diesel <- national_ffc_data$us_consumption %>% 
     filter(msn %in% c("DFACB", "DFCCB", "DFICB", "DFRCB", "DKEIB")) 
@@ -398,13 +401,14 @@ get_mobile_corrections_data <- function (national_ffc_data,
   total_nonroad_mogas <- us_consumption_mogas %>% 
     group_by(year) %>%
     # Get total EIA mogas by year (tra + com + ind)
-    summarize(mogas_ethanol_corrected = sum(mogas_ethanol_corrected)) %>%
+    summarize(mogas_ethanol_adjusted = sum(mogas_ethanol_adjusted)) %>%
     ungroup() %>%
     # Get MOVES3 on-road mogas totals
     left_join(mogas_annual_totals %>% 
                 select(year, onroad_mogas_excl_ethanol_v2), by = "year") %>%
     # Annual non-road mogas = total mogas - on-road mogas
-    mutate(nonroad_mogas = mogas_ethanol_corrected - onroad_mogas_excl_ethanol_v2)
+    mutate(nonroad_mogas = mogas_ethanol_adjusted - 
+             onroad_mogas_excl_ethanol_v2)
   
   ## Rec Boat Mogas-------------------------------------------------------
   
@@ -452,20 +456,20 @@ get_mobile_corrections_data <- function (national_ffc_data,
       sector_description == "transportation sector" ~ "trans")) %>%
     # Non-trans mogas total = total non-trans mogas - on-road - rec boats
     mutate(remaining_mogas = case_when(
-      meta_sector == "non-trans" ~ sum(mogas_ethanol_corrected) - 
+      meta_sector == "non-trans" ~ sum(mogas_ethanol_adjusted) - 
         (onroad_mogas_excl_ethanol_v2 + rec_boat_mogas),
-      .default = mogas_ethanol_corrected), .by = year) %>%
+      .default = mogas_ethanol_adjusted), .by = year) %>%
     mutate(mogas_adjusted = case_when(
       # Com or ind = remaining mogas value * EIA mogas / sum of ind + com mogas 
       meta_sector == "non-trans" ~ 
-        remaining_mogas * mogas_ethanol_corrected / sum(mogas_ethanol_corrected),
+        remaining_mogas * mogas_ethanol_adjusted / sum(mogas_ethanol_adjusted),
       # Transportation = on-road total + rec boat total
       meta_sector == "trans" ~ 
         onroad_mogas_excl_ethanol_v1 + rec_boat_mogas), 
       .by = c(year, meta_sector)) 
   
   
-  # Distillate (Diesel) Fuel Corrections--------------------------
+  # Distillate (Diesel) Fuel Adjustments--------------------------
   ## Vessel Fuel Data-----------------------------------------------
   
   # Retrieved from EIA 
@@ -552,26 +556,124 @@ get_mobile_corrections_data <- function (national_ffc_data,
   
   # Aggregate------------------------------------------------
   
-  mobile_corrections <- lst(national_mogas, national_diesel)
+  mobile_adjustments <- lst(national_mogas, national_diesel)
   
-  return(mobile_corrections)
+  return(mobile_adjustments)
+  
+}
+
+
+# National Motor Gasoline and Diesel Fuel Adjustments
+get_ibf_adjustments_data <- function (national_ffc_data, 
+                                         scraped_data) {
+  
+# Fuel Densities----------------------------------------------
+
+# These are fixed (I think)
+
+fuels <- tibble(fuel = c("jet fuel", "JP8", "JP5", "JP4", "JAA", "JA1", "JAB", 
+                         "distillate fuel", "commerce marine", 
+                         "military marine", "residual fuel", 
+                         "aviation gasoline", "intermediate fuel oil (IFO)"),
+                fuel_density = c(3.002, 3.04, 3.08, 2.90, 3.08, 3.04, NA, NA, 
+                                 3.1916, 3.18, 3.575, 2.72, 3.81))
+
+# Military Jet Fuel---------------------------------------------
+
+# jet_fuel_military = sum of all jet fuels: JAB, JAA, JA1, JP4, JP5, JP8
+# For each, account for both Navy and Air Force (what about the Army?)
+
+# each fuel = millions of gallons * fuel_density * 1000000
+# jet_fuel_military = sum(all of these)
+
+# each fuel's gallons data = black box 
+
+# Civilian Jet Fuel----------------------------------------------
+
+# data from Int'l Commercial Aviation (AEDT ) (TBTU)
+# "Personal Communciation" data ie black box
+
+
+# Marine Residual Fuel-------------------------------------------
+
+# residual_fuel_marine <- residual_fuel_all * heat_content   / 1000
+# 
+# residual_fuel_all <- (residual_vessels_american + residual_vessels_foreign) *  42  /  1000
+
+# diesel_vessels_american & diesel_vessels_foreign are black box data
+
+# They're using a fixed value for heat content instead of the annually variable 
+# Heat Content data. Need to look into that
+
+# Marine Distillate Fuel-----------------------------------------
+
+dist_fuel_marine <- commerce_marine + military_marine
+
+
+commerce_marine <- diesel_fuel_all * heat_content / 1000
+
+diesel_fuel_all = (diesel_vessels_american + diesel_vessels_foreign) *  42  /  1000
+
+# diesel_vessels_american & diesel_vessels_foreign are black box data
+
+military_marine <- MGO + F76 + IFO * heat_content
+# Military Marine = MGO + F76 + IFO * heat_content 
+# MGO, F76, IFO are black box data
+
+# They're using a fixed value for heat content instead of the annually variable 
+# Heat Content data. Need to look into that
+
+
+
+# IBF Adjustments---------------------------------------------
+
+
+# jet_fuel_consumption <- jet_fuel_civilian + jet_fuel_military
+
+# Requires heat_content from jet fuel which is CONSTANT at 5.670
+# Correction: no, it doesn't need this
+# jet_fuel_heat_content <- 5.670 
+
+# Aviation jet fuel (tbtu) = intl comm aviation (hard coded number in Transport workbook) +
+# military aircraft (hidden worksheet)
+
+# Marine residual fuel = ??? (hidden worksheet)
+
+# Marine distillate fuel = ??? (hidden worksheet)
+
+# Aggregate---------------------------------------------
+
+ibf_adjustments <- lst(ibf_jet_fuel_adj, ibf_marine_residual_fuel_adj, 
+                       ibf_marine_dist_fuel_adj) %>%
+  rbind()
+
+return(ibf_adjustments)
+
+}
+
+# Perform all national data adjustments
+get_neu_ippu_adjustments_data <- function() {
+  
+  # ippu_adj, synth_gas_adj, coke_adj, is_adj, eastman_gas_adj, 
+  # blast_furnace_adj, coke_oven_adj, biogas_adj, ammonia_adj
+  
+  # Aggregate---------------------------------------------
+  
+  neu_and_ippu_adjustments <- lst(ippu_adj, synth_gas_adj, coke_adj, is_adj,
+                                  eastman_gas_adj, blast_furnace_adj, 
+                                  coke_oven_adj, biogas_adj, ammonia_adj, 
+                                  neu_adj) %>%
+    rbind()
+  
+  return(neu_and_ippu_adjustments)
   
 }
 
 # Perform all national data adjustments
-national_ffc_adjust_data <- function (national_ffc_data) {
-  
-  # PLACEHOLDER for NEU stuff until we get data
-  ippu_adj <- 0
-  synth_gas_adj <- 0
-  coke_adj <- 0
-  is_adj <- 0
-  eastman_gas_adj <- 0
-  blast_furnace_adj <- 0
-  coke_oven_adj <- 0
-  biogas_adj <- 0
-  ammonia_adj <- 0
-  cb_adj <- 0
+national_ffc_adjust_data <- function(national_ffc_data,
+                                     mobile_adjustments,
+                                     neu_and_ippu_adjustments,
+                                     ibf_adjustments) {
   
   # Collate National consumption data-------------------------------------
   
@@ -599,7 +701,6 @@ national_ffc_adjust_data <- function (national_ffc_data) {
     # need to adjust motor gas (com)
     # commercial has ethanol in the dataset but not in the spreadsheet
     
-    
     # Collapse list into a single data frame
     list_rbind() 
   
@@ -621,7 +722,7 @@ national_ffc_adjust_data <- function (national_ffc_data) {
       # What is the MSN for coking coal?
       filter(msn == "") %>%
       # Subtract IPPU adjustment
-      mutate(adjusted_value = value - ippu_adj, 
+      mutate(adjusted_value = value - neu_and_ippu_adjustments$ippu_adj, 
              # Adjusted value no lower than zero 
              adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)),
     
@@ -632,7 +733,10 @@ national_ffc_adjust_data <- function (national_ffc_data) {
       filter(msn == "CLICB") %>%
       # Subtract adjustments
       mutate(adjusted_value = value - sum(
-        synth_gas_adj, coke_adj, is_adj, eastman_gas_adj)),
+        neu_and_ippu_adjustments$synth_gas_adj, 
+        neu_and_ippu_adjustments$coke_adj, 
+        neu_and_ippu_adjustments$is_adj, 
+        neu_and_ippu_adjustments$eastman_gas_adj)),
     
     # Natural Gas (NEU adjustment: special; blast furnace adjustment, 
     # coke oven adjustment, biogas adjustment, 
@@ -643,22 +747,25 @@ national_ffc_adjust_data <- function (national_ffc_data) {
       # Subtract adjustments
       # Blast furnace, coke oven, and biogas are always zero?
       mutate(adjusted_value = value - sum(
-        blast_furnace_adj, coke_oven_adj, biogas_adj, 
-        ammonia_adj, is_adj)),
+        neu_and_ippu_adjustments$blast_furnace_adj,
+        neu_and_ippu_adjustments$coke_oven_adj, 
+        neu_and_ippu_adjustments$biogas_adj, 
+        neu_and_ippu_adjustments$ammonia_adj, 
+        neu_and_ippu_adjustments$is_adj)),
     
     # Residual Fuel (carbon black adjustment) 
     residual_fuel = national_ffc_data$us_consumption %>%
       filter(msn == "RFICB") %>%
-      # Subtract carbon black correction
-      mutate(adjusted_value = value - cb_adj, 
+      # Subtract carbon black adjustment
+      mutate(adjusted_value = value - neu_and_ippu_adjustments$cb_adj, 
              # Adjusted value no lower than zero 
              adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)),
     
     # Distillate Fuel (i&s adjustment, mogas/df adjustment)
     distillate_fuel = national_ffc_data$us_consumption %>%
       filter(msn == "DFICB") %>%
-      # Subtract iron & steel correction
-      mutate(adusted_value = value - is_adj),
+      # Subtract iron & steel adjustment
+      mutate(adusted_value = value - neu_and_ippu_adjustments$is_adj),
     
     # Motor gasoline (mogas/df adjustment)
     motor_gasoline = national_ffc_data$us_consumption %>%
@@ -744,12 +851,14 @@ national_ffc_adjust_data <- function (national_ffc_data) {
     # Distillate Fuel (IBF adjustment, mogas/df adjustment)
     distillate_fuel = national_ffc_data$us_consumption %>%
       filter(msn == "DFACB") %>%
-      mutate(adjusted_value = value - ibf_dist_fuel_adj), 
+      mutate(adjusted_value = value - 
+               ibf_adjustments$ibf_marine_dist_fuel_adj), 
     
     # Jet Fuel (IBF adjustment)
     jet_fuel = national_ffc_data$us_consumption %>%
       filter(msn == "JFACB") %>%
-      mutate(adjusted_value = value - ibf_jet_fuel_adj),
+      mutate(adjusted_value = value - 
+               ibf_adjustments$ibf_jet_fuel_adj),
     
     # LPG (Propane) AKA HGL
     lpg = national_ffc_data$us_consumption %>%
@@ -762,158 +871,151 @@ national_ffc_adjust_data <- function (national_ffc_data) {
     # Residual Fuel (IBF adjustment)
     residual_fuel = national_ffc_data$us_consumption %>%
       filter(msn == "RFACB") %>%
-      mutate(adjusted_value = value - ibf_residual_fuel_adj)) %>%
+      mutate(adjusted_value = value -
+               ibf_adjustments$ibf_marine_residual_fuel_adj)) %>%
     
     # Collapse list into a single data frame
     list_rbind()
   
   # Aggregate------------------------------------------------------
   
-  national_ffc_adjusted <- lst(us_res_com_ele, us_ind, us_tra)
+  national_ffc_adjusted <- lst(us_res_com_ele, us_ind, us_tra) %>%
+    bind_rows()
+  
+}
+
+# Calculate national co2 emissions
+national_ffc_calculate_emissions <- function(national_ffc_adjusted, 
+                                             carbon, 
+                                             universal_data)  {
+  
+  carbon_emissions_national <- national_ffc_adjusted %>% 
+    left_join(carbon$carbon_factors, 
+              by =c("source_description", "year")) %>%
+    # MMT CO2  = btu * carbon factor/1000 * 44/12
+    mutate(mmt_co2 = adjusted_value * 
+             (carbon_factor/1000) * carbon$carbon_ratio)
+  
+  # Apply labels to variables
+  carbon_emissions_national <- universal_data$apply_variable_labels(carbon_emissions_national, universal_data$ghgi_variables)
+  
+  return(carbon_emissions_national)
   
 }
 
 
 # Read SEDS data from EIA's API
 
-state_ffc_get_seds_data <- function(msn_names, 
-                                    apply_variable_labels, 
-                                    ghgi_variables) {
-  # Alternatively, read SEDS data from EIA API file pulled with epa_api.R
+state_ffc_get_seds_data <- function(universal_data) {
+  
+  # read SEDS data from EIA API file pulled with epa_api.R
   seds <- read_csv("data/api_seds.csv") %>%
     clean_names() %>%
-    select( state = state_id, year = period, msn = series_id, 
+    select( state = state_id, year = period, msn = series_id,
             value, unit) %>%
     filter(unit == "Billion Btu") %>%
-    filter(msn %in% msn_names$msn_lookup) %>%
-    mutate(unit = str_to_lower(unit), 
+    filter(msn %in% universal_data$msn_names$msn_lookup) %>%
+    mutate(unit = str_to_lower(unit),
            year = as.character(year)) %>%
-    left_join(msn_names$msn %>% select(-unit), by = "msn") %>%
+    left_join(universal_data$msn_names$msn %>%
+                select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
     distinct() %>%
     # Convert to millions of BTUs
-    mutate(value = value / 1000) 
+    mutate(value = value / 1000)
   
-  # # Access SEDS data via EIA API
-  # 
-  # # This script contains two options for retrieving SEDS data from the EIA API:
-  # # 1) retrieve entire dataset for all states + DC, 1990-present, inclusive; 
-  # # 2) retrieve most recent year of data and append to the existing SEDS csv.
-  # 
+  # Access SEDS data via EIA API
+  # This script contains two options for retrieving SEDS data from the EIA API:
+  # 1) retrieve entire dataset for all states + DC, 1990-present, inclusive;
+  # 2) retrieve most recent year of data and append to the existing SEDS csv.
+
   # # API key generated 11/22/23 
-  # key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
-  # 
-  # # API key check
-  # eia_api_url <- "https://api.eia.gov/v2/seds/data"
-  # response <- GET(eia_api_url, query = list(api_key = key))
-  # # If status = 200, then it's working
-  # print(response)
-  # 
-  # # Function for Options 1 & 2---------------------------------------------
-  # 
-  # # Function to Query EIA API
-  # get_results <- function(state, year, offset) {
-  #   
-  #   # offset_by is the offset (i.e., row to start with) for pagination
-  #   # For now, to avoid exceeding the 5000-row data limit, we will pull
-  #   # only one year and state per query. This requires n=51*years API queries. 
-  #   results <- paste0("https://api.eia.gov/v2/seds/data/?frequency=annual",
-  #                     "&data[0]=value", 
-  #                     "&facets[stateId][]=", state, # state input
-  #                     "&start=", year - 1, # start = previous year for some reason
-  #                     "&end=", year,
-  #                     "&sort[0][column]=period&sort[0][direction]=desc&offset=",
-  #                     offset, "&length=5000", # offset (usually 0)
-  #                     "&api_key=", key) %>% # our API key is required
-  #     GET() %>% # retrieve page from url
-  #     content("raw") %>% # extract content as a raw vector
-  #     rawToChar() %>% # convert to character data
-  #     fromJSON() # convert from JSON to R object
-  #   
-  #   # The data limit from EIA's API is 5000 rows per query. 
-  #   # Here, we check the results to see if we exceeded that. 
-  #   # Extract warnings (if they exist)
-  #   limits <- pluck(results, "response", "warnings", "warning")
-  #   limits <- ifelse(is_empty(limits), "nothing", limits)
-  #   print(limits)
-  #   
-  #   # Check if data limit (5000 rows) was reached, ignoring empty values
-  #   limit_reached <<- case_when(
-  #     limits == "nothing" ~ FALSE,
-  #     str_detect(limits, "incomplete return") ~ TRUE,
-  #     .default = FALSE)
-  #   print(limit_reached)
-  #   
-  #   return(results)
-  #   
-  # }
-  # 
-  # 
-  # 
-  # # Option 1: Retrieve All SEDS Data-------------------------------------------
-  # 
-  # # Apply API data query function across all states and years.
-  # # Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
+  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+  
+  # Get most recent year
+  latest_year <- year(Sys.Date()) - 3
+  # Function for Options 1 & 2---------------------------------------------
+
+  # Function to Query EIA API
+  get_results <- function(state, year, offset) {
+    # For now, to avoid exceeding the 5000-row data limit, we will pull
+    # only one year and state per query. This requires n=51*years API queries.
+    results <- paste0("https://api.eia.gov/v2/seds/data/?frequency=annual",
+                      "&data[0]=value",
+                      "&facets[stateId][]=", state, # state input
+                      "&start=", year - 1, # start = previous year
+                      "&end=", year,
+                      "&sort[0][column]=period&sort[0][direction]=desc&offset=",
+                      offset, "&length=5000", # offset (usually 0)
+                      "&api_key=", key) %>% # our API key is required
+      GET() %>% # retrieve page from url
+      content("raw") %>% # extract content as a raw vector
+      rawToChar() %>% # convert to character data
+      fromJSON() # convert from JSON to R object
+
+    # The data limit from EIA's API is 5000 rows per query.
+    # Here, we check the results to see if we exceeded that.
+    # Extract warnings (if they exist)
+    # limits <- pluck(results, "response", "warnings", "warning")
+    # limits <- ifelse(!is_empty(limits), 
+    #                  paste0("data limit reached: ", limits), limits)
+    # print(limits)
+
+    # Check if data limit (5000 rows) was reached, ignoring empty values
+    # limit_reached <- case_when(
+    #   limits == "nothing" ~ FALSE,
+    #   str_detect(limits, "incomplete return") ~ TRUE,
+    #   .default = FALSE)
+    # print(limit_reached)
+
+    return(results)
+
+  }
+
+  # Retrieve All SEDS Data-------------------------------------------
+
+  # Apply API data query function across all states and years.
+  # Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
   # tic()
-  # api_results <- expand_grid(state = states_and_dc, 
-  #                            year = 1990:2022, 
-  #                            offset = 0) %>%
+  # api_results <- expand_grid(
+  #   state = state_name_key %>% 
+  #     filter(territory == FALSE) %>%
+  #     pull(state),
+  #   year = 2021:latest_year,
+  #   offset = 0) %>%
   #   pmap(function(state, year, offset) get_results(state, year, offset))
   # toc()
   # 
-  # api_seds <- api_results %>%
+  # seds <- api_results %>%
   #   map(\(.x) pluck(.x, "response", "data")) %>%
-  #   list_rbind()
-  # 
-  # # Write data to csv file
-  # write_csv(api_seds, "data/api_seds.csv")
-  # 
-  # # The script read_seds_data.R performs further transformation of this data.
-  # 
-  # # Option 2: Retrieve New Year of Data Only---------------------------------
-  # 
-  # api_results_new <- expand_grid(state = states_and_dc, 
-  #                                year = 2022, 
-  #                                offset = 0) %>%
-  #   pmap(function(state, year, offset) get_results(state, year, offset))
-  # 
-  # api_seds_new <- api_results_new %>%
-  #   map(\(.x) pluck(.x, "response", "data")) %>%
-  #   list_rbind() %>% mutate(period = as.numeric(period), 
-  #                           value = as.numeric(value))
-  # 
-  # # Load existing data
-  # api_seds <- read_csv("data/api_seds.csv") 
-  # 
-  # # Check if new data is different from existing data
-  # new_stuff <- api_seds_new %>% 
-  #   filter(seriesId %in% msn_lookup) %>%
-  #   # Remove any superfluous spaces from the character data
-  #   mutate(across(where(is.character), ~ str_trim(.))) %>%
-  #   # Filter: only retain new data that's not in the existing dataset
-  #   anti_join(api_seds %>% 
-  #               filter (period == "2022",
-  #                       seriesId %in% msn_lookup))
-  # 
-  # # View the results
-  # new_stuff
-  # 
-  # # If it looks OK, append new data to existing dataset
-  # api_seds <- read_csv("data/api_seds.csv") %>%
-  #   rbind(api_seds_new)
-  # 
-  # # Save the updated file 
-  # write_csv(api_seds, "data/api_seds.csv")
-  
+  #   list_rbind() %>%
+  #     clean_names() %>%
+  #     select( state = state_id, year = period, msn = series_id,
+  #             value, unit) %>%
+  #     filter(unit == "Billion Btu") %>%
+  #     filter(msn %in% universal_data$msn_names$msn_lookup) %>%
+  #     mutate(unit = str_to_lower(unit),
+  #            year = as.character(year)) %>%
+  #     left_join(universal_data$msn_names$msn %>%
+  #                 select(-unit), by = "msn") %>%
+  #     # Remove any duplicates caused by appending new annual data
+  #     distinct() %>%
+  #     # Convert to millions of BTUs
+  #     mutate(value = as.numeric(value) / 1000)
+
+  # Write data to csv file
+  # write_csv(seds, "data/api_seds.csv")
+
+
   return(seds)
   
 }
 
 # Datascraping
-scrape_data <- function(msn_names) {
+scrape_data <- function(universal_data) {
   
   # Set year to match most recent available year (current year minus two)
-  latest_year <- year(Sys.Date()) -2
+  latest_year <- year(Sys.Date()) -3
   
   # Scrape FWHA Fuel Use (State & National FFC) ----------------------------
   
@@ -955,7 +1057,7 @@ scrape_data <- function(msn_names) {
                            "District of Colombia", state)) %>%
     rename(state_name = state) %>%
     # Get state codes
-    left_join(msn_names$state_name_key %>% 
+    left_join(universal_data$msn_names$state_name_key %>% 
                 filter(territory == FALSE), 
               by = "state_name") %>%
     # No longer need national total or full state name
@@ -987,7 +1089,7 @@ scrape_data <- function(msn_names) {
            state = if_else(str_detect(state, "Dist"), "District of Colombia", state)) %>%
     rename(state_name = state) %>%
     # Get state codes
-    left_join(msn_names$state_name_key %>% 
+    left_join(universal_data$msn_names$state_name_key %>% 
                 filter(territory == FALSE), 
               by = "state_name") %>%
     # No longer need national total or full state name
@@ -1056,8 +1158,9 @@ scrape_data <- function(msn_names) {
   #   clean_names() 
   # 
   # # Apply variable labels 
-  # swc <- apply_variable_labels(swc, ghgi_variables)
-  # 
+  # swc <- universal_data$apply_variable_labels(swc,
+  # universal_data$ghgi_variables)
+
   scraped_data <- lst(diesel_distribution,
                       diesel_use_by_class, 
                       #swc, 
@@ -1071,9 +1174,29 @@ scrape_data <- function(msn_names) {
 
 # Retrieve national FFC data for adjustments
 
-state_ffc_get_corrections_data <- function() {
+state_ffc_get_adjustments_data <- function(national_ffc_adjusted, 
+                                           ibf_adjustments, 
+                                           neu_and_ippu_adjustments) {
+
+  #NOTE------------------------------  
+  # This function currently exists in a hybrid form.
+  # It reads necessary national data from csv/Excel, but 
+  # eventually it will get it directly from this pipeline. 
+  # Here is a framework for the pipeline code:
   
-  # Adjustment factors data, derived from national inventory------------
+  adjustments <- national_ffc_adjusted
+  national_adjustments <- national_ffc_adjusted
+    consumption_input <- national_ffc_adjusted
+    ibf_adjustments <- ibf_adjustments
+    neu_adjustments <- neu_and_ippu_adjustments
+  is_distribution <- neu_and_ippu_adjustments
+  ammonia_distribution <- neu_and_ippu_adjustments
+  petrochemicals_distribution <- neu_and_ippu_adjustments
+  petrochemicals_cb_distribution <- neu_and_ippu_adjustments
+  # foks_diesel_distribution & foks_residual_distribution may be read from
+  # Excel sheet (see below) since they are no longer being updated 
+  
+  # Adjustment factors data from national inventory------------
   adjustments <- read_csv("data/us_compare.csv") %>%
     clean_names() %>%
     # Change 'year' to a column
@@ -1088,8 +1211,8 @@ state_ffc_get_corrections_data <- function() {
              source_description == "hydrocarbon gas liquids", 
              "hgl", source_description)) 
   
-  # National corrections data------------------------------------------
-  national_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
+  # National adjustments data-------------------------------------
+  national_adjustments <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                      sheet = "Corrections", 
                                      skip = 0, range = "B5:AI60",
                                      col_names = FALSE) %>%
@@ -1107,7 +1230,7 @@ state_ffc_get_corrections_data <- function() {
     pivot_longer(cols = -1) %>%
     pivot_wider(names_from = categories) %>%
     mutate(year = as.character(year)) %>%
-    select(year, sng_correction = dakota_gas,
+    select(year, sng_adjustment = dakota_gas,
            nat_gas_ammonia_factor = ammonia_production,
            ippu = coking_coal, 
            cb_factor = residual_fuel, 
@@ -1116,7 +1239,7 @@ state_ffc_get_corrections_data <- function() {
            is_coal_factor = coal)
   
   # Consumption input data------------------------------------------
-  # Consumption input is 'US compare' data with corrections factors applied. 
+  # Consumption input is 'US compare' data with adjustments applied. 
   # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
   
   consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx", 
@@ -1156,9 +1279,10 @@ state_ffc_get_corrections_data <- function() {
   print("This generates a warning about NA values.")
   print("Ignore this warning. These values are not used.")
   
-  # IBF corrections data--------------------------------------------
+  # IBF adjustments data--------------------------------------------
+  
   # Read in IBF data from FFC excel workbook. Only need one line:
-  ibf_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
+  ibf_adjustments <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                 sheet = "International Bunker Fuels", 
                                 skip = 0, range = "C7:AJ10") %>%
     clean_names() %>%
@@ -1175,7 +1299,7 @@ state_ffc_get_corrections_data <- function() {
   
   # NEU data---------------------------------------------------------
   # Read in NEU data from FFC excel workbook
-  neu_corrections <- read_excel("data/national_inventory_CO2_data.xlsx", 
+  neu_adjustments <- read_excel("data/national_inventory_CO2_data.xlsx", 
                                 sheet = "Non-Energy Use", 
                                 skip = 0, range = "D5:AK24") %>%
     clean_names() %>%
@@ -1203,6 +1327,7 @@ state_ffc_get_corrections_data <- function() {
              str_squish()) 
   
   # I & S distributions data--------------------------------------------
+  
   # Read in I & S data from FFC excel workbook
   is_distribution <- read_excel(
     "data/ippu_i&s_percent.xlsx", 
@@ -1358,12 +1483,13 @@ state_ffc_get_corrections_data <- function() {
                 mutate(year = "2022"))
   
   # Aggregate------------------------------------------------------
-  corrections <- lst(
+  
+  state_adjustments <- lst(
     adjustments, 
-    national_corrections, 
+    national_adjustments, 
     consumption_input, 
-    ibf_corrections, 
-    neu_corrections, 
+    ibf_adjustments, 
+    neu_adjustments, 
     is_distribution, 
     ammonia_distribution, 
     petrochemicals_distribution, 
@@ -1371,21 +1497,20 @@ state_ffc_get_corrections_data <- function() {
     foks_diesel_distribution, 
     foks_residual_distribution)
   
-  return(corrections)
+  return(state_adjustments)
   
 }
 
 
 # Carbon Factors
-get_carbon_factors <- function (apply_variable_labels, 
-                                ghgi_variables) {
+get_carbon_factors <- function (universal_data) {
   
   # Ratio of the molecular weight of carbon dioxide to carbon
   carbon_ratio <- 44/12
   
   # Apply label to variable
   carbon_ratio <- carbon_ratio %>% 
-    set_variable_labels(.labels = ghgi_variables %>% 
+    set_variable_labels(.labels = universal_data$ghgi_variables %>% 
                           filter(variable == "carbon_ratio") %>% 
                           pull(metadata))
   
@@ -1439,7 +1564,8 @@ get_carbon_factors <- function (apply_variable_labels,
            carbon_factor = as.numeric(carbon_factor))
   
   # Apply labels to variables
-  carbon_factors <- apply_variable_labels(carbon_factors, ghgi_variables)
+  carbon_factors <- universal_data$apply_variable_labels(carbon_factors,
+                                          universal_data$ghgi_variables)
   
   carbon <- lst(carbon_factors, carbon_ratio)
   
@@ -1453,8 +1579,7 @@ get_carbon_factors <- function (apply_variable_labels,
 # The procedure for retrieving and collating the FFC data for US territories
 # differs from the procedure for states. 
 get_territories_data <- function(carbon, 
-                                 apply_variable_labels, 
-                                 ghgi_variables) {
+                                 universal_data) {
   # API Key----------------------------------------------------------------
   
   # API key generated 11/22/23 
@@ -1562,12 +1687,13 @@ get_territories_data <- function(carbon,
              source_description,  "than 500 ppm sulfur", "Distillate Fuel Oil"), 
            source_description = str_remove_all(
              source_description,  ", Kerosene Type"),
-           source_description = if_else(source_description %in% c("Ethane", "Propane", 
-                                                                  "Normal Butane", "Isobutane",
-                                                                  "Ethylene", "Propylene", 
-                                                                  "Butylene", "Isobutylene", 
-                                                                  "Pentanes Plus"), 
-                                        "lpg", source_description)) %>%
+           source_description = if_else(
+             source_description %in% c("Ethane", "Propane", 
+                                       "Normal Butane", "Isobutane",
+                                       "Ethylene", "Propylene", 
+                                       "Butylene", "Isobutylene", 
+                                       "Pentanes Plus"), 
+             "lpg", source_description)) %>%
     group_by(source_description) %>%
     # Calculate mean heat content by source (affects LPGs only)
     summarize(heat_content = mean(heat_content)) %>%
@@ -1614,8 +1740,9 @@ get_territories_data <- function(carbon,
     mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon$carbon_ratio)
   
   # Apply labels to variables
-  carbon_territories <- apply_variable_labels(carbon_territories, 
-                                              ghgi_variables)
+  carbon_territories <- universal_data$apply_variable_labels(
+    carbon_territories, 
+    universal_data$ghgi_variables)
   
   # For Vince's spreadsheet------------------------------------------------
   
@@ -1636,18 +1763,18 @@ get_territories_data <- function(carbon,
 
 # Perform all state data adjustments
 state_ffc_adjust_data <- function(seds, 
-                                  corrections, 
+                                  state_adjustments, 
                                   scraped_data,
-                                  apply_variable_labels, 
-                                  ghgi_variables) {
+                                  universal_data) {
   
-  # Residential
+  ## Residential------------------------------------------------
+  
   seds_res_adjusted <- lst(
     
     coal = seds %>%
       filter(msn == "CLRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments,
+      left_join(state_adjustments$adjustments,
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1667,7 +1794,7 @@ state_ffc_adjust_data <- function(seds,
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments,  
+      left_join(state_adjustments$adjustments,  
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1682,7 +1809,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = seds %>%
       filter(msn == "DFRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1706,13 +1833,14 @@ state_ffc_adjust_data <- function(seds,
     # Collapse list into a single data frame
     list_rbind()
   
-  # Commercial
+  ## Commercial---------------------------------------------------
+  
   seds_com_adjusted <- lst(
     
     coal = seds %>%
       filter(msn == "CLCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1723,7 +1851,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = seds %>%
       filter(msn == "DFCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1740,7 +1868,7 @@ state_ffc_adjust_data <- function(seds,
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1761,7 +1889,7 @@ state_ffc_adjust_data <- function(seds,
       # Ethanol no longer needed (and value is now duplicative)
       filter(msn != "EMCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments , 
+      left_join(state_adjustments$adjustments , 
                 by = c("source_description", "year", "sector_description")) %>%
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -1789,16 +1917,17 @@ state_ffc_adjust_data <- function(seds,
     # Collapse list into a single data frame
     list_rbind()
   
-  # Industrial
+  ## Industrial---------------------------------------------------
+  
   seds_ind_adjusted <- lst(
     
     # Coking Coal
     coking_coal = seds %>%
       filter(msn == "CLKCB") %>%
-      # Join with national data corrections
-      left_join(corrections$national_corrections, by = "year") %>%
+      # Join with national data adjustments
+      left_join(state_adjustments$national_adjustments, by = "year") %>%
       mutate(states_sum_value = sum(value), .by = c(msn, year),
-             # ippu percent = ippu / sum_states_value as long as ippu is greater
+             # ippu factor = ippu / sum_states_value as long as ippu is greater
              ippu_factor = if_else(ippu < states_sum_value,
                                    ippu / states_sum_value, 1),
              adjusted_value = value - (value * ippu_factor), 
@@ -1814,19 +1943,19 @@ state_ffc_adjust_data <- function(seds,
                   select(sum_coking_coal = states_sum_value,
                          coking_coal_value = value, year, state),
                 by = c("year", "state")) %>%
-      # Join with national data corrections
-      left_join(corrections$national_corrections, by = "year") %>%
+      # Join with national data adjustments
+      left_join(state_adjustments$national_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(corrections$consumption_input,
+      left_join(state_adjustments$consumption_input,
                 by = c("year", "source_description", "sector_description")) %>%
       # Join with I & S distribution data
-      left_join(corrections$is_distribution, by = c("state", "year")) %>% 
+      left_join(state_adjustments$is_distribution, by = c("state", "year")) %>% 
       mutate(coke_factor = if_else(ippu < sum_coking_coal, 0,
                                    ippu - sum_coking_coal),
              other_coal_coke_adj =
                coke_factor * (coking_coal_value / sum_coking_coal),
-             # SNG correction for North Dakota only
-             other_coal_sng_adj  = if_else(state == "ND", sng_correction, 0),
+             # SNG adjustment for North Dakota only
+             other_coal_sng_adj  = if_else(state == "ND", sng_adjustment, 0),
              # Multiply I & S factor by I & S state distribution percentages
              other_coal_is_adj = is_coal_factor * is_percent,
              adjusted_value_pre = value -
@@ -1848,18 +1977,20 @@ state_ffc_adjust_data <- function(seds,
       # Group_size shows that each group has exactly two rows. Good!
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFINB") %>%
-      # Join with national data corrections
-      left_join(corrections$national_corrections, by = "year") %>%
+      # Join with national data adjustments
+      left_join(state_adjustments$national_adjustments, by = "year") %>%
       # Change source and MSN to reflect that it's net natural gas
       mutate(source_description = "natural gas",
              msn = "net natural gas") %>%
       # Join with consumption input data
-      left_join(corrections$consumption_input,
+      left_join(state_adjustments$consumption_input,
                 by = c("year", "source_description", "sector_description")) %>%
       # Join with I & S distribution data
-      left_join(corrections$is_distribution, by = c("state", "year")) %>% 
+      left_join(state_adjustments$is_distribution, 
+                by = c("state", "year")) %>% 
       # Join with ammonia distribution data
-      left_join(corrections$ammonia_distribution, by = c("state", "year")) %>% 
+      left_join(state_adjustments$ammonia_distribution, 
+                by = c("state", "year")) %>% 
       # Change MSN identifier. old MSN distinction no longer needed(?)
       # However, MSN can be reconstituted from other _code fields if needed.
       #  Ammonia factor * ammonia distribution = ammonia adjusted value 
@@ -1880,13 +2011,14 @@ state_ffc_adjust_data <- function(seds,
     # Residual Fuel
     residual_fuel = seds %>%
       filter(msn == "RFICB") %>%
-      # Join with national data corrections 
-      left_join(corrections$national_corrections, by = "year") %>%
+      # Join with national data adjustments 
+      left_join(state_adjustments$national_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(corrections$consumption_input,
+      left_join(state_adjustments$consumption_input,
                 by = c("year", "source_description", "sector_description")) %>%
       # Join with petrochemicals carbon black distribution data
-      left_join(corrections$petrochemicals_cb_distribution, by = c("state", "year")) %>% 
+      left_join(state_adjustments$petrochemicals_cb_distribution, 
+                by = c("state", "year")) %>% 
       # adjust for cb factor = cb_factor * petrochem cb distribution 
       # adjusted value = value - cb adjusted value (minimum = 0)
       mutate(residual_fuel_cb_adj = if_else(
@@ -1902,13 +2034,13 @@ state_ffc_adjust_data <- function(seds,
     # Distillate Fuel
     distillate_fuel = seds %>%
       filter(msn == "DFICB") %>%
-      # Join with national data corrections 
-      left_join(corrections$national_corrections, by = "year") %>%
+      # Join with national data adjustments
+      left_join(state_adjustments$national_state_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(corrections$consumption_input,
+      left_join(state_adjustments$consumption_input,
                 by = c("year", "source_description", "sector_description")) %>%
       # Join with I & S distribution data
-      left_join(corrections$is_distribution, by = c("state", "year")) %>% 
+      left_join(state_adjustments$is_distribution, by = c("state", "year")) %>% 
       # distillate_fuel_is_adj = is_distillate_fuel_factor * 
       # mysterious hard-coded % used in the other_coal_is_adj, above
       # distillate_fuel_is_adj (if negative, then 0)
@@ -1935,7 +2067,7 @@ state_ffc_adjust_data <- function(seds,
       # Get sum of all states' net gasoline
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # get adjustment factor for motor gasoline
-      left_join(corrections$adjustments,
+      left_join(state_adjustments$adjustments,
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename adjustment factor for clarity
       rename(motor_gas_factor = national_value) %>%
@@ -1953,7 +2085,7 @@ state_ffc_adjust_data <- function(seds,
       # Get sum of all states' petroleum_coke
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # get adjustment factor for petroleum coke
-      left_join(corrections$adjustments,
+      left_join(state_adjustments$adjustments,
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename adjustment factor for clarity 
       rename(petro_coke_factor = national_value) %>%
@@ -1971,7 +2103,7 @@ state_ffc_adjust_data <- function(seds,
       # Change source description to reflect new value
       mutate(source_description = "hgl") %>%
       # Join with adjustments to get adjustment factor
-      left_join(corrections$adjustments,
+      left_join(state_adjustments$adjustments,
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename adjustment factor for clarity
       rename(ind_lpg_factor = national_value) %>%
@@ -1995,12 +2127,13 @@ state_ffc_adjust_data <- function(seds,
     list_rbind()
   # BTW: distillate_fuel_is_adj is required for neu_adjustments
   
-  # Transportation
+  ## Transportation-----------------------------------------
+  
   seds_tra_adjusted <- lst(
     
     distillate_fuel = scraped_data$diesel_distribution %>% 
       # Join with adjustments data
-      left_join(corrections$adjustments %>% 
+      left_join(state_adjustments$adjustments %>% 
                   # Can only join by 'year', so a filter is required
                   filter(source_description == "distillate fuel oil", 
                          sector_description == "transportation sector"), 
@@ -2010,7 +2143,7 @@ state_ffc_adjust_data <- function(seds,
     
     gasoline = scraped_data$gasoline_distribution %>%
       # Join with adjustments data
-      left_join(corrections$adjustments %>% 
+      left_join(state_adjustments$adjustments %>% 
                   # Can only join by 'year', so a filter is required
                   filter(source_description == "motor gasoline", 
                          sector_description == "transportation sector"), 
@@ -2054,7 +2187,7 @@ state_ffc_adjust_data <- function(seds,
     natural_gas = seds %>%
       filter(msn == "NGACB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # rename for clarity
       rename(natural_gas_factor = national_value) %>%
@@ -2068,7 +2201,8 @@ state_ffc_adjust_data <- function(seds,
     # Collapse list into a single data frame
     list_rbind()
   
-  # Electric Power
+  ## Electric Power---------------------------------------------------
+  
   seds_ele_adjusted <- lst(
     
     coal = seds %>%
@@ -2077,7 +2211,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(sector_description = word(sector_description, 
                                        start = 1, end = 3)) %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename for clarity
       rename(coal_factor = national_value) %>%
@@ -2099,7 +2233,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(sector_description = word(sector_description, 
                                        start = 1, end = 3)) %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename for clarity
       rename(natural_gas_factor = national_value) %>%
@@ -2133,7 +2267,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(sector_description = word(sector_description, 
                                        start = 1, end = 3)) %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(corrections$adjustments, 
+      left_join(state_adjustments$adjustments, 
                 by = c("source_description", "year", "sector_description")) %>%
       # Rename for clarity
       rename(distillate_fuel_factor = national_value) %>%
@@ -2146,11 +2280,12 @@ state_ffc_adjust_data <- function(seds,
     # Collapse list into a single data frame
     list_rbind()
   
-  # IBF
+  ## IBF--------------------------------------------------------------
+  
   seds_ibf_adjusted <- lst(
     
-    distillate_fuel = corrections$foks_diesel_distribution %>%
-      left_join(corrections$ibf_corrections %>% filter(
+    distillate_fuel = state_adjustments$foks_diesel_distribution %>%
+      left_join(state_adjustments$ibf_adjustments %>% filter(
         source_description == "distillate fuel oil"), 
         by = "year") %>% 
       # Calculate adjusted value (factor * percent)
@@ -2159,8 +2294,8 @@ state_ffc_adjust_data <- function(seds,
              msn = "DFACB", 
              sector_description = "transportation sector"),
     
-    residual_fuel = corrections$foks_residual_distribution %>%
-      left_join(corrections$ibf_corrections %>% filter(
+    residual_fuel = state_adjustments$foks_residual_distribution %>%
+      left_join(state_adjustments$ibf_adjustments %>% filter(
         source_description == "residual fuel oil"), 
         by = "year") %>% 
       # Calculate adjusted value (factor * percent)
@@ -2171,7 +2306,7 @@ state_ffc_adjust_data <- function(seds,
     
     jet_fuel = seds %>%
       filter(msn == "JFACB") %>%
-      left_join(corrections$ibf_corrections,
+      left_join(state_adjustments$ibf_adjustments,
                 by = c("year", "source_description")) %>% 
       # Get sum of all states' value 
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -2185,12 +2320,13 @@ state_ffc_adjust_data <- function(seds,
     select(state, year, sector_description, source_description, 
            msn, ibf_adjusted_value)
   
-  # NEU
+  ## NEU-------------------------------------------------------------
+  
   seds_neu_adjusted <- lst(
     
     # Other coal
-    # NEU Correction applies to Tennessee only (Eastman Gas Plant)
-    other_coal = corrections$neu_corrections %>%
+    # NEU adjustment applies to Tennessee only (Eastman Gas Plant)
+    other_coal = state_adjustments$neu_adjustments %>%
       filter(source_description == "other coal", 
              sector_description == "industrial sector") %>%
       mutate(neu_adjusted_value = neu_factor,
@@ -2200,10 +2336,10 @@ state_ffc_adjust_data <- function(seds,
              state = "TN"),
     
     # Natural gas
-    natural_gas = corrections$neu_corrections %>%
+    natural_gas = state_adjustments$neu_adjustments %>%
       # Natural gas has a very long source name in the NEU data
       filter(str_detect(source_description, "natural gas")) %>%
-      left_join(corrections$petrochemicals_distribution, by = "year") %>%
+      left_join(state_adjustments$petrochemicals_distribution, by = "year") %>%
       # NEU value = NEU factor * distribution (will be zero for most states)
       mutate(neu_adjusted_value = neu_factor * petrochemical_percent, 
              # Standardize MSN & source to match seds_ind_adjusted
@@ -2213,8 +2349,8 @@ state_ffc_adjust_data <- function(seds,
     # Distillate fuel
     distillate_fuel = seds_ind_adjusted %>% 
       filter(msn == "DFICB") %>%
-      # Join with NEU corrections data
-      left_join(corrections$neu_corrections,
+      # Join with NEU adjustments data
+      left_join(state_adjustments$neu_adjustments,
                 by = c("year", "source_description", "sector_description")) %>%
       mutate(neu_adjusted_value = neu_factor * 
                (distillate_fuel_is_adj / states_sum_value)) %>%
@@ -2231,8 +2367,8 @@ state_ffc_adjust_data <- function(seds,
       filter(msn != "PPICB") %>%
       # Change source description to reflect new value
       mutate(source_description = "hgl") %>%
-      # Join with neu corrections to get neu factor
-      left_join(corrections$neu_corrections,
+      # Join with neu adjustments to get neu factor
+      left_join(state_adjustments$neu_adjustments,
                 by = c("year", "source_description", "sector_description")) %>%
       # Get sum of all states' lpg
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -2243,8 +2379,8 @@ state_ffc_adjust_data <- function(seds,
     # Pentanes plus
     pentanes_plus = seds %>%
       filter(msn == "PPICB") %>%
-      # Join with neu corrections to get neu factor
-      left_join(corrections$neu_corrections,
+      # Join with neu adjustments to get neu factor
+      left_join(state_adjustments$neu_adjustments,
                 by = c("year", "source_description", "sector_description")) %>%
       # Get sum of all states' pentanes plus
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -2254,8 +2390,8 @@ state_ffc_adjust_data <- function(seds,
     # Petroleum coke
     petroleum_coke = seds %>%
       filter(msn == "PCICB") %>%
-      # Join with neu corrections to get neu factor
-      left_join(corrections$neu_corrections,
+      # Join with neu adjustments to get neu factor
+      left_join(state_adjustments$neu_adjustments,
                 by = c("year", "source_description", "sector_description")) %>%
       # Get sum of all states' petroleum coke
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -2265,8 +2401,8 @@ state_ffc_adjust_data <- function(seds,
     # Still gas
     still_gas = seds %>%
       filter(msn == "SGICB") %>%
-      # Join with neu corrections to get neu factor
-      left_join(corrections$neu_corrections,
+      # Join with neu adjustments to get neu factor
+      left_join(state_adjustments$neu_adjustments,
                 by = c("year", "source_description", "sector_description")) %>%
       # Get sum of all states' still gas
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
@@ -2277,6 +2413,8 @@ state_ffc_adjust_data <- function(seds,
     list_rbind() %>%
     # Remove nonessential columns to simplify joins in state_breakouts.R
     select(sector_description:year, neu_adjusted_value, state, msn)
+  
+  ## Aggregate------------------------------------------------
   
   seds_adjusted <- lst(seds_res_adjusted, 
                        seds_com_adjusted, 
@@ -2326,7 +2464,8 @@ state_ffc_adjust_data <- function(seds,
         "residential coal",
       .default = source_description)) %>%
     
-    # Subtract NEU and IBF adjustments
+    
+    ## Subtract NEU and IBF------------------------------
     # Join with NEU adjusted data
     left_join(seds_adjusted$seds_neu_adjusted, 
               by = c("sector_description", "source_description", "year", 
@@ -2342,10 +2481,11 @@ state_ffc_adjust_data <- function(seds,
       adjusted_value - ibf_adjusted_value, 
       adjusted_value), 
       # Some MSNs are 100% NEU. For these, NEU value = 100% of adjusted value
-      neu_adjusted_value = if_else(msn %in% c("ARICB", "LUICB", "FNICB", "CLKCB",
-                                              "FOICB", "SNICB", "WXICB", 
-                                              "MSICB", "LUACB"), 
-                                   adjusted_value, neu_adjusted_value),  
+      neu_adjusted_value = if_else(
+        msn %in% c("ARICB", "LUICB", "FNICB", "CLKCB",
+                   "FOICB", "SNICB", "WXICB", 
+                   "MSICB", "LUACB"), 
+        adjusted_value, neu_adjusted_value),  
       neu_ibf_adjusted_value = if_else(
         # Subtract NEU only if NEU applies (i.e., isn't NA)
         !is.na(neu_adjusted_value), 
@@ -2359,7 +2499,8 @@ state_ffc_adjust_data <- function(seds,
       .default = neu_ibf_adjusted_value))
   
   # Apply labels to variables
-  seds_all_adjusted <- apply_variable_labels(seds_all_adjusted, ghgi_variables)
+  seds_all_adjusted <- universal_data$apply_variable_labels(seds_all_adjusted, 
+                                             universal_data$ghgi_variables)
   
   seds_all_plus_ind <- lst(seds_all_adjusted, seds_ind_adjusted)
   
@@ -2371,10 +2512,9 @@ state_ffc_adjust_data <- function(seds,
 # Calculate Carbon Emissions
 state_ffc_calculate_emissions <- function(seds_all_adjusted, 
                                           carbon, 
-                                          apply_variable_labels, 
-                                          ghgi_variables)  {
+                                          universal_data)  {
   
-  carbon_emissions <- seds_all_adjusted %>% 
+  carbon_emissions_state <- seds_all_adjusted %>% 
     left_join(carbon$carbon_factors, 
               by =c("source_description", "year")) %>%
     # MMT CO2  = btu * carbon factor/1000 * 44/12
@@ -2387,18 +2527,44 @@ state_ffc_calculate_emissions <- function(seds_all_adjusted,
              .default = source_description))
   
   # Apply labels to variables
-  carbon_emissions <- apply_variable_labels(carbon_emissions, ghgi_variables)
+  carbon_emissions_state <- universal_data$apply_variable_labels(
+    carbon_emissions_state,
+    universal_data$ghgi_variables)
   
-  return(carbon_emissions)
+  return(carbon_emissions_state)
   
 }
 
+# Create national FFC ggplot figures
+national_ffc_ggplot_figures <- function(national_ffc_adjusted, 
+                                        carbon_emissions_national) {
+  
+return(national_ffc_figures)
+
+}
 
 # Create state FFC ggplot figures
 state_ffc_ggplot_figures <- function(seds_all_adjusted, 
                                      seds_ind_adjusted,
-                                     corrections, 
-                                     carbon_emissions) {
+                                     state_adjustments, 
+                                     carbon_emissions_state) {
+  
+  # Color Palettes-----------------------------------------------------------
+  
+  # Hex	Gas	Sector	Economic Sectors
+  #4F81BD	Carbon Dioxide	Energy	Residential
+  #C0504D	Methane	Agriculture	Agriculture
+  #4198AF	Nitrous Oxide	IPPU	Industry
+  #9BBB59	HFCs, PFCs, SF6, NF3	LULUF Emissions	Transportation
+  #D7925D	 	Waste	Commercial
+  #7F63A1	Net CO2 Flux from LULUCF	LULUCF Removals	Electric Power Industry
+  #49525E	Net Emissions	Net Emissions	 
+  
+  # Style Guide Palette
+  ghg_palette <- c("#4F81BD", "#C0504D", "#4198AF", "#9BBB59",
+                   "#D7925D", "#7F63A1", "#49525E")
+  
+  myPalette <- colorRampPalette(c("thistle1","slateblue3"), space = "Lab")
   
   # Read National Emissions Data (for Figures)------------------------------
   
@@ -2418,24 +2584,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
            sector_description = if_else(
              str_detect(sector_description, "electric"), 
              "electric power sector", sector_description))
-  
-  # Color Palettes-----------------------------------------------------------
-  
-  # Hex	Gas	Sector	Economic Sectors
-  #4F81BD	Carbon Dioxide	Energy	Residential
-  #C0504D	Methane	Agriculture	Agriculture
-  #4198AF	Nitrous Oxide	IPPU	Industry
-  #9BBB59	HFCs, PFCs, SF6, NF3	LULUF Emissions	Transportation
-  #D7925D	 	Waste	Commercial
-  #7F63A1	Net CO2 Flux from LULUCF	LULUCF Removals	Electric Power Industry
-  #49525E	Net Emissions	Net Emissions	 
-  
-  # Style Guide Palette
-  ghg_palette <- c("#4F81BD", "#C0504D", "#4198AF", "#9BBB59",
-                   "#D7925D", "#7F63A1", "#49525E")
-  
-  myPalette <- colorRampPalette(c("thistle1","slateblue3"), space = "Lab")
-  
+
   # Create Data Object (SEDS + National)--------------------------------------
   
   # Energy Use, State Totals vs. National: 
@@ -2460,7 +2609,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
                  "isobutane", "isobutylene"), "lpg",
                  source_description)),
       
-      national = corrections$adjustments %>% 
+      national = state_adjustments$adjustments %>% 
         rename(value = national_value) %>% 
         mutate(dataname = "national_total", 
                value = value / 1000, 
@@ -2483,7 +2632,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
   
   state_vs_national_co2 <-
     lst(
-      states = carbon_emissions %>%
+      states = carbon_emissions_state %>%
         select(sector_description, year, value = mmt_co2) %>%
         mutate(dataname = "state_total",
                ghg = "co2"),
@@ -2508,7 +2657,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
   # transformed values, the differences, or the proportions so we can be
   # consistent across figures and avoid confusion.
   
-  # Differences in Coal/NG State Totals vs National Totals-------------------
+  ## Fig 2-2: Differences in Coal/NG State Totals vs National Totals-----------
   state_ffc_figures <- lst(
     
     fig_2_2 = energy_use %>%
@@ -2544,7 +2693,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
     
     
     
-    ## Differences in Petroleum Coke State Totals vs National Totals----------
+    ## Fig 2-3: Differences in Petroleum Coke State Totals vs Nat. Totals----
     
     fig_2_3 = state_vs_national_btu %>%
       map(\(.x)
@@ -2573,7 +2722,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
             legend.position = "none") +
       labs(x = "", y = "Difference: SEDS - national (TBtu) "),
     
-    ## Sectoral Differences in Select Fuels-----------------------------------
+    ## Fig 2-4: Sectoral Differences in Select Fuels-------------------
     
     fig_2_4a = state_vs_national_btu %>%
       list_rbind() %>%
@@ -2632,8 +2781,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
             strip.background = element_blank()) +
       labs(x = "", y = ""),
     
-    ## IPPU Adjustments Made to Industrial Sector Energy Use--------------------
-    
+    ## Fig 2-5: IPPU Adjustments Made to Industrial Sector Energy Use-------
     
     fig_2_5 = seds_ind_adjusted %>%
       mutate(ippu_adjustments = case_when(
@@ -2665,17 +2813,17 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
             strip.background = element_blank()) +
       labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total"),
     
-    # Figures 2-6 and 2-7 are infographics built from tables
+    ## Figs 2-6 and 2-7 are infographics built from tables----------------
     
-    # Comparison of Transportation Sector Fuel Use----------------------------
-    
+    ## Fig 2-8: Comparison of Transportation Sector Fuel Use--------------
     
     fig_2_8 = ggplot(state_vs_national_btu %>%
                        list_rbind() %>%
                        filter(sector_description == "transportation sector",
                               str_detect(source_description,
                                          "distillate|motor")) %>%
-                       group_by(dataname, sector_description, source_description, year) %>%
+                       group_by(dataname, sector_description, 
+                                source_description, year) %>%
                        summarize(total_btu = sum(value, na.rm = TRUE)) %>%
                        ungroup(),
                      aes(x = as.numeric(year), y = total_btu)) +
@@ -2697,10 +2845,10 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
       facet_grid(~ source_description),
     
     
-    # Fig 2-9 requires the full suite of Transport sector data
+    ## Fig 2-9 requires the full suite of Transport sector data------------
     
     
-    ## Adjustments made to Industrial Sector for NEUs---------------------------
+    ## Fig 2-10: Adjustments made to Industrial Sector for NEUs------------
     
     fig_2_10 = seds_all_adjusted %>%
       filter(sector_description == "industrial sector") %>%
@@ -2724,7 +2872,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
       labs(x = "", y = "tBtu", fill = "% of unadj. ind. sector total"),
     
     
-    ## Adjustments Made to Transportation Sector for IBFs------------------------
+    ## Fig 2-11: Adjustments Made to Transportation Sector for IBFs-------
     
     fig_2_11 = seds_all_adjusted %>%
       filter(sector_description == "transportation sector") %>%
@@ -2748,8 +2896,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
       labs(x = "", y = "tBtu", fill = "% of unadj. trans. sector total"),
     
     
-    ## Differences in State-Level Total and National Total FFC CO2 Emissions------
-    
+    ## Fig 2-12: Differences in State Total and Nat. Total FFC CO2-----
     
     fig_2_12a = carbon_comparison %>%
       group_by(year, sector_description, dataname) %>%
@@ -2790,7 +2937,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
       labs(x = "", y = "Difference: SEDS - national (MMT CO2) ")
     
     
-    ## Differences in State-Level and National Total NEU CO2 Emissions--------
+    ## Fig 2-13: Differences in State and Nat.Total NEU CO2--------
     
     # Not sure what data I'm looking at in this figure--ask Vince
     
@@ -2820,10 +2967,20 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
 }
 
 
+# create national 'gt' tables for report
+national_ffc_gt_tables <- function() {
+  national_ffc_tables <-lst()
+  
+  return(national_ffc_tables)
+  
+}
+
+
 # create state 'gt' tables for report
 state_ffc_gt_tables <- function() {
   state_ffc_tables <-lst(
     
+    # Table 2-1---------------------------------------------------
     table_2_1 <- read_excel("data/state_report_tables.xlsx", sheet = 1) %>%
       gt() %>%
       tab_header(
@@ -2857,6 +3014,7 @@ state_ffc_gt_tables <- function() {
                    locations = list(cells_column_labels(columns = 4), 
                                     cells_body(columns = 4, rows = c(3, 4, 6)))),
     
+    # Table 2-2---------------------------------------------------
     table_2_2 <- read_excel("data/state_report_tables.xlsx", sheet = 2) %>%
       # Add grouping columns for the gt table
       mutate(group = c(rep("Determine Activity Data", times = 7), 
@@ -2891,6 +3049,7 @@ state_ffc_gt_tables <- function() {
       tab_style(style = cell_text(align = "center"), 
                 locations = list(cells_column_labels(), cells_row_groups())),
     
+    # Table 2-3---------------------------------------------------
     table_2_3 <- read_excel("data/state_report_tables.xlsx", sheet = 3) %>%
       gt(groupname_col = "Source/Category", row_group_as_column = TRUE) %>%
       tab_header(
@@ -2924,6 +3083,7 @@ state_ffc_gt_tables <- function() {
       tab_style(style = cell_fill(color = "lightsteelblue1"), 
                 locations = list(cells_row_groups())),
     
+    # Table 2-4---------------------------------------------------
     table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
       gt() %>%
       tab_header(
@@ -2953,35 +3113,7 @@ state_ffc_gt_tables <- function() {
       tab_style(style = cell_text(align = "center"), 
                 locations = list(cells_column_labels())),
     
-    table_2_4 <- read_excel("data/state_report_tables.xlsx", sheet = 4) %>%
-      gt() %>%
-      tab_header(
-        title = md("Table 2-4: Summary of Approaches to Disaggregate Waste Incineration Emissions Across Time Series")) %>%
-      opt_row_striping() %>%
-      # rows_add(`National-Level Estimates` = "Determine Activity Data", .before = 1) %>%
-      sub_missing(missing_text = " ") %>%
-      text_transform(locations = cells_body(column = `Summary of Data Used`), 
-                     fn = function(x) {
-                       paste("• ", x) }) %>%
-      tab_options(
-        heading.border.bottom.style = "solid", 
-        heading.border.bottom.color = "black", 
-        heading.title.font.weight = "bold", 
-        heading.align = "center", 
-        column_labels.background.color = "steelblue",
-        column_labels.border.bottom.style = "solid", 
-        column_labels.border.bottom.color = "black", 
-        column_labels.border.bottom.width = 3,
-        table.align = "center", 
-        row.striping.include_table_body = TRUE,
-        row.striping.background_color = "lightsteelblue1") %>%
-      tab_style(style = cell_text(align = "left"), 
-                locations = list(cells_body())) %>%
-      tab_style(style = cell_text(font = "Calibri"), 
-                locations = cells_title()) %>%
-      tab_style(style = cell_text(align = "center"), 
-                locations = list(cells_column_labels()))
-    
+    # Table 2-5---------------------------------------------------
     # table 2-5 must be populated with data; 
     # where is this data from? Ask Vince
   )
