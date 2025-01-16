@@ -386,7 +386,7 @@ national_ffc_read_eia_data <- function(general_data) {
 
 
 # National Motor Gasoline and Diesel Fuel Adjustments
-get_mobile_adjustments_data <- function (moves, 
+get_mobile_adjustments_data <- function (moves3, 
                                          national_ffc_data, 
                                          scraped_data) {
   
@@ -395,11 +395,11 @@ get_mobile_adjustments_data <- function (moves,
   # Motor Gasoline------------------------------------------------------------
   ## MOVES Data---------------------------------------------------------
   
-  moves <- moves$vmt %>%
+  moves <- moves3$vmt %>%
     clean_names() %>%
     pivot_longer(cols = starts_with("x"), 
                  values_to = "vmt_percent", names_to = "year") %>%
-    left_join(moves$fuel %>% 
+    left_join(moves3$fuel %>% 
                 clean_names() %>%
                 pivot_longer(cols = starts_with("x"), 
                              values_to = "fuel_use_percent", names_to = "year"), 
@@ -426,10 +426,8 @@ get_mobile_adjustments_data <- function (moves,
   
   # Gasoline joules per gallon. Fixed value
   mogas_energy <- 43488 * 2839
-  # Nonroad : For now I'm using 1990 values as placeholders
-  nonroad_lawn_garden <-  2280381389 
-  nonroad_recreational <-  725907978 
-  
+  mogas_annual_totals <- 1
+  mogas_nonroad_total <- 1
   # THIS WORKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
   mogas <- moves %>%
@@ -440,10 +438,9 @@ get_mobile_adjustments_data <- function (moves,
                 select(year, heat_content), 
               by = "year") %>%
     left_join(national_ffc_data$ethanol_tra, by = "year") %>%
-    mutate(nonroad_lawn_garden = nonroad_lawn_garden, 
-           nonroad_recreational = nonroad_recreational, 
+    mutate(mogas_nonroad_total = mogas_nonroad_total, 
            gas_use = fuel_use_percent * (
-             gasoline_use_gal * 1000 - nonroad_lawn_garden - nonroad_recreational), 
+             gasoline_use_gal * 1000 - mogas_nonroad_total), 
            tbtu = (gas_use / 42 * heat_content) / 10^9) %>%
     mutate(tbtu_sum = sum(tbtu), .by = year) %>%
     mutate(ethanol_adjustment_factor = 1 - (ethanol / 1000 / tbtu_sum), 
