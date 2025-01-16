@@ -23,7 +23,10 @@ git clone https://github.com/USEPA/GHG-inventory-FFC.git
 
 2. Ensure that you have the required R packages installed. You can install any missing dependencies by running the following in your R console:
 
-install.packages(c("httr", "tidyverse", "assertr", "rvest", "extrafont", "gt", "gtExtras", "janitor", "jsonlite", "knitr", "openxlsx", "patchwork", "reactable", "readxl", "reticulate", "shiny", "tictoc"))
+install.packages(c("assertr", "extrafont", "gt", "gtExtras", "httr", "janitor", 
+                            "jsonlite", "knitr", "labelled", "openxlsx", 
+                            "pdftools", "reactable", "readxl", "rvest", "quarto", "shiny",
+                            "showtext", "tarchetypes", "targets", "tictoc", "tidyverse", "visNetwork", "waldo"))
 
 
 
