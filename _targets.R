@@ -1,4 +1,4 @@
-# Load packages 
+# Load packages
 library(targets)
 library(visNetwork)
 library(quarto)
@@ -6,28 +6,30 @@ library(tarchetypes)
 library(tidyverse)
 library(readxl)
 
-tar_option_set(error = "null", 
-               # garbage_collection = TRUE,
-               packages = c("extrafont", "gt", "gtExtras", "httr", "janitor", 
-                            "jsonlite", "knitr", "labelled", "openxlsx", 
-                            "pdftools", "reactable", "readxl", "rvest", 
-                            "showtext", "tictoc", "tidyverse"))
+tar_option_set(
+  # error = "null",
+  # garbage_collection = TRUE,
+  packages = c(
+    "extrafont", "gt", "gtExtras", "httr", "janitor",
+    "jsonlite", "knitr", "labelled", "openxlsx",
+    "pdftools", "reactable", "readxl", "rvest",
+    "showtext", "tictoc", "tidyverse"
+  )
+)
 # assertr, shiny, waldo
 
 # Function to read Excel files
 read_xl_data <- function(path) {
-  
   # Read names of all worksheets
   sheets <- excel_sheets(path)
-  
-  data <- sheets %>% 
+
+  data <- sheets %>%
     # Set names of worksheets as the list element names
     set_names() %>%
     # Read each worksheet as a separate list element
     map(\(.x) read_excel(path, sheet = .x))
-  
+
   return(data)
-  
 }
 
 # Source custom functions for FFC data
@@ -36,249 +38,354 @@ source("functions.R")
 # Define the Pipeline-------------------------------------------
 
 list(
-  
+
   # Load Local/Network Files------------------------------------
-  
+
   # Track data files (check for updates)
-  
+
   # Both national and state
-  tar_file(harmonized_data_file, 
-             "data_harmonization.xlsx"), 
-  
+  tar_file(
+    harmonized_data_file,
+    "data_harmonization.xlsx"
+  ),
+
   # Both national and state
-  tar_file(carbon_factors_file, 
-            # Sheets: Factors
-            "data/carbon_factors.xlsx"),
-  
+  tar_file(
+    carbon_factors_file,
+    # Sheets: Factors
+    "data/carbon_factors.xlsx"
+  ),
+
   # National
-  tar_file(moves3_file, 
-             "data/moves3.xlsx"), 
-  
+  tar_file(
+    moves3_file,
+    "data/moves3.xlsx"
+  ),
+
   # National
-  tar_file(misc_corrections_file, 
-           "data/misc_corrections.xlsx"), 
-  
+  tar_file(
+    misc_corrections_file,
+    "data/misc_corrections.xlsx"
+  ),
+
   # State
-  tar_file(international_bunker_fuels_file, 
-           "data/international_bunker_fuels.xlsx"),
+  tar_file(
+    international_bunker_fuels_file,
+    "data/international_bunker_fuels.xlsx"
+  ),
   # State
-  tar_file(non_energy_use_file, 
-           "data/non_energy_use.xlsx"), 
+  tar_file(
+    non_energy_use_file,
+    "data/non_energy_use.xlsx"
+  ),
   # State
-  tar_file(ippu_distributions_file, 
-             "data/ippu_distributions.xlsx"), 
+  tar_file(
+    ippu_distributions_file,
+    "data/ippu_distributions.xlsx"
+  ),
   # State
-  tar_file(foks_diesel_file, 
-             # Also FOKS Resid Fuel Bunker 2020.xls
-             "data/FOKS Diesel Fuel Bunker 2020.xls"),   
-  
+  tar_file(
+    foks_diesel_file,
+    # Also FOKS Resid Fuel Bunker 2020.xls
+    "data/FOKS Diesel Fuel Bunker 2020.xls"
+  ),
+
   # State
-  tar_file(foks_residual_file, 
-           # Also FOKS Resid Fuel Bunker 2020.xls
-           "data/FOKS Resid Fuel Bunker 2020.xls"),  
-  
+  tar_file(
+    foks_residual_file,
+    # Also FOKS Resid Fuel Bunker 2020.xls
+    "data/FOKS Resid Fuel Bunker 2020.xls"
+  ),
+
   # Load data files (if updates detected)
   
   # Both
-  tar_target(harmonized_data, 
-             read_xl_data(harmonized_data_file)),
-  
+  tar_target(
+    harmonized_data,
+    read_xl_data(harmonized_data_file)
+  ),
+
   # Both
-  tar_target(carbon_factors, 
-             read_xl_data(carbon_factors_file)),
-  
+  tar_target(
+    carbon_factors,
+    read_xl_data(carbon_factors_file)
+  ),
+
   # National
-  tar_target(moves3, 
-             read_xl_data(moves3_file)),
-  
+  tar_target(
+    moves3,
+    read_xl_data(moves3_file)
+  ),
+
   # National
-  tar_target(misc_corrections, 
-             read_xl_data(misc_corrections_file)),
+  tar_target(
+    misc_corrections,
+    read_xl_data(misc_corrections_file)
+  ),
   # State
-  tar_target(international_bunker_fuels, 
-             read_xl_data(international_bunker_fuels_file)),
-  
+  tar_target(
+    international_bunker_fuels,
+    read_xl_data(international_bunker_fuels_file)
+  ),
+
   # State
-  tar_target(non_energy_use, 
-             read_xl_data(non_energy_use_file)),
-  
+  tar_target(
+    non_energy_use,
+    read_xl_data(non_energy_use_file)
+  ),
+
   # State
-  tar_target(ippu_distributions, 
-             read_xl_data(ippu_distributions_file)),
-  
+  tar_target(
+    ippu_distributions,
+    read_xl_data(ippu_distributions_file)
+  ),
+
   # State
-  tar_target(foks_diesel, 
-             read_xl_data(foks_diesel_file)),
-  
+  tar_target(
+    foks_diesel,
+    read_xl_data(foks_diesel_file)
+  ),
+
   # State
-  tar_target(foks_residual, 
-             read_xl_data(foks_residual_file)),
-  
+  tar_target(
+    foks_residual,
+    read_xl_data(foks_residual_file)
+  ),
+
   # Data Transformation-------------------------------------------
-  
+
   # Both national and state
   tar_target(
-    general_data, 
-    # Contains ghgi_values, ghgi_variables, ghgi_invdb_values, 
+    general_data,
+    # Contains ghgi_values, ghgi_variables, ghgi_invdb_values,
     # msn_names, and apply_variable_labels
-    data_setup(harmonized_data)),
+    data_setup(harmonized_data)
+  ),
 
   # Both national and state
   tar_target(
     scraped_data,
-    scrape_data(general_data)), 
-  
+    scrape_data(general_data)
+  ),
+
   # Both national and state
   tar_target(
-    carbon, 
-    get_carbon_factors(general_data,
-                       carbon_factors)),
-  
+    carbon,
+    get_carbon_factors(
+      general_data,
+      carbon_factors
+    )
+  ),
+
   # National
   tar_target(
-    national_ffc_data, 
-    national_ffc_read_eia_data(general_data)), 
-  
+    national_ffc_data,
+    national_ffc_read_eia_data(general_data)
+  ),
+
   # National
   # Mobile is in-work ----where are mobile adjustments made in national data?
-  tar_target(
-    mobile_adjustments,
-    get_mobile_adjustments_data(moves3, 
-                                national_ffc_data,
-                                scraped_data)),
-  
+  # tar_target(
+  #   mobile_adjustments,
+  #   get_mobile_adjustments_data(
+  #     moves3,
+  #     national_ffc_data,
+  #     scraped_data
+  #   )
+  # ),
+
   # National
   # IBF is in-work
   tar_target(
     ibf_adjustments,
-    get_ibf_adjustments_data(national_ffc_data,
-                                scraped_data)),
-  
+    get_ibf_adjustments_data(
+      national_ffc_data,
+      scraped_data
+    )
+  ),
+
   # National
   tar_target(
-    misc_adjustments, 
-    get_misc_adjustments_data(misc_corrections)),
-  
+    misc_adjustments,
+    get_misc_adjustments_data(misc_corrections)
+  ),
+
   # National
   tar_target(
     national_ffc_adjusted,
-    national_ffc_adjust_data(national_ffc_data,
-                             mobile_adjustments,
-                             misc_adjustments,
-                             ibf_adjustments)),
-  
+    national_ffc_adjust_data(
+      national_ffc_data,
+      # mobile_adjustments,
+      ibf_adjustments,
+      misc_adjustments
+    )
+  ),
+
   # National
   tar_target(
     carbon_emissions_national,
-    national_ffc_calculate_emissions(national_ffc_adjusted,
-                                     carbon,
-                                     apply_variable_labels,
-                                     ghgi_variables)),
-  
-  # State
-  tar_target(
-    seds,
-    state_ffc_get_seds_data(general_data)),
-  
-  # State
-  tar_target(
-    state_adjustments, 
-    state_ffc_get_adjustments_data(national_ffc_adjusted, 
-                                   international_bunker_fuels,
-                                   misc_adjustments,
-                                   non_energy_use,
-                                   ippu_distributions, 
-                                   foks_diesel, 
-                                   foks_residual)),
+    national_ffc_calculate_emissions(
+      national_ffc_adjusted,
+      carbon,
+      general_data
+    )
+  ),
 
   # State
   tar_target(
-    carbon_territories, 
-    get_territories_data(carbon, 
-                         general_data)), 
-  
+    seds,
+    state_ffc_get_seds_data(general_data)
+  ),
+
   # State
   tar_target(
-    seds_all_plus_ind, 
-    state_ffc_adjust_data(seds, 
-                          state_adjustments, 
-                          scraped_data,
-                          general_data)),
-  
+    state_adjustments,
+    state_ffc_get_adjustments_data(
+      national_ffc_adjusted,
+      international_bunker_fuels,
+      misc_adjustments,
+      non_energy_use,
+      ippu_distributions,
+      foks_diesel,
+      foks_residual
+    )
+  ),
+
   # State
   tar_target(
-    seds_all_adjusted, 
-    seds_all_plus_ind$seds_all_adjusted), 
-  
+    carbon_territories,
+    get_territories_data(
+      carbon,
+      general_data
+    )
+  ),
+
   # State
   tar_target(
-    seds_ind_adjusted, 
-    seds_all_plus_ind$seds_ind_adjusted), 
+    seds_all_plus_ind,
+    state_ffc_adjust_data(
+      seds,
+      state_adjustments,
+      scraped_data,
+      general_data
+    )
+  ),
+
+  # State
+  tar_target(
+    seds_all_adjusted,
+    seds_all_plus_ind$seds_all_adjusted
+  ),
+
+  # State
+  tar_target(
+    seds_ind_adjusted,
+    seds_all_plus_ind$seds_ind_adjusted
+  ),
 
   # State
   tar_target(
     carbon_emissions_state,
-    state_ffc_calculate_emissions(seds_all_adjusted,
-                                  carbon,
-                                  general_data)),
-  
+    state_ffc_calculate_emissions(
+      seds_all_adjusted,
+      carbon,
+      general_data
+    )
+  ),
+
   # Figures, Tables, and Quarto Reports
-  
-  # National 
+
+  # National
   tar_target(
     national_ffc_figures,
-    national_ffc_ggplot_figures(national_ffc_adjusted, 
-                                carbon_emissions_national)),
-  
-  # National 
-  tar_target(saved_national_ffc_figures, 
-             {saveRDS(national_ffc_figures, 
-                      file = "saved_national_ffc_figures.rds")
-               "saved_national_ffc_figures.rds"}, format = "file"),
-  
-  # National 
-  tar_target(national_ffc_tables,
-             national_ffc_gt_tables()),
-  
-  # National 
-  tar_target(saved_national_ffc_tables, 
-             {saveRDS(national_ffc_tables, 
-                      file = "saved_national_ffc_tables.rds")
-               "saved_national_ffc_tables.rds"}, format = "file"),
-  
+    national_ffc_ggplot_figures(
+      national_ffc_adjusted,
+      carbon_emissions_national
+    )
+  ),
+
+  # National
+  tar_target(saved_national_ffc_figures,
+    {
+      saveRDS(national_ffc_figures,
+        file = "saved_national_ffc_figures.rds"
+      )
+      "saved_national_ffc_figures.rds"
+    },
+    format = "file"
+  ),
+
+  # National
+  tar_target(
+    national_ffc_tables,
+    national_ffc_gt_tables(national_ffc_adjusted,
+                           carbon_emissions_national)
+  ),
+
+  # National
+  tar_target(saved_national_ffc_tables,
+    {
+      saveRDS(national_ffc_tables,
+        file = "saved_national_ffc_tables.rds"
+      )
+      "saved_national_ffc_tables.rds"
+    },
+    format = "file"
+  ),
+
   # State
-  tar_target(state_ffc_figures,
-             state_ffc_ggplot_figures(seds_all_adjusted,
-                                      seds_ind_adjusted, 
-                                      state_adjustments,
-                                      carbon_emissions_state)),
-  
+  tar_target(
+    state_ffc_figures,
+    state_ffc_ggplot_figures(
+      seds_all_adjusted,
+      seds_ind_adjusted,
+      state_adjustments,
+      carbon_emissions_state
+    )
+  ),
+
   # State
-  tar_target(saved_state_ffc_figures, 
-             {saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
-               "saved_state_ffc_figures.rds"}, format = "file"),
-  
+  tar_target(saved_state_ffc_figures,
+    {
+      saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
+      "saved_state_ffc_figures.rds"
+    },
+    format = "file"
+  ),
+
   # State
-  tar_target(state_ffc_tables,
-             state_ffc_gt_tables()),
-  
+  tar_target(
+    state_ffc_tables,
+    state_ffc_gt_tables(seds_all_adjusted,
+                        carbon_emissions_state)
+  ),
+
   # State
-  tar_target(saved_state_ffc_tables, 
-             {saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
-               "saved_state_ffc_tables.rds"}, format = "file"),
-  
+  tar_target(saved_state_ffc_tables,
+    {
+      saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
+      "saved_state_ffc_tables.rds"
+    },
+    format = "file"
+  ),
+
   # National
   tar_quarto(
     national_ffc_final_report,
-    path = "national_ffc_final_report.qmd"),
+    path = "national_ffc_final_report.qmd", 
+    extra_files = c("saved_national_ffc_tables.rds", 
+                    "saved_national_ffc_figures.rds")
+  ),
 
   # State
   tar_quarto(
     state_ffc_final_report,
-    path = "state_ffc_final_report.qmd")
-  
+    path = "state_ffc_final_report.qmd",
+    extra_files = c("saved_state_ffc_tables.rds", 
+                    "saved_state_ffc_figures.rds")
+  )
 )
-  
+
 
 
 # tar_make()
