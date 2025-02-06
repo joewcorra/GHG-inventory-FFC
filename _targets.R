@@ -8,7 +8,7 @@ library(readxl)
 
 tar_option_set(
   # error = "null",
-  # garbage_collection = TRUE,
+  garbage_collection = 1,
   packages = c(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
     "jsonlite", "knitr", "labelled", "openxlsx",
@@ -143,13 +143,15 @@ list(
   # State
   tar_target(
     foks_diesel,
-    read_xl_data(foks_diesel_file)
+    read_xl_data(foks_diesel_file) %>% 
+      pluck(4) 
   ),
 
   # State
   tar_target(
     foks_residual,
-    read_xl_data(foks_residual_file)
+    read_xl_data(foks_residual_file) %>%
+      pluck(4) 
   ),
 
   # Data Transformation-------------------------------------------
