@@ -14,9 +14,11 @@ data_setup <- function(harmonized_data) {
       # Make selected columns lowercase (if they exist)
       mutate(across(matches(c("sector_description", "source_description", 
                               "eia_description", "unit")), 
-                    ~str_to_lower(.))) %>%
+                    ~str_to_lower(.))) 
       
+      if ("sector_description" %in% colnames(standardized_data)) {
       # Make 'year' a factor
+    standardized_data <- standardized_data %>% 
       mutate(year = as_factor(year),
              
              # Standardize sector descriptions; add the word "sector"
@@ -25,10 +27,13 @@ data_setup <- function(harmonized_data) {
                msn == "CLOCB" ~  "industrial sector", # industrial coking coal
                msn == "CLKCB" ~  "industrial sector", # other industrial coal
                msn == "SFINB" ~  "industrial sector", # supp. gaseous fuels
-               .default = sector_description),
+               .default = sector_description))
+      }
              
+    if ("source_description" %in% colnames(standardized_data)) {
+      standardized_data <- standardized_data %>% 
+        mutate(
              source_description = str_replace(source_description, " and ", " & "),
-             
              source_description = case_when(
                source_description %in% 
                  unique(msn_names$msn$source_description) ~ source_description,
@@ -37,22 +42,20 @@ data_setup <- function(harmonized_data) {
                str_detect(source_description, "jet fuel") ~ "jet fuel", 
                str_detect(source_description, "av(?=blend)") ~ "aviation gasoline",
                str_detect(source_description, "(?=.*av)(?=.*blend)") ~ "aviation gasoline blending components", 
-               str_detect(source_description, "utility coal") ~ "electric power coal",
+               str_detect(source_description, "utility coal") ~ "coal",
                str_detect(source_description, "other coal") ~ "coal",
-               
                str_detect(source_description, "other oils") ~ "other oils",
-               
                str_detect(source_description, "<401 deg|naphtha less") ~ "petrochemical feedstocks, naphtha less than 401 degrees F", 
                str_detect(source_description, "misc") ~ "miscellaneous petroleum products",
                str_detect(source_description, "(?=.*mo)(?=.*blend)") ~ "motor gasoline blending components", 
                str_detect(source_description, "lpg (propane)") ~ "lpg",
                str_detect(source_description, "liquefied petroleum gas") ~ "lpg",
                str_detect(source_description, "hgl") ~ "lpg",
-               
-               .default = source_description))
-    
+               .default = source_description)) }
+
+
     return(standardized_data) 
-    
+
   }
   
   # Create function to add labels (with 'labelled')-------------------
@@ -297,7 +300,9 @@ data_setup <- function(harmonized_data) {
 # Carbon Factors
 get_carbon_factors <- function(general_data,
                                carbon_factors) {
+  
   # Ratio of the molecular weight of carbon dioxide to carbon
+  carbon_ratio <- 44/12
   
   # Apply label to variable
   carbon_ratio <- carbon_ratio %>%
@@ -308,17 +313,20 @@ get_carbon_factors <- function(general_data,
   # Read in variable carbon factors data from FFC excel workbook
   carbon_factors_variable <- carbon_factors$factors_variable %>%
     clean_names() %>%
-    rename(source_description = fuel_type)
+    rename(source_description = fuel_type) %>%
+    mutate(source_description = str_to_lower(source_description))
 
   # Read in carbon factors data from FFC excel workbook
-  carbon_factors2 <- carbon_factors$factors_fixed %>%
+  carbon_factors <- carbon_factors$factors_fixed %>%
     clean_names() %>%
-    # Remove middle column, rename other columns
-    select(source_description = coal, carbon_factor = x3) %>%
-    # NA = not applicable, NC = not calculated. Remove all NA & NC
+    select(source_description = fuel_type, carbon_coefficient) %>%
+    mutate(source_description = str_to_lower(source_description)) %>%
     filter(
-      !is.na(carbon_factor),
-      carbon_factor != "NC",
+      # NA = not applicable, NC = not calculated. Remove all NA & NC
+      !is.na(carbon_coefficient),
+      carbon_coefficient != "NC",
+      # Retain only fixed-value coefficients
+      # !str_detect(carbon_coefficient, "variable"), 
       # Remove territories for now
       !str_detect(source_description, "erritor")
     ) %>%
@@ -327,10 +335,10 @@ get_carbon_factors <- function(general_data,
     # Copy non-variable factors across all years
     mutate(across(
       starts_with("x"),
-      ~ ifelse(carbon_factor == "variable", ., carbon_factor)
+      ~ ifelse(carbon_coefficient == "variable", ., carbon_coefficient)
     )) %>%
     # First factor column no longer needed
-    select(-carbon_factor) %>%
+    select(-carbon_coefficient) %>%
     # Pivot longer
     pivot_longer(
       cols = starts_with("x"),
@@ -340,7 +348,9 @@ get_carbon_factors <- function(general_data,
     mutate(
       year = str_remove(year, "x"),
       carbon_factor = as.numeric(carbon_factor)
-    )
+    ) 
+  
+    d <-general_data$standardize_ffc(carbon_factors, general_data$msn_names)
 
   # Apply labels to variables
   carbon_factors <- general_data$apply_variable_labels(

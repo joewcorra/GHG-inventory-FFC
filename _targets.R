@@ -264,7 +264,7 @@ list(
 
   # State
   tar_target(
-    seds_all_plus_ind,
+    seds_all,
     state_ffc_adjust_data(
       seds,
       state_adjustments,
@@ -273,23 +273,23 @@ list(
     )
   ),
 
-  # State
-  tar_target(
-    seds_all_adjusted,
-    seds_all_plus_ind$seds_all_adjusted
-  ),
-
-  # State
-  tar_target(
-    seds_ind_adjusted,
-    seds_all_plus_ind$seds_ind_adjusted
-  ),
+  # # State
+  # tar_target(
+  #   seds_all_adjusted,
+  #   seds_all_plus_ind$seds_all_adjusted
+  # ),
+  # 
+  # # State
+  # tar_target(
+  #   seds_ind_adjusted,
+  #   seds_all_plus_ind$seds_ind_adjusted
+  # ),
 
   # State
   tar_target(
     carbon_emissions_state,
     state_ffc_calculate_emissions(
-      seds_all_adjusted,
+      seds_all$seds_all_adjusted,
       carbon,
       general_data
     )
@@ -339,8 +339,8 @@ list(
   tar_target(
     state_ffc_figures,
     state_ffc_ggplot_figures(
-      seds_all_adjusted,
-      seds_ind_adjusted,
+      seds_all$seds_all_adjusted,
+      seds_all$seds_ind_adjusted,
       state_adjustments,
       carbon_emissions_state
     )
@@ -358,7 +358,7 @@ list(
   # State
   tar_target(
     state_ffc_tables,
-    state_ffc_gt_tables(seds_all_adjusted,
+    state_ffc_gt_tables(seds_all$seds_all_adjusted,
                         carbon_emissions_state)
   ),
 
