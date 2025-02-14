@@ -86,14 +86,12 @@ list(
   # State
   tar_file(
     foks_diesel_file,
-    # Also FOKS Resid Fuel Bunker 2020.xls
     "data/FOKS Diesel Fuel Bunker 2020.xls"
   ),
 
   # State
   tar_file(
     foks_residual_file,
-    # Also FOKS Resid Fuel Bunker 2020.xls
     "data/FOKS Resid Fuel Bunker 2020.xls"
   ),
 
@@ -172,7 +170,7 @@ list(
 
   # Both national and state
   tar_target(
-    carbon,
+    carbon_coefficients,
     get_carbon_factors(
       general_data,
       carbon_factors
@@ -228,7 +226,7 @@ list(
     carbon_emissions_national,
     national_ffc_calculate_emissions(
       national_ffc_adjusted,
-      carbon,
+      carbon_coefficients,
       general_data
     )
   ),
@@ -255,16 +253,16 @@ list(
 
   # State
   tar_target(
-    carbon_territories,
+    carbon_emissions_territories,
     get_territories_data(
-      carbon,
+      carbon_coefficients,
       general_data
     )
   ),
 
   # State
   tar_target(
-    seds_all,
+    state_ffc_adjusted,
     state_ffc_adjust_data(
       seds,
       state_adjustments,
@@ -273,24 +271,12 @@ list(
     )
   ),
 
-  # # State
-  # tar_target(
-  #   seds_all_adjusted,
-  #   seds_all_plus_ind$seds_all_adjusted
-  # ),
-  # 
-  # # State
-  # tar_target(
-  #   seds_ind_adjusted,
-  #   seds_all_plus_ind$seds_ind_adjusted
-  # ),
-
   # State
   tar_target(
     carbon_emissions_state,
     state_ffc_calculate_emissions(
-      seds_all$seds_all_adjusted,
-      carbon,
+      state_ffc_adjusted$seds_all_adjusted,
+      carbon_coefficients,
       general_data
     )
   ),
@@ -339,8 +325,8 @@ list(
   tar_target(
     state_ffc_figures,
     state_ffc_ggplot_figures(
-      seds_all$seds_all_adjusted,
-      seds_all$seds_ind_adjusted,
+      state_ffc_adjusted$seds_all_adjusted,
+      state_ffc_adjusted$seds_ind_adjusted,
       state_adjustments,
       carbon_emissions_state
     )
@@ -358,7 +344,7 @@ list(
   # State
   tar_target(
     state_ffc_tables,
-    state_ffc_gt_tables(seds_all$seds_all_adjusted,
+    state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
                         carbon_emissions_state)
   ),
 

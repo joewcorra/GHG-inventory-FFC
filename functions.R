@@ -99,6 +99,18 @@ data_setup <- function(harmonized_data) {
   # Guide: https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf
   # We must create tibbles of descriptors for sources & sectors of interest.
 
+  <- pdftools::pdf_text("https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf") 
+  
+  e <- d %>%
+    str_split("\\s{5,}") %>% 
+    map(\(x) str_replace(x, "\\\n.*", "")) %>% 
+    map(as_tibble) %>% 
+    list_rbind() %>% 
+    filter(str_detect(value, "=")) %>%
+    separate_wider_delim(cols = value, 
+                         names = c("code", "description"), 
+                         delim = "=")
+  
   # Create 'sources' tibble
   sources <- tibble(
     source_code = c(
@@ -225,18 +237,22 @@ data_setup <- function(harmonized_data) {
     # For national calcs: Add nat gas MSNs not included in SEDS
     add_row(
       msn = "NNCCB", sector_description = "commercial sector",
+      source_code = "NN", sector_code = "CC",
       source_description = "natural gas consumed by the commercial sector (excluding supplemental gaseous fuels)"
     ) %>%
     add_row(
       msn = "NNEIB", sector_description = "electric power sector (generation)",
+      source_code = "NN", sector_code = "EI", 
       source_description = "natural gas consumed by the electric power sector (excluding supplemental gaseous fuels)"
     ) %>%
     add_row(
       msn = "NNICB", sector_description = "industrial sector",
+      source_code = "NN", sector_code = "IC",
       source_description = "natural gas consumed by the industrial sector (excluding supplemental gaseous fuels)"
     ) %>%
     add_row(
       msn = "NNRCB", sector_description = "residential sector",
+      source_code = "NN", sector_code = "RC",
       source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)"
     )
 
@@ -358,9 +374,9 @@ get_carbon_factors <- function(general_data,
     general_data$ghgi_variables
   )
 
-  carbon <- lst(carbon_factors, carbon_ratio)
+  carbon_coefficients <- lst(carbon_factors, carbon_ratio)
 
-  return(carbon)
+  return(carbon_coefficients)
   
 }
 # Read national consumption data from EIA's API
@@ -1104,16 +1120,16 @@ national_ffc_adjust_data <- function(national_ffc_data,
 
 # Calculate national co2 emissions
 national_ffc_calculate_emissions <- function(national_ffc_adjusted,
-                                             carbon,
+                                             carbon_coefficients,
                                              general_data) {
   
   carbon_emissions_national <- national_ffc_adjusted %>%
-    left_join(carbon$carbon_factors,
+    left_join(carbon_coefficients$carbon_factors,
       by = c("source_description", "year")
     ) %>%
     # MMT CO2  = btu * carbon factor/1000 * 44/12
     mutate(mmt_co2 = adjusted_value *
-      (carbon_factor / 1000) * carbon$carbon_ratio)
+      (carbon_factor / 1000) * carbon_coefficients$carbon_ratio)
 
   # Apply labels to variables
   carbon_emissions_national <- general_data$apply_variable_labels(carbon_emissions_national, general_data$ghgi_variables)
@@ -1739,7 +1755,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
 # Calculate Emissions for US Territories
 # The procedure for retrieving and collating the FFC data for US territories
 # differs from the procedure for states.
-get_territories_data <- function(carbon,
+get_territories_data <- function(carbon_coefficients,
                                  general_data) {
   # API Key----------------------------------------------------------------
 
@@ -1924,16 +1940,16 @@ get_territories_data <- function(carbon,
 
   # need to figure out which carbon factors to use
 
-  carbon_territories <- ffc_territories %>%
-    left_join(carbon$carbon_factors,
+  carbon_emissions_territories <- ffc_territories %>%
+    left_join(carbon_coefficients$carbon_factors,
       by = c("source_description", "year")
     ) %>%
     # MMT CO2  = btu * carbon factor/1000 * 44/12
-    mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon$carbon_ratio)
+    mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon_coefficients$carbon_ratio)
 
   # Apply labels to variables
-  carbon_territories <- general_data$apply_variable_labels(
-    carbon_territories,
+  carbon_emissions_territories <- general_data$apply_variable_labels(
+    carbon_emissions_territories,
     general_data$ghgi_variables
   )
 
@@ -1949,7 +1965,7 @@ get_territories_data <- function(carbon,
 
   write_csv(territories_csv_format, "territories_csv_format.csv")
 
-  return(carbon_territories)
+  return(carbon_emissions_territories)
 }
 
 
@@ -2136,11 +2152,8 @@ state_ffc_adjust_data <- function(seds,
       left_join(state_adjustments$misc_adjustments, by = "year") %>%
       mutate(
         states_sum_value = sum(value), .by = c(msn, year),
-        # ippu factor = ippu / sum_states_value as long as ippu is greater
-        ippu_factor = if_else(coking_coal_adj < states_sum_value,
-                              coking_coal_adj / states_sum_value, 1
-        ),
-        adjusted_value = value - (value * ippu_factor)
+        # adjusted value = value * adjustment or zero, whichever is larger
+        adjusted_value = value * pmax(0, (1 - coking_coal_adj / states_sum_value))
       ),
 
     # Other Coal
@@ -2755,15 +2768,15 @@ state_ffc_adjust_data <- function(seds,
     general_data$ghgi_variables
   )
 
-  seds_all_plus_ind <- lst(seds_all_adjusted, seds_ind_adjusted)
+  state_ffc_adjusted <- lst(seds_all_adjusted, seds_ind_adjusted)
 
-  return(seds_all_plus_ind)
+  return(state_ffc_adjusted)
 }
 
 
 # Calculate Carbon Emissions
 state_ffc_calculate_emissions <- function(seds_all_adjusted,
-                                          carbon,
+                                          carbon_coefficients,
                                           general_data) {
   carbon_emissions_state <- seds_all_adjusted %>%
     # change source descriptions to match those in carbon_factors
@@ -2799,13 +2812,13 @@ state_ffc_calculate_emissions <- function(seds_all_adjusted,
         "residential coal",
       .default = source_description
     )) %>%
-    left_join(carbon$carbon_factors,
+    left_join(carbon_coefficients$carbon_factors,
       by = c("source_description", "year")
     ) %>%
     # MMT CO2  = btu * carbon factor/1000 * 44/12
     mutate(
       mmt_co2 = neu_ibf_adjusted_value *
-        (carbon_factor / 1000) * carbon$carbon_ratio,
+        (carbon_factor / 1000) * carbon_coefficients$carbon_ratio,
       # Restore original coal source descriptions
       source_description = case_when(
         str_detect(source_description, "coking coal") ~ "coking coal",
@@ -3109,7 +3122,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
 
     fig_2_5 = seds_ind_adjusted %>%
       mutate(ippu_adjustments = case_when(
-        msn == "CLKCB" ~ value * ippu_factor,
+        msn == "CLKCB" ~ value * pmax(0, (1 - coking_coal_adj / states_sum_value)),
         msn == "CLOCB" ~ other_coal_coke_adj + other_coal_is_adj,
         msn == "net natural gas" ~ natural_gas_ammonia_adj + natural_gas_is_adj,
         msn == "RFICB" ~ cb_residual_adj * petrochemical_cb_percent,
