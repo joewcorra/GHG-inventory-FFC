@@ -99,17 +99,18 @@ data_setup <- function(harmonized_data) {
   # Guide: https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf
   # We must create tibbles of descriptors for sources & sectors of interest.
 
-  <- pdftools::pdf_text("https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf") 
-  
-  e <- d %>%
-    str_split("\\s{5,}") %>% 
-    map(\(x) str_replace(x, "\\\n.*", "")) %>% 
-    map(as_tibble) %>% 
-    list_rbind() %>% 
-    filter(str_detect(value, "=")) %>%
-    separate_wider_delim(cols = value, 
-                         names = c("code", "description"), 
-                         delim = "=")
+  # Tried to read directly from EIA, but not all sources are included in PDF!
+  # d <- pdftools::pdf_text("https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf") 
+  # 
+  # e <- d %>%
+  #   str_split("\\s{2,}") %>% 
+  #   map(\(x) str_replace(x, "\\\n.*", "")) %>% 
+  #   map(as_tibble) %>% 
+  #   list_rbind() %>% 
+  #   filter(str_detect(value, "=")) %>%
+  #   separate_wider_delim(cols = value, 
+  #                        names = c("code", "description"), 
+  #                        delim = "=") 
   
   # Create 'sources' tibble
   sources <- tibble(
@@ -3537,4 +3538,57 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
   )
 
   return(state_ffc_tables)
+}
+
+
+
+# Write data to InvDB Excel Workbooks
+write_to_invdb <- function(carbonn_emissions_national, 
+                           carbon_emissions_state) {
+  
+  
+  ffc_invdb <-
+    carbon_emissions_state %>%
+    # Create or modify fields to conform to InvDB
+    mutate(Sector = "Energy", 
+           Source = "Fossil Fuel Combustion", 
+           Subsource = str_remove(sector_description, " sector") %>% 
+             str_to_title(),
+           GHG = "CO2", 
+           State = str_to_upper(state), 
+           Fuel = case_when(
+             source_description %in% c("coal", "coking coal") ~ "Coal", 
+             source_description== "natural gas" ~ "Natural Gas", 
+             .default = "Petroleum")) %>%
+    # Select InvDB fields
+    select(Sector, Source, Subsource, Fuel, State, GHG, Year = year, mmt_co2) %>%
+    # Sum mmt CO2 for each Subsource/Fuel/State/Year
+    group_by(Sector, Source, Subsource, Fuel, State, GHG, Year) %>%
+    summarize(value = sum(mmt_co2, na.rm = TRUE)) %>%
+    # Pivot data wide so the years are columns
+    pivot_wider(names_from = Year, values_from = value) %>%
+    ungroup()
+  
+  # Load blank Excel workbook
+  wb <- loadWorkbook("InvDB_ffc.xlsx")
+  
+  # Write data to each set of columns on the worksheet
+  writeData(wb, select(ffc_invdb, Sector:Fuel), sheet = 1, 
+            startCol = 1, startRow = 17, colNames = FALSE) 
+  
+  writeData(wb, select(ffc_invdb, State), sheet = 1, 
+            startCol = 7, startRow = 17, colNames = FALSE) 
+  
+  writeData(wb, select(ffc_invdb, GHG:last_col()), sheet = 1, 
+            startCol = 9, startRow = 17, colNames = FALSE) 
+  
+  # Save InvDB workbook
+  saveWorkbook(wb, "InvDB_ffc_new.xlsx", overwrite = TRUE)
+  
+  # Save as csv
+  write_csv(ffc_invdb, "ffc.csv")
+  
+  # Save as JSON
+  write_json(ffc_invdb, "ffc.json")
+  
 }

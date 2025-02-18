@@ -356,6 +356,14 @@ list(
     },
     format = "file"
   ),
+  
+  # NEED TO FINALIZE INVDB TEMPLATES BEFORE IMPLEMENTING
+  # State and National
+  # tar_target(
+  #   invdb,
+  #   write_to_invdb(carbonn_emissions_national,
+  #                       carbon_emissions_state)
+  # ),
 
   # National
   tar_quarto(
