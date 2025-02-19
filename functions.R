@@ -883,6 +883,7 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 
 
 get_misc_adjustments_data <- function(misc_corrections) {
+  
   # National adjustments data-------------------------------------
   misc_adjustments <- misc_corrections$corrections %>%
     clean_names() %>%
@@ -1545,11 +1546,12 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     # Remove letters from 'year' column and standardize source descriptions
     mutate(
       year = str_remove(year, "[a-z]"),
+      source_description = str_to_lower(source_description), 
       source_description = case_when(
         # In the IBF worksheet, jet fuel is listed as "aviation jet fuel"
-        str_detect(source_description, "jet fuel") ~ "jet fuel",
-        str_detect(source_description, "istillate") ~ "distillate fuel oil",
-        str_detect(source_description, "esidual") ~ "residual fuel oil"
+        str_detect(source_description, "jet") ~ "jet fuel",
+        str_detect(source_description, "distillate") ~ "distillate fuel oil",
+        str_detect(source_description, "residual") ~ "residual fuel oil"
       )
     )
 
@@ -2370,7 +2372,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # Rename MSN & source and calculate adjusted value
       mutate(
-        msn = "net lpg",
+        msn = "combined lpg",
         adjusted_value = ind_lpg_factor * (value / states_sum_value)
       ),
     # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
@@ -2408,6 +2410,7 @@ state_ffc_adjust_data <- function(seds,
         adjusted_value = national_value * diesel_percent,
         msn = "DFACB"
       ),
+    
     gasoline = scraped_data$gasoline_distribution %>%
       # Join with adjustments data
       left_join(
@@ -2423,18 +2426,22 @@ state_ffc_adjust_data <- function(seds,
         adjusted_value = national_value * gasoline_percent,
         msn = "net gasoline"
       ),
+    
     lubricants = seds %>%
       filter(msn == "LUACB") %>%
       # Adjusted = original value
       mutate(adjusted_value = value),
+    
     jet_fuel = seds %>%
       filter(msn == "JFACB") %>%
       # Adjusted = original value
       mutate(adjusted_value = value),
+    
     residual_fuel = seds %>%
       filter(msn == "RFACB") %>%
       # Adjusted = original value
       mutate(adjusted_value = value),
+    
     coal = seds %>%
       filter(msn == "CLACB") %>%
       # Adjusted = original value
@@ -2451,10 +2458,12 @@ state_ffc_adjust_data <- function(seds,
         msn = "combined lpg",
         adjusted_value = value
       ),
+    
     aviation_gasoline = seds %>%
       filter(msn == "AVACB") %>%
       # Adjusted = original value
       mutate(adjusted_value = value),
+    
     natural_gas = seds %>%
       filter(msn == "NGACB") %>%
       # Join with the adjustment factor data (from national inventory)
@@ -2556,6 +2565,7 @@ state_ffc_adjust_data <- function(seds,
         msn = "DFACB",
         sector_description = "transportation sector"
       ),
+    
     residual_fuel = state_adjustments$foks_residual_distribution %>%
       left_join(
         state_adjustments$ibf_adjustments %>% filter(
@@ -2570,6 +2580,7 @@ state_ffc_adjust_data <- function(seds,
         msn = "RFACB",
         sector_description = "transportation sector"
       ),
+    
     jet_fuel = seds %>%
       filter(msn == "JFACB") %>%
       left_join(state_adjustments$ibf_adjustments,
@@ -2651,7 +2662,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # Rename MSN and calculate adjusted value
       mutate(
-        msn = "net lpg",
+        msn = "combined lpg",
         neu_adjusted_value = neu_factor * (value / states_sum_value)
       ),
 

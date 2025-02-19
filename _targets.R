@@ -361,7 +361,7 @@ list(
   # State and National
   # tar_target(
   #   invdb,
-  #   write_to_invdb(carbonn_emissions_national,
+  #   write_to_invdb(carbon_emissions_national,
   #                       carbon_emissions_state)
   # ),
 
