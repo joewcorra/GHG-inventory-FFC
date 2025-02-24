@@ -404,8 +404,8 @@ national_ffc_read_eia_data <- function(general_data) {
   eia_national <- pluck(eia_api_consumption, "response", "data") %>%
     mutate(msn = str_sub(msn, 1, 5)) %>%
     filter(
-      unit == "Trillion Btu",
-      str_sub(msn, 3, 4) %in% c("AC", "IC", "RC", "CC", "EI")
+      unit == "Trillion Btu", 
+      str_sub(msn, 3, 4) %in% c("AC", "IC", "RC", "CC", "EI", "KC", "OC")
     ) %>%
     select(-unit, -seriesDescription)
 
@@ -928,7 +928,9 @@ national_ffc_adjust_data <- function(national_ffc_data,
     # commercial has ethanol in the dataset but not in the spreadsheet
 
     # Collapse list into a single data frame
-    list_rbind()
+    list_rbind() %>%
+    # create 'adjusted_value' column to match ind and tra data
+    mutate(adjusted_value = value)
 
   ## Industrial------------------------------------------------
 
@@ -945,7 +947,7 @@ national_ffc_adjust_data <- function(national_ffc_data,
     # Coking Coal (IPPU adjustment)
     coking_coal = national_ffc_data$us_consumption %>%
       # What is the MSN for coking coal?
-      filter(msn == "") %>%
+      filter(msn == "CLKCB") %>%
       # Subtract IPPU adjustment
       left_join(misc_adjustments, by = "year") %>%
       mutate(
@@ -958,7 +960,7 @@ national_ffc_adjust_data <- function(national_ffc_data,
     # synthetic natural gas adjustment, coking coal adjustment,
     # i & s adjustment
     other_coal = national_ffc_data$us_consumption %>%
-      filter(msn == "CLICB") %>%
+      filter(msn == "CLOCB") %>%
       # Subtract adjustments
       left_join(misc_adjustments, by = "year") %>%
       # Subtract adjustments
@@ -1070,12 +1072,22 @@ national_ffc_adjust_data <- function(national_ffc_data,
       filter(msn == "UOICB")
   ) %>%
     # Collapse list into a single data frame
-    list_rbind()
+    list_rbind() %>%
+    # Convert coal to "industrial sector"
+    mutate(sector_description = "industrial sector")
 
   ## Transportation--------------------------------------------------
 
   us_tra <- lst(
 
+    # Coal
+    coal = national_ffc_data$us_consumption %>%
+      filter(msn == "CLACB"),
+    
+    # Natural Gas
+    natural_gas = national_ffc_data$us_consumption %>%
+      filter(msn == "NGACB"),
+    
     # Lubricants (NEU adjustment)
     lubricants = national_ffc_data$us_consumption %>%
       filter(msn == "LUACB") %>%
@@ -2166,7 +2178,8 @@ state_ffc_adjust_data <- function(seds,
         coking_coal %>%
           select(
             sum_coking_coal = states_sum_value,
-            coking_coal_value = value, year, state
+            coking_coal_value = value, 
+            year, state
           ),
         by = c("year", "state")
       ) %>%
@@ -2189,7 +2202,7 @@ state_ffc_adjust_data <- function(seds,
         # Multiply I & S factor by I & S state distribution percentages
         other_coal_is_adj = is_coal_adj * is_percent,
         adjusted_value_pre = value -
-          other_coal_adj -
+          other_coal_coke_adj -
           sng_dakota_adj -
             other_coal_is_adj) %>%
       # Get sum of all states' adjusted values
