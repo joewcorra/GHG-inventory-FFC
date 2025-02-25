@@ -884,7 +884,7 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 
 get_misc_adjustments_data <- function(misc_corrections) {
   
-  # National adjustments data-------------------------------------
+   # National adjustments data-------------------------------------
   misc_adjustments <- misc_corrections$corrections %>%
     clean_names() %>%
     mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
@@ -901,11 +901,17 @@ get_misc_adjustments_data <- function(misc_corrections) {
 
 # Perform all national data adjustments
 national_ffc_adjust_data <- function(national_ffc_data,
+                                     general_data, 
                                      # mobile_adjustments,
                                      ibf_adjustments,
                                      misc_adjustments) {
   # Collate National consumption data-------------------------------------
-
+  
+  # Apply standardization function to national data
+  national_ffc_data$us_consumption <- 
+    general_data$standardize_ffc(national_ffc_data$us_consumption, 
+                                 general_data$msn_names)
+  
   ## Residential, Commercial, & Electric Power----------------------------
 
   # No adjustments EXCEPT dist fuel and mogas (see those scripts).
@@ -1003,31 +1009,35 @@ national_ffc_adjust_data <- function(national_ffc_data,
       filter(msn == "DFICB") %>%
       # Subtract iron & steel adjustment
       left_join(misc_adjustments, by = "year") %>%
-      mutate(
-        adjusted_value = value - is_diesel_adj), 
+      mutate(adjusted_value = value - is_diesel_adj), 
 
     # Motor gasoline (mogas/df adjustment)
     motor_gasoline = national_ffc_data$us_consumption %>%
-      filter(msn %in% c("MGICB", "EMICB")),
+      filter(msn %in% c("MGICB", "EMICB")) %>%
+      mutate(adjusted_value = value),
 
     # Kerosene (no adjustment)
     kerosene = national_ffc_data$us_consumption %>%
-      filter(msn == "KSICB"),
+      filter(msn == "KSICB") %>%
+      mutate(adjusted_value = value),
 
     # Petroleum Coke (NEU adjustment: special)
     petroleum_coke = national_ffc_data$us_consumption %>%
-      filter(msn == "PCICB"),
+      filter(msn == "PCICB") %>%
+      mutate(adjusted_value = value),
 
     # LPG (AKA Propane) (no adjustment)
     lpg = national_ffc_data$us_consumption %>%
-      filter(msn == "HLICB"),
+      filter(msn == "HLICB") %>%
+      mutate(adjusted_value = value),
 
     # PQICB     PYICB (NEU adjustment: special)
     # Propane and Propylene: Included w/ HLICB ?
 
     # Lubricants (NEU adjustment: 100%)
     lubricants = national_ffc_data$us_consumption %>%
-      filter(msn == "LUICB"),
+      filter(msn == "LUICB") %>%
+      mutate(adjusted_value = value),
 
     # Misc Products (NEU adjustment: 100%)
     misc_products = national_ffc_data$us_consumption %>%
@@ -1049,11 +1059,13 @@ national_ffc_adjust_data <- function(national_ffc_data,
 
     # Pentanes Plus (NEU adjustment: special)
     pentanes_plus = national_ffc_data$us_consumption %>%
-      filter(msn == "PPICB"),
+      filter(msn == "PPICB") %>%
+      mutate(adjusted_value = value),
 
     # Still Gas (NEU adjustment: special)
     still_gas = national_ffc_data$us_consumption %>%
-      filter(msn == "SGICB"),
+      filter(msn == "SGICB") %>%
+      mutate(adjusted_value = value),
 
     # Special Naphtha (NEU adjustment: 100%)
     special_naphtha = national_ffc_data$us_consumption %>%
@@ -1069,7 +1081,8 @@ national_ffc_adjust_data <- function(national_ffc_data,
 
     # Unfinished Oils (no adjustment)
     unfinished_oils = national_ffc_data$us_consumption %>%
-      filter(msn == "UOICB")
+      filter(msn == "UOICB") %>%
+      mutate(adjusted_value = value) 
   ) %>%
     # Collapse list into a single data frame
     list_rbind() %>%

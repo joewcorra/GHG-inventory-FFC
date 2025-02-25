@@ -215,6 +215,7 @@ list(
     national_ffc_adjusted,
     national_ffc_adjust_data(
       national_ffc_data,
+      general_data,
       # mobile_adjustments,
       ibf_adjustments,
       misc_adjustments
