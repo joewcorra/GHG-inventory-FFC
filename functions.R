@@ -382,6 +382,7 @@ get_carbon_factors <- function(general_data,
 }
 # Read national consumption data from EIA's API
 national_ffc_read_eia_data <- function(general_data) {
+  
   # API key generated 11/22/23
   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
@@ -389,41 +390,46 @@ national_ffc_read_eia_data <- function(general_data) {
   latest_year <- year(Sys.Date()) - 3
 
   # Read EIA Consumption Data----------------------------------------------
+  
+  # Function to read data from EIA API, 1 year at a time
+  get_national_results <- function(year) {
+    # For now, to avoid exceeding the 5000-row data limit, we will pull
+    # only one year and state per query. This requires n=51*years API queries.
+    results <- paste0(
+      "https://api.eia.gov/v2/total-energy/data/?frequency",
+      "=annual&data[0]=value&start=", year - 1, # start = previous year
+      "&end=", year, "&sort[0][column]=period&sort[0][direction]",
+      "=desc&offset=0&length=5000&api_key=", key) %>% # our API key is required
+      GET() %>% # retrieve page from url
+      content("raw") %>% # extract content as a raw vector
+      rawToChar() %>% # convert to character data
+      fromJSON() # convert from JSON to R object
+  }
+  
+  tic()
+  api_results <- expand_grid(
+    year = 1990:latest_year) %>%
+    pmap(function(year) get_national_results(year))
+  toc()
 
-  eia_api_consumption <- paste0(
-    "https://api.eia.gov/v2/total-energy/data/?frequency",
-    "=annual&data[0]=value&start=1990&end=2022&sort[0][column]",
-    "=period&sort[0][direction]",
-    "=desc&offset=0&length=5000&api_key=", key
-  ) %>% # our API key
-    GET() %>% # retrieve page from url
-    content("raw") %>% # extract content as a raw vector
-    rawToChar() %>% # convert to character data
-    fromJSON() # convert from JSON to R object
-
-  eia_national <- pluck(eia_api_consumption, "response", "data") %>%
-    mutate(msn = str_sub(msn, 1, 5)) %>%
-    filter(
-      unit == "Trillion Btu", 
-      str_sub(msn, 3, 4) %in% c("AC", "IC", "RC", "CC", "EI", "KC", "OC")
-    ) %>%
-    select(-unit, -seriesDescription)
-
-  us_consumption <- eia_national %>%
-    left_join(general_data$msn_names$msn, by = "msn") %>%
-    filter(msn %in% general_data$msn_names$msn_lookup) %>%
-    # Remove "(consumption)" from electric power sector description
-    mutate(
-      sector_description = if_else(
-        str_detect(sector_description, "electric power"),
-        "electric power sector", sector_description
-      ),
-      # Make btu value numeric and remove non-numeric data (generates warning)
-      value = parse_number(value)
-    ) %>%
-    rename(year = period) %>%
-    mutate(unit = "Trillion Btu") %>%
+  us_consumption <- api_results %>%
+    map(\(.x) pluck(.x, "response", "data")) %>%
+    list_rbind() %>%
+    clean_names() %>%
+    select(year = period, msn, value, unit) %>%
+    mutate(unit = str_to_lower(unit),
+           year = as.character(year), 
+           value = parse_number(value), 
+           msn = str_sub(msn, 1, 5)) %>%
+    filter(unit == "trillion btu", 
+           msn %in% general_data$msn_names$msn_lookup, 
+           str_sub(msn, 3, 4) %in% c("AC", "IC", "RC", "CC", "EI", "KC", "OC")) %>%
+    left_join(general_data$msn_names$msn %>%
+                select(-unit), by = "msn") %>%
+    # Remove any duplicates caused by appending new annual data
+    distinct() %>%
     general_data$standardize_ffc(general_data$msn_names)
+
 
   # Read EIA Heat Content Data----------------------------------------------
 
@@ -1199,7 +1205,7 @@ state_ffc_get_seds_data <- function(general_data) {
   # Function for Options 1 & 2---------------------------------------------
 
   # Function to Query EIA API
-  get_results <- function(state, year, offset) {
+  get_state_results <- function(state, year, offset) {
     # For now, to avoid exceeding the 5000-row data limit, we will pull
     # only one year and state per query. This requires n=51*years API queries.
     results <- paste0(
@@ -1246,7 +1252,7 @@ state_ffc_get_seds_data <- function(general_data) {
   #     pull(state),
   #   year = 2021:latest_year,
   #   offset = 0) %>%
-  #   pmap(function(state, year, offset) get_results(state, year, offset))
+  #   pmap(function(state, year, offset) get_state_results(state, year, offset))
   # toc()
   #
   # seds <- api_results %>%
@@ -1480,84 +1486,88 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   # foks_diesel_distribution & foks_residual_distribution may be read from
   #   Excel sheet (see below) since they are no longer being updated
 
+  
+  
+  
   # Adjustment factors data from national inventory------------
-  adjustments <- read_csv("data/us_compare.csv") %>%
-    clean_names() %>%
-    # Change 'year' to a column
-    pivot_longer(
-      cols = starts_with("x"),
-      names_to = "year", values_to = "national_value"
-    ) %>%
-    # Get rid of leading 'x' in years
-    mutate(
-      year = str_remove(year, "x"),
-      # Standardize sector descriptions
-      sector_description = str_c(sector_description, " sector"),
-      # Standardize source descriptions
-      source_description = if_else(
-        source_description == "hydrocarbon gas liquids",
-        "hgl", source_description
-      )
-    )
-
-
-  # Consumption input data------------------------------------------
-  # Consumption input is 'US compare' data with adjustments applied.
-  # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
-
-  consumption_input <- read_excel("data/national_inventory_CO2_data.xlsx",
-    sheet = "Consumption Input",
-    skip = 0, range = "C5:AK131"
-  ) %>%
-    clean_names() %>%
-    rename(
-      sector_description = t_btu,
-      source_description = x2
-    ) %>%
-    mutate(
-      sector_description = if_else(
-        str_detect(sector_description, "ource"),
-        NA_character_, sector_description
-      ),
-      # Standardize source descriptions for joins in industrial_adjustments.R
-      source_description = case_when(
-        str_detect(source_description, "istillate") ~ "distillate fuel oil",
-        str_detect(source_description, "esidual") ~ "residual fuel oil",
-        .default = source_description
-      )
-    ) %>%
-    fill(sector_description) %>%
-    pivot_longer(
-      cols = !c(sector_description, source_description),
-      values_to = "consumption_value", names_to = "year"
-    ) %>%
-    filter(
-      !is.na(source_description),
-      !str_detect(year, "percent")
-    ) %>%
-    mutate(
-      year = parse_number(year) %>% as.character(),
-      # NAs are okay in the next line; we won't be using those values
-      consumption_value = as.numeric(consumption_value),
-      source_description = str_to_lower(source_description),
-      sector_description = str_to_lower(sector_description) %>%
-        str_c(" sector")
-    ) %>%
-    # Only used for ind: resid fuel, dist fuel, nat gas, & coal. Remove others
-    filter(
-      sector_description == "industrial sector",
-      source_description %in% c(
-        "residual fuel oil", "other coal",
-        "distillate fuel oil", "natural gas"
-      )
-    ) %>%
-    # Change other coal = coal for consistent joins in industrial_adjustments.R
-    mutate(
-      source_description =
-        if_else(source_description == "other coal", "coal",
-          source_description
-        )
-    )
+  
+  # NOTE: MOGAS AND DIESEL VALUES ARE INCORRECT AT THIS TIME (2/27/2025)
+  # if necessary we can pull calculated diesel/mogas values from national data 
+  national_inv_adjustments <- national_ffc_adjusted %>% 
+    select(year, 
+           sector_description, 
+           source_description, 
+           national_value = adjusted_value)
+  
+  # adjustments <- read_csv("data/us_compare.csv") %>%
+  #   clean_names() %>%
+  #   # Change 'year' to a column
+  #   pivot_longer(
+  #     cols = starts_with("x"),
+  #     names_to = "year", values_to = "national_value"
+  #   ) %>%
+  #   # Get rid of leading 'x' in years
+  #   mutate(
+  #     year = str_remove(year, "x"),
+  #     # Standardize sector descriptions
+  #     sector_description = str_c(sector_description, " sector"),
+  #     # Standardize source descriptions
+  #     source_description = if_else(
+  #       source_description == "hydrocarbon gas liquids",
+  #       "hgl", source_description
+  #     )
+  #   )
+  # 
+  # 
+  # # Consumption input data------------------------------------------
+  # # Consumption input is 'US compare' data with adjustments applied.
+  # # It applies only to industrial coal, nat gas, resid fuel, & dist fuel.
+  # 
+  # national_inv_adjustments <- read_excel("data/national_inventory_CO2_data.xlsx",
+  #   sheet = "Consumption Input",
+  #   skip = 0, range = "C5:AK64"
+  # ) %>%
+  #   clean_names() %>%
+  #   rename(
+  #     sector_description = 1,
+  #     source_description = 2
+  #   ) %>%
+  #   mutate(
+  #     sector_description = if_else(
+  #       str_detect(sector_description, "ource"),
+  #       NA_character_, sector_description
+  #     ),
+  #     # Standardize source descriptions for joins 
+  #     source_description = case_when(
+  #       str_detect(source_description, "istillate") ~ "distillate fuel oil",
+  #       str_detect(source_description, "esidual") ~ "residual fuel oil",
+  #       .default = source_description
+  #     )
+  #   ) %>%
+  #   fill(sector_description) %>%
+  #   pivot_longer(
+  #     cols = !c(sector_description, source_description),
+  #     values_to = "consumption_value", names_to = "year"
+  #   ) %>%
+  #   filter(
+  #     !is.na(source_description),
+  #     !str_detect(year, "percent")
+  #   ) %>%
+  #   mutate(
+  #     year = parse_number(year) %>% as.character(),
+  #     # NAs are okay in the next line; we won't be using those values
+  #     consumption_value = as.numeric(consumption_value),
+  #     source_description = str_to_lower(source_description),
+  #     sector_description = str_to_lower(sector_description) %>%
+  #       str_c(" sector")
+  #   ) %>%
+  #   # Change other coal = coal for consistent joins 
+  #   mutate(
+  #     source_description =
+  #       if_else(source_description == "other coal", "coal",
+  #         source_description
+  #       )
+  #   )
 
   # IBF adjustments data--------------------------------------------
 
@@ -1763,9 +1773,8 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   # Aggregate------------------------------------------------------
 
   state_adjustments <- lst(
-    adjustments,
     misc_adjustments,
-    consumption_input,
+    national_inv_adjustments,
     ibf_adjustments,
     neu_adjustments,
     is_distribution,
@@ -2008,7 +2017,7 @@ state_ffc_adjust_data <- function(seds,
     coal = seds %>%
       filter(msn == "CLRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2031,7 +2040,7 @@ state_ffc_adjust_data <- function(seds,
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2048,7 +2057,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = seds %>%
       filter(msn == "DFRCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2083,7 +2092,7 @@ state_ffc_adjust_data <- function(seds,
     coal = seds %>%
       filter(msn == "CLCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2094,7 +2103,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = seds %>%
       filter(msn == "DFCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2111,7 +2120,7 @@ state_ffc_adjust_data <- function(seds,
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2134,7 +2143,7 @@ state_ffc_adjust_data <- function(seds,
       # Ethanol no longer needed (and value is now duplicative)
       filter(msn != "EMCCB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Get sum of all states' value
@@ -2199,7 +2208,7 @@ state_ffc_adjust_data <- function(seds,
       # Join with national data adjustments
       left_join(state_adjustments$misc_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(state_adjustments$consumption_input,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("year", "source_description", "sector_description")
       ) %>%
       # Join with I & S distribution data
@@ -2225,7 +2234,7 @@ state_ffc_adjust_data <- function(seds,
       ) %>%
       mutate(
         adjusted_value =
-          (adjusted_value_pre / states_sum_value) * consumption_value
+          (adjusted_value_pre / states_sum_value) * national_value
       ),
 
     # Natural Gas
@@ -2245,7 +2254,7 @@ state_ffc_adjust_data <- function(seds,
         msn = "net natural gas"
       ) %>%
       # Join with consumption input data
-      left_join(state_adjustments$consumption_input,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("year", "source_description", "sector_description")
       ) %>%
       # Join with I & S distribution data
@@ -2276,7 +2285,7 @@ state_ffc_adjust_data <- function(seds,
       mutate(
         adjusted_value =
           (adjusted_value_pre / states_sum_value) *
-            consumption_value
+            national_value
       ),
 
     # Residual Fuel
@@ -2285,7 +2294,7 @@ state_ffc_adjust_data <- function(seds,
       # Join with national data adjustments
       left_join(state_adjustments$misc_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(state_adjustments$consumption_input,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("year", "source_description", "sector_description")
       ) %>%
       # Join with petrochemicals carbon black distribution data
@@ -2306,7 +2315,7 @@ state_ffc_adjust_data <- function(seds,
       # now adjust by consumption value
       mutate(
         adjusted_value =
-          consumption_value * (residual_fuel_cb_adj / states_sum_value)
+          national_value * (residual_fuel_cb_adj / states_sum_value)
       ),
 
     # Distillate Fuel
@@ -2315,7 +2324,7 @@ state_ffc_adjust_data <- function(seds,
       # Join with national data adjustments
       left_join(state_adjustments$misc_adjustments, by = "year") %>%
       # Join with consumption input data
-      left_join(state_adjustments$consumption_input,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("year", "source_description", "sector_description")
       ) %>%
       # Join with I & S distribution data
@@ -2333,7 +2342,7 @@ state_ffc_adjust_data <- function(seds,
       # now adjust by consumption value
       mutate(
         adjusted_value =
-          consumption_value *
+          national_value *
             (distillate_fuel_is_adj / states_sum_value)
       ),
 
@@ -2349,7 +2358,7 @@ state_ffc_adjust_data <- function(seds,
       # Get sum of all states' net gasoline
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # get adjustment factor for motor gasoline
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename adjustment factor for clarity
@@ -2370,7 +2379,7 @@ state_ffc_adjust_data <- function(seds,
       # Get sum of all states' petroleum_coke
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # get adjustment factor for petroleum coke
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename adjustment factor for clarity
@@ -2389,7 +2398,7 @@ state_ffc_adjust_data <- function(seds,
       # Change source description to reflect new value
       mutate(source_description = "hgl") %>%
       # Join with adjustments to get adjustment factor
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename adjustment factor for clarity
@@ -2424,7 +2433,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = scraped_data$diesel_distribution %>%
       # Join with adjustments data
       left_join(
-        state_adjustments$adjustments %>%
+        state_adjustments$national_inv_adjustments %>%
           # Can only join by 'year', so a filter is required
           filter(
             source_description == "distillate fuel oil",
@@ -2440,7 +2449,7 @@ state_ffc_adjust_data <- function(seds,
     gasoline = scraped_data$gasoline_distribution %>%
       # Join with adjustments data
       left_join(
-        state_adjustments$adjustments %>%
+        state_adjustments$national_inv_adjustments %>%
           # Can only join by 'year', so a filter is required
           filter(
             source_description == "motor gasoline",
@@ -2493,7 +2502,7 @@ state_ffc_adjust_data <- function(seds,
     natural_gas = seds %>%
       filter(msn == "NGACB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # rename for clarity
@@ -2516,7 +2525,7 @@ state_ffc_adjust_data <- function(seds,
     coal = seds %>%
       filter(msn == "CLEIB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename for clarity
@@ -2535,7 +2544,7 @@ state_ffc_adjust_data <- function(seds,
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFEIB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename for clarity
@@ -2560,7 +2569,7 @@ state_ffc_adjust_data <- function(seds,
     distillate_fuel = seds %>%
       filter(msn == "DFEIB") %>%
       # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$adjustments,
+      left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
       ) %>%
       # Rename for clarity
@@ -2959,7 +2968,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
           source_description
           )
         ),
-      national = state_adjustments$adjustments %>%
+      national = state_adjustments$national_inv_adjustments %>%
         rename(value = national_value) %>%
         mutate(
           dataname = "national_total",
