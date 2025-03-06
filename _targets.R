@@ -10,7 +10,7 @@ library(readxl)
 
 tar_option_set(
   # error = "null",
-  garbage_collection = 1,
+  # garbage_collection = 1,
   packages = c(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
     "jsonlite", "knitr", "labelled", "openxlsx",
@@ -362,8 +362,15 @@ list(
 )
 
 
-
+# Run the pipeline (only executes targets that require updating)
 # tar_make()
+
+# Create visualization of targets network
 # tar_visnetwork()
-# tar_read(seds_ind_adjusted) # use any target name
-# tar_manifest() # check for problems
+
+# Load a cached target into global environment
+# tar_read()
+# blahblah <- tar_read(seds_ind_adjusted) # use any target name
+
+# Check for problems
+# tar_manifest() 
