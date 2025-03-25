@@ -17,6 +17,21 @@ swc_url <- paste0('https://ghgdata.epa.gov/ghgp/service/export?q=&tr=current&ds=
 # Retrieve SWC Excel file data
 GET(swc_url, write_disk(local_excel_path, overwrite = TRUE))
 
+
+# Read from temp file: all data 
+
+# Create vector of years, 2011 to latest year of data
+data_years <- 2011: (year(Sys.Date()) -2)
+
+# Create list of dataframes, one for each year
+swc_data <- data_years %>%
+  # map a function to each year to read Excel data
+  map(\(.x) read_excel(local_excel_path, sheet = paste0(.x), skip = 6) %>%
+        # Clean up column names/apply snake-case style.
+        clean_names()) %>%
+  bind_rows()
+
+
 # Read from temp file 2023 data
 # The top six lines are blank in this worksheet, so we'll skip them 
 swc2023 <- read_excel(local_excel_path, sheet = 1, skip = 6) %>%
@@ -103,7 +118,7 @@ subpart_c_unit_data <- read_excel("data/emissions_by_unit_and_fuel_type_c_d_aa.x
   clean_names()
 
 # Read in FFC subpart C fuel data from GHGRP, note col types to avoid warnings and Clean up column names/apply snake-case style
-subpart_c_fuel_data <- read_excel("data/emissions_by_unit_and_fuel_type_c_d_aa.xlsx", sheet = 2, col_types = c("guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "text", "text", "guess", "guess"), skip = 5) |>
+subpart_c_fuel_data <- read_excel("data/emissions_by_unit_and_fuel_type_c_d_aa.xlsx", sheet = 2, guess_max = 10000,  skip = 5) |>
   clean_names()
 
 # filter the fuel data to only MSW

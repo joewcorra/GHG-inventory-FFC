@@ -3669,7 +3669,7 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 
 
 # XIX. INVDB--------------------------------------------------
-write_to_invdb <- function(carbonn_emissions_national, 
+write_to_invdb <- function(carbon_emissions_national, 
                            carbon_emissions_state) {
   
   
