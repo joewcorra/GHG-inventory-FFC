@@ -387,7 +387,7 @@ national_ffc_read_eia_data <- function(general_data) {
   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
   # Change to match most recent available year (current year minus two)
-  latest_year <- year(Sys.Date()) - 3
+  latest_year <- year(Sys.Date()) - 2
 
   
   # Read EIA Consumption Data----------------------------------------------
@@ -1282,7 +1282,7 @@ state_ffc_get_seds_data <- function(general_data) {
   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
 
   # Get most recent year
-  latest_year <- year(Sys.Date()) - 3
+  latest_year <- year(Sys.Date()) - 2
   # Function for Options 1 & 2---------------------------------------------
 
   # Function to Query EIA API
@@ -1364,7 +1364,7 @@ state_ffc_get_seds_data <- function(general_data) {
 
 scrape_data <- function(general_data) {
   # Set year to match most recent available year (current year minus two)
-  latest_year <- year(Sys.Date()) - 3
+  latest_year <- year(Sys.Date()) - 2
 
   # Scrape FWHA Fuel Use (State & National FFC) ----------------------------
 

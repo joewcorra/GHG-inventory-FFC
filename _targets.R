@@ -9,7 +9,7 @@ library(tidyverse)
 library(readxl)
 
 tar_option_set(
-  # error = "null",
+  error = "null",
   # garbage_collection = 1,
   packages = c(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
@@ -365,6 +365,7 @@ list(
 # Run the pipeline (only executes targets that require updating)
 # tar_make()
 
+
 # Create visualization of targets network
 # tar_visnetwork()
 
@@ -374,3 +375,6 @@ list(
 
 # Check for problems
 # tar_manifest() 
+
+
+
