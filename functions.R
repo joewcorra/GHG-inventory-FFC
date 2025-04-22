@@ -68,14 +68,15 @@ data_setup <- function(harmonized_data) {
         mutate(year = as_factor(year))
     }
 
+    labels <- as.list(deframe(ghgi_variables %>%
+                               select(variable, metadata) %>%
+                               filter(variable %in%
+                                        colnames(data))))
     # Filter the variables dataframe and apply metadata as variable labels
-    set_variable_labels(data,
-      .labels = deframe(ghgi_variables %>%
-        filter(variable %in%
-          colnames(data)) %>%
-        select(-data_type)) %>%
-        as.list()
-    )
+    var_label(data) <- labels
+    
+    return(data)
+    
   }
 
 
@@ -89,8 +90,6 @@ data_setup <- function(harmonized_data) {
 
   ghgi_invdb_values <- harmonized_data$invdb
 
-  # Add variable labels
-  ghgi_invdb_values <- apply_variable_labels(ghgi_invdb_values, ghgi_variables)
 
   # Create Filtering Dataframe-------------------------------------------
 
@@ -257,11 +256,6 @@ data_setup <- function(harmonized_data) {
       source_description = "natural gas consumed by the residential sector (excluding supplemental gaseous fuels)"
     )
 
-  # Add variable labels
-  msn <- apply_variable_labels(
-    msn,
-    ghgi_variables
-  )
 
   # State and Territory Names---------------------------------------------
 
@@ -303,6 +297,7 @@ data_setup <- function(harmonized_data) {
   msn_names <- lst(msn, msn_lookup, state_name_key)
 
   general_data <- lst(
+    ghgi_values,
     ghgi_values,
     ghgi_variables,
     ghgi_invdb_values,
@@ -369,11 +364,6 @@ get_carbon_factors <- function(general_data,
   
     d <-general_data$standardize_ffc(carbon_factors, general_data$msn_names)
 
-  # Apply labels to variables
-  carbon_factors <- general_data$apply_variable_labels(
-    carbon_factors,
-    general_data$ghgi_variables
-  )
 
   carbon_coefficients <- lst(carbon_factors, carbon_ratio)
 
@@ -2905,6 +2895,7 @@ state_ffc_adjust_data <- function(seds,
 state_ffc_calculate_emissions <- function(seds_all_adjusted,
                                           carbon_coefficients,
                                           general_data) {
+  
   carbon_emissions_state <- seds_all_adjusted %>%
     # change source descriptions to match those in carbon_factors
     mutate(source_description = case_when(

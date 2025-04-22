@@ -9,8 +9,8 @@ library(tidyverse)
 library(readxl)
 
 tar_option_set(
-  error = "null",
-  # garbage_collection = 1,
+  error = "continue",
+  garbage_collection = 1,
   packages = c(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
     "jsonlite", "knitr", "labelled", "openxlsx",
@@ -299,7 +299,6 @@ list(
       )
       "saved_national_ffc_tables.rds"
     },
-    format = "file"
   ),
 
   ### State--------------------------------------------
@@ -363,18 +362,18 @@ list(
 
 
 # Run the pipeline (only executes targets that require updating)
-# tar_make()
+# targets::tar_make()
 
 
 # Create visualization of targets network
-# tar_visnetwork()
+# targets::tar_visnetwork()
 
 # Load a cached target into global environment
-# tar_read()
+# targets::tar_read()
 # blahblah <- tar_read(seds_ind_adjusted) # use any target name
 
 # Check for problems
-# tar_manifest() 
+# targets::tar_manifest() 
 
 
 
