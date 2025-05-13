@@ -337,11 +337,12 @@ list(
   ## InvDB Output-------------------------------
   
   # NEED TO FINALIZE INVDB TEMPLATES BEFORE IMPLEMENTING
-  # tar_target(
-  #   invdb,
-  #   write_to_invdb(carbon_emissions_national,
-  #                       carbon_emissions_state)
-  # ),
+  tar_target(
+    invdb,
+    write_to_invdb(
+  # carbon_emissions_national,
+                        carbon_emissions_state)
+  ),
 
   ### National--------------------------------------------
   # tar_quarto(

@@ -3732,7 +3732,8 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 
 
 # XIX. INVDB--------------------------------------------------
-write_to_invdb <- function(carbon_emissions_national, 
+write_to_invdb <- function(
+    # carbon_emissions_national, 
                            carbon_emissions_state) {
   
   
@@ -3759,7 +3760,7 @@ write_to_invdb <- function(carbon_emissions_national,
     ungroup()
   
   # Load blank Excel workbook
-  wb <- loadWorkbook("InvDB_ffc.xlsx")
+  wb <- loadWorkbook("invDB/InvDB_ffc.xlsx")
   
   # Write data to each set of columns on the worksheet
   writeData(wb, select(ffc_invdb, Sector:Fuel), sheet = 1, 
@@ -3772,12 +3773,12 @@ write_to_invdb <- function(carbon_emissions_national,
             startCol = 9, startRow = 17, colNames = FALSE) 
   
   # Save InvDB workbook
-  saveWorkbook(wb, "InvDB_ffc_new.xlsx", overwrite = TRUE)
+  saveWorkbook(wb, "invDB/InvDB_ffc_new.xlsx", overwrite = TRUE)
   
   # Save as csv
-  write_csv(ffc_invdb, "ffc.csv")
+  write_csv(ffc_invdb, "invDB/ffc.csv")
   
   # Save as JSON
-  write_json(ffc_invdb, "ffc.json")
+  write_json(ffc_invdb, "invDB/ffc.json")
   
 }
