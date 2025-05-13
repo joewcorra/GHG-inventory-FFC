@@ -9,7 +9,7 @@ library(tidyverse)
 library(readxl)
 
 tar_option_set(
-  error = "continue",
+  error = "null",
   garbage_collection = 1,
   packages = c(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
@@ -202,11 +202,11 @@ list(
   tar_target(
     national_ffc_adjusted,
     national_ffc_adjust_data(
-      national_ffc_data,
-      general_data,
+      # national_ffc_data,
+      # general_data,
       # mobile_adjustments,
-      ibf_adjustments,
-      misc_adjustments
+      # ibf_adjustments,
+      # misc_adjustments
     )
   ),
 
@@ -268,38 +268,38 @@ list(
   ## Figures, Tables, and Quarto Reports--------------------------------
 
   ### National-------------------------------------------------
-  tar_target(
-    national_ffc_figures,
-    national_ffc_ggplot_figures(
-      national_ffc_adjusted,
-      carbon_emissions_national
-    )
-  ),
-
-  tar_target(saved_national_ffc_figures,
-    {
-      saveRDS(national_ffc_figures,
-        file = "saved_national_ffc_figures.rds"
-      )
-      "saved_national_ffc_figures.rds"
-    },
-    format = "file"
-  ),
-
-  tar_target(
-    national_ffc_tables,
-    national_ffc_gt_tables(national_ffc_adjusted,
-                           carbon_emissions_national)
-  ),
-
-  tar_target(saved_national_ffc_tables,
-    {
-      saveRDS(national_ffc_tables,
-        file = "saved_national_ffc_tables.rds"
-      )
-      "saved_national_ffc_tables.rds"
-    },
-  ),
+  # tar_target(
+  #   national_ffc_figures,
+  #   national_ffc_ggplot_figures(
+  #     national_ffc_adjusted,
+  #     carbon_emissions_national
+  #   )
+  # ),
+  # 
+  # tar_target(saved_national_ffc_figures,
+  #   {
+  #     saveRDS(national_ffc_figures,
+  #       file = "saved_national_ffc_figures.rds"
+  #     )
+  #     "saved_national_ffc_figures.rds"
+  #   },
+  #   format = "file"
+  # ),
+  # 
+  # tar_target(
+  #   national_ffc_tables,
+  #   national_ffc_gt_tables(national_ffc_adjusted,
+  #                          carbon_emissions_national)
+  # ),
+  # 
+  # tar_target(saved_national_ffc_tables,
+  #   {
+  #     saveRDS(national_ffc_tables,
+  #       file = "saved_national_ffc_tables.rds"
+  #     )
+  #     "saved_national_ffc_tables.rds"
+  #   },
+  # ),
 
   ### State--------------------------------------------
   tar_target(
@@ -344,12 +344,12 @@ list(
   # ),
 
   ### National--------------------------------------------
-  tar_quarto(
-    national_ffc_final_report,
-    path = "national_ffc_final_report.qmd", 
-    extra_files = c("saved_national_ffc_tables.rds", 
-                    "saved_national_ffc_figures.rds")
-  ),
+  # tar_quarto(
+  #   national_ffc_final_report,
+  #   path = "national_ffc_final_report.qmd", 
+  #   extra_files = c("saved_national_ffc_tables.rds", 
+  #                   "saved_national_ffc_figures.rds")
+  # ),
 
   ### State----------------------------------------------
   tar_quarto(
