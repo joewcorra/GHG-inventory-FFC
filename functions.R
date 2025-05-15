@@ -262,8 +262,8 @@ data_setup <- function(harmonized_data) {
   # Create dataframes of states and territories (names & 2-letter codes)
 
   state_name_key <- tibble(
-    state = ghgi_values$state,
-    state_name = ghgi_values$state_name
+    state = str_squish(ghgi_values$state),
+    state_name = str_squish(ghgi_values$state_name)
   ) %>%
     # Identify territories
     mutate(territory = if_else(state %in% c(
@@ -1268,8 +1268,8 @@ state_ffc_get_seds_data <- function(general_data) {
       select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
     distinct() %>%
-    # Convert to millions of BTUs
-    mutate(value = value / 1000) %>%
+    # # Convert to millions of BTUs
+    # mutate(value = value / 1000) %>%
     # Standarize names and combine LPGs
     general_data$standardize_ffc(general_data$msn_names)
 
@@ -1326,30 +1326,30 @@ state_ffc_get_seds_data <- function(general_data) {
 
   # Apply API data query function across all states and years.
   # Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
-  # tic()
-  # api_results <- expand_grid(
-  #   state = general_data$ghgi_values$state[1:51],
-  #   year = 1990:latest_year,
-  #   offset = 0) %>%
-  #   pmap(function(state, year, offset) get_state_results(state, year, offset))
-  # toc()
-  # 
-  # seds <- api_results %>%
-  #   map(\(.x) pluck(.x, "response", "data")) %>%
-  #   list_rbind() %>%
-  #     clean_names() %>%
-  #     select( state = state_id, year = period, msn = series_id,
-  #             value, unit) %>%
-  #     filter(unit == "Billion Btu") %>%
-  #     filter(msn %in% general_data$msn_names$msn_lookup) %>%
-  #     mutate(unit = str_to_lower(unit),
-  #            year = as.character(year)) %>%
-  #     left_join(general_data$msn_names$msn %>%
-  #                 select(-unit), by = "msn") %>%
-  #     # Remove any duplicates caused by appending new annual data
-  #     distinct() %>%
-  #     # Convert to millions of BTUs
-  #     mutate(value = as.numeric(value) / 1000)
+  tic()
+  api_results <- expand_grid(
+    state = general_data$ghgi_values$state[1:51],
+    year = 1990:latest_year,
+    offset = 0) %>%
+    pmap(function(state, year, offset) get_state_results(state, year, offset))
+  toc()
+
+  seds <- api_results %>%
+    map(\(.x) pluck(.x, "response", "data")) %>%
+    list_rbind() %>%
+      clean_names() %>%
+      select( state = state_id, year = period, msn = series_id,
+              value, unit) %>%
+      filter(unit == "Billion Btu") %>%
+      filter(msn %in% general_data$msn_names$msn_lookup) %>%
+      mutate(unit = str_to_lower(unit),
+             year = as.character(year)) %>%
+      left_join(general_data$msn_names$msn %>%
+                  select(-unit), by = "msn") %>%
+      # Remove any duplicates caused by appending new annual data
+      distinct() %>%
+      # Convert to millions of BTUs
+      mutate(value = as.numeric(value) / 1000)
 
   # Write data to csv file
   write_csv(seds, "data/api_seds.csv")
@@ -1399,6 +1399,7 @@ scrape_data <- function(general_data) {
     ) %>%
     # Remove letters from year column
     mutate(
+      state = str_squish(state), 
       year = str_remove(year, "[a-z]"),
       # Get national total for each year by insta-grouping
       national_total = sum(gasoline_percent, na.rm = TRUE), .by = year
@@ -1410,7 +1411,7 @@ scrape_data <- function(general_data) {
       gasoline_percent = gasoline_percent / national_total,
       # Fix the dumb abbreviation for District of Columbia
       state = if_else(str_detect(state, "Dist"),
-        "District of Colombia", state
+        "District of Columbia", state
       )
     ) %>%
     rename(state_name = state) %>%
@@ -1443,6 +1444,7 @@ scrape_data <- function(general_data) {
     ) %>%
     # Remove letters from year column
     mutate(
+      state = str_squish(state), 
       year = str_remove(year, "[a-z]"),
       # Get national total for each year by insta-grouping
       national_total = sum(diesel_percent, na.rm = TRUE), .by = year
@@ -1453,7 +1455,7 @@ scrape_data <- function(general_data) {
     mutate(
       diesel_percent = diesel_percent / national_total,
       # Fix the dumb abbreviation for District of Columbia
-      state = if_else(str_detect(state, "Dist"), "District of Colombia", state)
+      state = if_else(str_detect(state, "Dist"), "District of Columbia", state)
     ) %>%
     rename(state_name = state) %>%
     # Get state codes
@@ -1514,32 +1516,9 @@ scrape_data <- function(general_data) {
     mutate(year = str_remove(year, "[a-z]"))
   # Retain only 1990 onward
 
-  # # Scrape EPA Flight solid waste combustion data
-  #
-  # # Temporary file storage path
-  # local_excel_path <- tempfile(fileext = ".xls")
-  #
-  # # URL for SWC data by year and facility
-  # swc_url <- paste0(
-  #   "https://ghgdata.epa.gov/ghgp/service/export?q=&tr=current&ds=E&ryr=2023&cyr=2023&lowE=-20000&highE=23000000&st=&fc=&mc=&rs=ALL&sc=0&is=11&et=&tl=&pn=undefined&ol=0&sl=0&bs=&g1=1&g2=1&g3=1&g4=1&g5=1&g6=0&g7=1&g8=1&g9=1&g10=1&g11=1&g12=1&s1=0&s2=1&s3=0&s4=0&s5=0&s6=0&s7=0&s8=0&s9=0&s10=0&s201=0&s202=0&s203=0&s204=1&s301=0&s302=0&s303=0&s304=0&s305=0&s306=0&s307=0&s401=0&s402=0&s403=0&s404=0&s405=0&s601=0&s602=0&s701=0&s702=0&s703=0&s704=0&s705=0&s706=0&s707=0&s708=0&s709=0&s710=0&s711=0&s801=0&s802=0&s803=0&s804=0&s805=0&s806=0&s807=0&s808=0&s809=0&s810=0&s901=0&s902=0&s903=0&s904=0&s905=0&s906=0&s907=0&s908=0&s909=0&s910=0&s911=0&sf=11001100&allReportingYears=yes&listExport=false")
-  #
-  # # Retrieve SWC Excel file data
-  # GET(swc_url, write_disk(local_excel_path, overwrite = TRUE))
-  #
-  # # Read from temp file
-  # # The top six lines are blank in this worksheet, so we'll skip them
-  # swc <- read_excel(local_excel_path, skip = 6) %>%
-  #   # Clean up column names/apply snake-case style.
-  #   clean_names()
-  #
-  # # Apply variable labels
-  # swc <- general_data$apply_variable_labels(swc,
-  # general_data$ghgi_variables)
-
   scraped_data <- lst(
     diesel_distribution,
     diesel_use_by_class,
-    # swc,
     gasoline_distribution,
     gasoline_use_national
   )
@@ -2095,6 +2074,11 @@ state_ffc_adjust_data <- function(seds,
                                   state_adjustments,
                                   scraped_data,
                                   general_data) {
+  
+  
+  seds <- general_data$standardize_ffc(seds, general_data$msn_names) %>%
+    filter(year != "1989")
+  
   ## Residential------------------------------------------------
 
   seds_res_adjusted <- lst(
@@ -2162,14 +2146,14 @@ state_ffc_adjust_data <- function(seds,
       mutate(
         msn = "combined lpg",
         # convert units
-        adjusted_value = value * 1000000
+        adjusted_value = value 
       ),
 
     # All other sources go in the last list element
     other_residential = seds %>%
       filter(msn %in% c("KSRCB")) %>%
       # convert units
-      mutate(adjusted_value = value * 1000000)
+      mutate(adjusted_value = value)
   ) %>%
     # Collapse list into a single data frame
     list_rbind()
@@ -2258,14 +2242,14 @@ state_ffc_adjust_data <- function(seds,
       mutate(
         msn = "combined lpg",
         # convert units
-        adjusted_value = value * 1000000
+        adjusted_value = value
       ),
 
     # All other sources go in the last list element
     other_commercial = seds %>%
       filter(msn %in% c("KSCCB", "PCCCB", "RFCCB")) %>%
       # convert units
-      mutate(adjusted_value = value * 1000000)
+      mutate(adjusted_value = value)
   ) %>%
     # Collapse list into a single data frame
     list_rbind()
@@ -2365,7 +2349,7 @@ state_ffc_adjust_data <- function(seds,
           ammonia_percent,
         #  I & S factor * I & S distribution = I & S adjusted value
         natural_gas_is_adj = is_natgas_adj * is_percent,
-        adjusted_value_pre = value * 1000000 -
+        adjusted_value_pre = value -
           (natural_gas_ammonia_adj + natural_gas_is_adj)
       ) %>%
       # Get sum of all states' adjusted (preliminary) values
@@ -2396,8 +2380,8 @@ state_ffc_adjust_data <- function(seds,
       # adjust for cb factor = cb_factor * petrochem cb distribution
       # adjusted value = value - cb adjusted value (minimum = 0)
       mutate(residual_fuel_cb_adj = if_else(
-        value * 1000000 - (cb_residual_adj * petrochemical_cb_percent) < 0, 0,
-        value * 1000000 - (cb_residual_adj * petrochemical_cb_percent)
+        value - (cb_residual_adj * petrochemical_cb_percent) < 0, 0,
+        value - (cb_residual_adj * petrochemical_cb_percent)
       )) %>%
       # Get sum of all states' cb adjusted values
       mutate(
@@ -2423,8 +2407,8 @@ state_ffc_adjust_data <- function(seds,
       left_join(state_adjustments$is_distribution, by = c("state", "year")) %>%
       # distillate_fuel_is_adj (if negative, then 0)
       mutate(distillate_fuel_is_adj = if_else(
-        value * 1000000 - (is_diesel_adj * is_percent) < 0, 0,
-        value * 1000000 - (is_diesel_adj * is_percent)
+        value - (is_diesel_adj * is_percent) < 0, 0,
+        value - (is_diesel_adj * is_percent)
       )) %>%
       # Get sum of all states' cb adjusted values
       mutate(
@@ -2513,7 +2497,7 @@ state_ffc_adjust_data <- function(seds,
         "IQICB", "IYICB"
       )) %>%
       # convert units
-      mutate(adjusted_value = value  * 1000000)
+      mutate(adjusted_value = value)
   ) %>%
     # Collapse list into a single data frame
     list_rbind()
@@ -2557,22 +2541,22 @@ state_ffc_adjust_data <- function(seds,
     lubricants = seds %>%
       filter(msn == "LUACB") %>%
       # Adjusted = original value
-      mutate(adjusted_value = value * 1000000),
+      mutate(adjusted_value = value),
     
     jet_fuel = seds %>%
       filter(msn == "JFACB") %>%
       # Adjusted = original value
-      mutate(adjusted_value = value * 1000000),
+      mutate(adjusted_value = value),
     
     residual_fuel = seds %>%
       filter(msn == "RFACB") %>%
       # Adjusted = original value
-      mutate(adjusted_value = value * 1000000),
+      mutate(adjusted_value = value),
     
     coal = seds %>%
       filter(msn == "CLACB") %>%
       # Adjusted = original value
-      mutate(adjusted_value = value * 1000000),
+      mutate(adjusted_value = value),
 
     # LPGs (propane and/or HGL)
     lpg = seds %>%
@@ -2584,14 +2568,14 @@ state_ffc_adjust_data <- function(seds,
       mutate(
         msn = "combined lpg",
         # convert units
-        adjusted_value = value  * 1000000
+        adjusted_value = value
       ),
     
     aviation_gasoline = seds %>%
       filter(msn == "AVACB") %>%
       # Adjusted = original value
       # Convert units
-      mutate(adjusted_value = value * 1000000),
+      mutate(adjusted_value = value),
     
     natural_gas = seds %>%
       filter(msn == "NGACB") %>%
@@ -2658,7 +2642,7 @@ state_ffc_adjust_data <- function(seds,
     residual_fuel = seds %>%
       filter(msn == "RFEIB") %>%
       # Convert units
-      mutate(adjusted_value = value  * 1000000),
+      mutate(adjusted_value = value),
     petroleum_coke = seds %>%
       filter(msn == "PCEIB") %>%
       mutate(adjusted_value = value),
@@ -3740,37 +3724,44 @@ write_to_invdb <- function(
   ffc_invdb <-
     carbon_emissions_state %>%
     # Create or modify fields to conform to InvDB
-    mutate(Sector = "Energy", 
-           Source = "Fossil Fuel Combustion", 
-           Subsource = str_remove(sector_description, " sector") %>% 
+    mutate(Subsector = str_remove(sector_description, " sector") %>% 
              str_to_title(),
-           GHG = "CO2", 
-           State = str_to_upper(state), 
-           Fuel = case_when(
+           GeoRef = str_to_upper(state), 
+           Fuel1 = case_when(
              source_description %in% c("coal", "coking coal") ~ "Coal", 
              source_description== "natural gas" ~ "Natural Gas", 
-             .default = "Petroleum")) %>%
-    # Select InvDB fields
-    select(Sector, Source, Subsource, Fuel, State, GHG, Year = year, mmt_co2) %>%
+             .default = "Petroleum")) %>%    # Select InvDB fields
+    select(Subsector, Fuel1, GeoRef, Year = year, mmt_co2) %>%
     # Sum mmt CO2 for each Subsource/Fuel/State/Year
-    group_by(Sector, Source, Subsource, Fuel, State, GHG, Year) %>%
+    group_by(Subsector, Fuel1, GeoRef, Year) %>%
     summarize(value = sum(mmt_co2, na.rm = TRUE)) %>%
     # Pivot data wide so the years are columns
     pivot_wider(names_from = Year, values_from = value) %>%
-    ungroup()
+    ungroup() %>%
+    mutate('Data Type' = "GHG",
+           Sector = "Energy", 
+           Category = "Fossil Fuel Combustion", 
+           GHG = "CO2") %>%
+    select('Data Type', Sector, Subsector, Category, Fuel1, GeoRef, GHG, everything())
   
   # Load blank Excel workbook
-  wb <- loadWorkbook("invDB/InvDB_ffc.xlsx")
+  wb <- loadWorkbook("invDB/InvDB_ffc_template.xlsx")
   
   # Write data to each set of columns on the worksheet
-  writeData(wb, select(ffc_invdb, Sector:Fuel), sheet = 1, 
-            startCol = 1, startRow = 17, colNames = FALSE) 
+  writeData(wb, select(ffc_invdb, 1:4), sheet = 1, 
+            startCol = 1, startRow = 2, colNames = FALSE) 
   
-  writeData(wb, select(ffc_invdb, State), sheet = 1, 
-            startCol = 7, startRow = 17, colNames = FALSE) 
+  writeData(wb, select(ffc_invdb, Fuel1), sheet = 1, 
+            startCol = 11, startRow = 2, colNames = FALSE) 
   
-  writeData(wb, select(ffc_invdb, GHG:last_col()), sheet = 1, 
-            startCol = 9, startRow = 17, colNames = FALSE) 
+  writeData(wb, select(ffc_invdb, GeoRef), sheet = 1, 
+            startCol = 13, startRow = 2, colNames = FALSE) 
+  
+  writeData(wb, select(ffc_invdb, GHG), sheet = 1, 
+            startCol = 20, startRow = 2, colNames = FALSE) 
+  
+  writeData(wb, select(ffc_invdb, 8:last_col()), sheet = 1, 
+            startCol = 22, startRow = 2, colNames = FALSE) 
   
   # Save InvDB workbook
   saveWorkbook(wb, "invDB/InvDB_ffc_new.xlsx", overwrite = TRUE)
