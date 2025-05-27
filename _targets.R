@@ -340,10 +340,11 @@ list(
   tar_target(
     invdb,
     write_to_invdb(
-  # carbon_emissions_national,
-                        carbon_emissions_state)
+      # carbon_emissions_national,
+      carbon_emissions_territories,
+      carbon_emissions_state)
   ),
-
+  
   ### National--------------------------------------------
   # tar_quarto(
   #   national_ffc_final_report,

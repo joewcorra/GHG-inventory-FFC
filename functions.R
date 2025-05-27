@@ -50,7 +50,7 @@ data_setup <- function(harmonized_data) {
                str_detect(source_description, "(?=.*mo)(?=.*blend)") ~ "motor gasoline blending components", 
                str_detect(source_description, "lpg (propane)") ~ "lpg",
                str_detect(source_description, "liquefied petroleum gas") ~ "lpg",
-               str_detect(source_description, "hgl") ~ "lpg",
+               str_detect(source_description, "hgl|hydrocarbon gas liquids") ~ "lpg",
                .default = source_description)) }
 
 
@@ -116,7 +116,7 @@ data_setup <- function(harmonized_data) {
     source_code = c(
       "AR", "AB", "AV", "B1", "BD", "BF", "BO", "BQ", "BT",
       "BX", "BY", "CC", "CL", "CO", "DF", "DK", "EL", "EM", "ES",
-      "EQ", "EY", "FN", "FO", "FS", "HL", "HP", "IQ", "IY",
+      "EQ", "EY", "FN", "FO", "FS", "GE", "HL", "HP", "IQ", "IY",
       "JF", "KS", "LU", "MB", "MG", "MS", "NG", "NN", "NU", "OH",
       "OJ", "OP", "P1", "P5", "PA", "PC", "PE", "PP", "PQ",
       "PY", "RF", "SF", "SG", "SN", "SU", "TE", "TN", "UO",
@@ -136,7 +136,7 @@ data_setup <- function(harmonized_data) {
       "electricity sales", "ethane", "ethylene",
       "petrochemical feedstocks, naphtha less than 401 degrees F",
       "petrochemical feedstocks, other oils equal to or greater than 401 degrees F",
-      "petrochemical feedstocks, still gas",
+      "petrochemical feedstocks, still gas", "geothermal energy", 
       "hydrocarbon gas liquids",
       "hydroelectric pumped storage",
       "isobutane", "isobutylene",
@@ -283,9 +283,10 @@ data_setup <- function(harmonized_data) {
     "CCNIB", "CLICB", "CLKCB", "CLOCB", "CLRCB", "CLACB",
     "CLCCB", "CLEIB", "COICB", "DFACB", "DFCCB", "DFEIB",
     "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", "EMTCB",
-    "EQICB", "EYICB", "FNICB", "FOICB", "HLACB", "HLCCB", "HLICB",
-    "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB", "KSRCB",
-    "LUACB", "LUICB", "MBICB", "MGACB", "MGCCB",
+    "EQICB", "EYICB", "FNICB", "FOICB", "GETCB", 
+    "HLACB", "HLCCB", "HLICB",
+    "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB", 
+    "KSRCB","LUACB", "LUICB", "MBICB", "MGACB", "MGCCB",
     "MGICB", "MSICB", "NGACB", "NGCCB", "NGEIB", "NGRCB", "NGICB",
     "NNCCB", "NNEIB", "NNICB", "NNRCB", "PCCCB", "PCEIB",
     "PCICB", "PQACB", "PQCCB", "PQICB", "PPICB", "PQRCB", "PYICB",
@@ -293,7 +294,7 @@ data_setup <- function(harmonized_data) {
     "SGICB", "SFINB", "SNICB", "UOICB", "WXICB"
   )
 
-
+                                                                                                                      
   msn_names <- lst(msn, msn_lookup, state_name_key)
 
   general_data <- lst(
@@ -491,7 +492,7 @@ national_ffc_read_eia_data <- function(general_data) {
            eia_description = NA_character_,
            source_code = NA_character_,
            sector_code = "IC", 
-           source_description = "hgl",
+           source_description = "hydrocarbon gas liquids",
            sector_description = "industrial sector") %>%
     select(-lpg)
   
@@ -1677,8 +1678,9 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
         # Remove asterisks and the word "industrial" from source
         str_remove_all("\\*|industrial") %>%
         # Remove extra spaces from source
-        str_squish()
-    )
+        str_squish(), 
+      source_description = if_else(source_description == "hgl", 
+                                   "hydrocarbon gas liquids", source_description))
 
   # I & S distributions data--------------------------------------------
 
@@ -2044,9 +2046,15 @@ get_territories_data <- function(carbon_coefficients,
     left_join(carbon_coefficients$carbon_factors,
       by = c("source_description", "year")
     ) %>%
-    # MMT CO2  = btu * carbon factor/1000 * 44/12
-    mutate(mmt_co2 = tbtu / 1000 * carbon_factor * carbon_coefficients$carbon_ratio)
-
+   # Fill in missing carbon factors for coal and other petroleum
+    mutate(carbon_factor = case_when(
+      source_description == "other petroleum liquids" ~ 20.0,
+      source_description == "coal" ~ 25.1,
+      .default = carbon_factor
+    ), 
+           # MMT CO2  = btu * carbon factor/1000 * 44/12
+      mmt_co2 = tbtu / 1000 * carbon_factor * carbon_coefficients$carbon_ratio)
+  
   # Apply labels to variables
   carbon_emissions_territories <- general_data$apply_variable_labels(
     carbon_emissions_territories,
@@ -2471,7 +2479,7 @@ state_ffc_adjust_data <- function(seds,
       # Remove pentanes plus from this list element:
       filter(msn != "PPICB") %>%
       # Change source description to reflect new value
-      mutate(source_description = "lpg") %>%
+      mutate(source_description = "hydrocarbon gas liquids") %>%
       # Join with adjustments to get adjustment factor
       left_join(state_adjustments$national_inv_adjustments,
         by = c("source_description", "year", "sector_description")
@@ -2638,6 +2646,22 @@ state_ffc_adjust_data <- function(seds,
       # Multiply adjustment factor by states's value / the above sum
       mutate(adjusted_value = natural_gas_factor *
         (value / states_sum_value)),
+    
+    geothermal = seds %>%
+      filter(msn == "GETCB") %>%
+      mutate(sector_description = "electric power sector") %>%
+      # Join with the adjustment factor data (from national inventory)
+      left_join(state_adjustments$national_inv_adjustments,
+                by = c("source_description", "year", "sector_description")
+      ) %>%
+      # Rename for clarity
+      rename(geothermal_factor = national_value) %>%
+      # Get sum of all states' value
+      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
+      # Multiply adjustment factor by states's value / the above sum
+      mutate(adjusted_value = geothermal_factor *
+               (value / states_sum_value)),
+    
     
     residual_fuel = seds %>%
       filter(msn == "RFEIB") %>%
@@ -2881,13 +2905,8 @@ state_ffc_adjust_data <- function(seds,
         neu_ibf_adjusted_value - neu_adjusted_value,
         neu_ibf_adjusted_value
       )
-    ) %>%
-    # Finally, ZERO OUT all pentanes plus and unfinished oils
-    mutate(neu_ibf_adjusted_value = case_when(
-      source_description == "pentanes plus" ~ 0,
-      source_description == "unfinished oils" ~ 0,
-      .default = neu_ibf_adjusted_value
-    ))
+    ) 
+    
 
   # Apply labels to variables
   seds_all_adjusted <- general_data$apply_variable_labels(
@@ -2907,6 +2926,12 @@ state_ffc_calculate_emissions <- function(seds_all_adjusted,
                                           general_data) {
   
   carbon_emissions_state <- seds_all_adjusted %>%
+    # ZERO OUT all pentanes plus and unfinished oils
+    mutate(neu_ibf_adjusted_value = case_when(
+      source_description == "pentanes plus" ~ 0,
+      source_description == "unfinished oils" ~ 0,
+      .default = neu_ibf_adjusted_value
+    )) %>%
     # change source descriptions to match those in carbon_factors
     mutate(source_description = case_when(
       str_detect(source_description, "naphtha less than") ~ "naphtha",
@@ -2918,7 +2943,8 @@ state_ffc_calculate_emissions <- function(seds_all_adjusted,
         "avgas blend components",
       source_description == "motor gasoline blending components" ~
         "mogas blend components",
-      str_detect(source_description, "hydrocarbon|propane") ~ "lpg",
+      str_detect(source_description, "hydrocarbon") & sector_description != "industrial sector" ~ "lpg",
+      str_detect(source_description, "hydrocarbon") & sector_description == "industrial sector" ~ "hgl (energy use)",
       str_detect(source_description, "miscellaneous") ~ "misc. products",
       str_detect(source_description, "distillate ") ~ "distillate fuel oil",
       str_detect(source_description, "residual") ~ "residual fuel oil",
@@ -2946,6 +2972,8 @@ state_ffc_calculate_emissions <- function(seds_all_adjusted,
     # MMT CO2  = btu * carbon factor/1000 * 44/12
     mutate(
       mmt_co2 = neu_ibf_adjusted_value *
+        (carbon_factor / 1000) * carbon_coefficients$carbon_ratio,
+      mmt_co2_neu = adjusted_value *
         (carbon_factor / 1000) * carbon_coefficients$carbon_ratio,
       # Restore original coal source descriptions
       source_description = case_when(
@@ -3041,7 +3069,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
           # .default = sector_description),
           # source_description = if_else(
           source_description = if_else(source_description %in% c(
-            "hgl", "propane", "propylene",
+            "hgl", "propane", "propylene", "hydrocarbon gas liquids",
             "ethane", "ethylene",
             "normal butane", "butylene",
             "isobutane", "isobutylene"
@@ -3056,7 +3084,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
           value = value / 1000,
           source_description = case_when(
             source_description == "other coal" ~ "coal",
-            source_description == "hgl" ~ "lpg",
+            source_description %in% c("hgl", "hydrocarbon gas liquids") ~ "lpg",
             .default = source_description
           )
         )
@@ -3718,9 +3746,67 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 # XIX. INVDB--------------------------------------------------
 write_to_invdb <- function(
     # carbon_emissions_national, 
-                           carbon_emissions_state) {
+  carbon_emissions_territories, 
+  carbon_emissions_state) {
   
   
+  territories_invdb <- carbon_emissions_territories %>%  
+    mutate(`Data Type` = "GHG", 
+           Sector = "Energy",
+           Subsector = "US Territories", 
+           Category = "Fossil Fuel Combustion", 
+           GeoRef = str_to_upper(state), 
+           GHG = "CO2",
+           Fuel1 = case_when(
+             source_description == "coal" ~ "Coal", 
+             source_description == "natural gas" ~ "Natural Gas", 
+             .default = "Petroleum")) %>%
+    group_by(`Data Type`, Sector, Subsector,  Category, 
+             Fuel1, GeoRef, GHG, Year = year) %>%
+    summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE)) %>%
+    arrange(desc(Year)) %>%
+    pivot_wider(names_from = Year, values_from = mmt_co2)
+  
+  neu_territories_invdb <- carbon_emissions_territories %>%  
+    # Create or modify fields to conform to InvDB
+    mutate(`Data Type` = "GHG", 
+           Sector = "Energy",
+           Subsector = "US Territories",
+           Category = "Non-Energy Uses of Fossil Fuels",
+           GeoRef = str_to_upper(state), 
+           GHG = "CO2",
+           Fuel1 = "") %>%
+    filter(source_description %in% c("other petroleum liquids", 
+                                     "lubricants")) %>%
+    group_by(`Data Type`, Sector, Subsector,  Category, 
+             Fuel1, GeoRef, GHG, Year = year) %>%
+    summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE)) %>%
+    arrange(desc(Year)) %>%
+    pivot_wider(names_from = Year, values_from = mmt_co2)
+  
+ neu_invdb <-
+    carbon_emissions_state %>%
+    # Create or modify fields to conform to InvDB
+    mutate(`Data Type` = "GHG", 
+           Sector = "Energy",
+           Subsector = str_remove(sector_description, " sector") %>% 
+             str_to_title(),
+           Category = "Non-Energy Uses of Fossil Fuels",
+           GeoRef = str_to_upper(state), 
+           GHG = "CO2",
+           Fuel1 = "", 
+           mmt_co2 = mmt_co2_neu) %>%
+   filter(Subsector == "Industrial" | Subsector == "Transportation") %>%
+   filter(msn %in% c("LUACB", "CLKCB", "CLOCB",  "net natural gas", 
+                     "ARICB", "combined lpg", "LUICB", "PPICB", 
+                     "LUICB", "FOICB", "SGICB", "PCICB", "SNICB",
+                     "DFICB", "WXICB", "MSICB")) %>%
+   group_by(`Data Type`, Sector, Subsector,  Category, 
+            Fuel1, GeoRef, GHG, Year = year) %>%
+   summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE)) %>%
+   arrange(desc(Year)) %>%
+   pivot_wider(names_from = Year, values_from = mmt_co2)
+    
   ffc_invdb <-
     carbon_emissions_state %>%
     # Create or modify fields to conform to InvDB
@@ -3729,12 +3815,14 @@ write_to_invdb <- function(
            GeoRef = str_to_upper(state), 
            Fuel1 = case_when(
              source_description %in% c("coal", "coking coal") ~ "Coal", 
+             source_description == "geothermal energy" ~ "Geothermal",
              source_description== "natural gas" ~ "Natural Gas", 
              .default = "Petroleum")) %>%    # Select InvDB fields
     select(Subsector, Fuel1, GeoRef, Year = year, mmt_co2) %>%
     # Sum mmt CO2 for each Subsource/Fuel/State/Year
     group_by(Subsector, Fuel1, GeoRef, Year) %>%
     summarize(value = sum(mmt_co2, na.rm = TRUE)) %>%
+    filter(Year != "1989") %>%
     # Pivot data wide so the years are columns
     pivot_wider(names_from = Year, values_from = value) %>%
     ungroup() %>%
@@ -3742,7 +3830,21 @@ write_to_invdb <- function(
            Sector = "Energy", 
            Category = "Fossil Fuel Combustion", 
            GHG = "CO2") %>%
-    select('Data Type', Sector, Subsector, Category, Fuel1, GeoRef, GHG, everything())
+    select('Data Type', Sector, Subsector, Category, 
+           Fuel1, GeoRef, GHG, everything()) %>%
+    bind_rows(territories_invdb) %>%
+    bind_rows(neu_invdb) %>%
+    # make Territory codes conform to InvDB
+    mutate(GeoRef = case_when(
+      GeoRef == "GUM" ~ "GU",  
+      GeoRef == "PRI" ~ "PR",
+      GeoRef == "ASM" ~ "AS",
+      GeoRef == "VIR" ~ "VI",
+      GeoRef == "WAK" ~ "UM",
+      GeoRef == "USIQ" ~ "MP",
+      .default = GeoRef
+    )) 
+
   
   # Load blank Excel workbook
   wb <- loadWorkbook("invDB/InvDB_ffc_template.xlsx")
