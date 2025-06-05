@@ -259,9 +259,10 @@ list(
   tar_target(
     carbon_emissions_state,
     state_ffc_calculate_emissions(
-      state_ffc_adjusted$seds_all_adjusted,
+      state_ffc_adjusted,
       carbon_coefficients,
-      general_data
+      general_data, 
+      state_adjustments
     )
   ),
 
