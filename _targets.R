@@ -56,6 +56,12 @@ list(
     # Sheets: Factors
     "data/carbon_factors.xlsx"
   ),
+  
+  tar_file(
+    neu_storage_file,
+    # Sheets: Factors
+    "data/neu_storage.csv"
+  ),
 
   ### National------------------------------------
   tar_file(
@@ -106,6 +112,11 @@ list(
     carbon_factors,
     read_xl_data(carbon_factors_file)
   ),
+  
+  tar_target(
+    neu_storage,
+    read_csv(neu_storage_file)
+  ), 
 
   ### National--------------------------------------------
   tar_target(
@@ -165,7 +176,8 @@ list(
     carbon_coefficients,
     get_carbon_factors(
       general_data,
-      carbon_factors
+      carbon_factors, 
+      neu_storage
     )
   ),
 

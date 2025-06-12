@@ -312,7 +312,8 @@ data_setup <- function(harmonized_data) {
 
 # II. CARBON FACTORS-----------------------------------
 get_carbon_factors <- function(general_data,
-                               carbon_factors) {
+                               carbon_factors, 
+                               neu_storage) {
   
   # Ratio of the molecular weight of carbon dioxide to carbon
   carbon_ratio <- 44/12
@@ -337,11 +338,7 @@ get_carbon_factors <- function(general_data,
     filter(
       # NA = not applicable, NC = not calculated. Remove all NA & NC
       !is.na(carbon_coefficient),
-      carbon_coefficient != "NC",
-      # Retain only fixed-value coefficients
-      # !str_detect(carbon_coefficient, "variable"), 
-      # Remove territories for now
-      !str_detect(source_description, "erritor")
+      carbon_coefficient != "NC"
     ) %>%
     # Join with annually variable carbon factor data
     left_join(carbon_factors_variable, by = "source_description") %>%
@@ -365,8 +362,20 @@ get_carbon_factors <- function(general_data,
   
     d <-general_data$standardize_ffc(carbon_factors, general_data$msn_names)
 
-
-  carbon_coefficients <- lst(carbon_factors, carbon_ratio)
+neu_storage <- neu_storage %>%
+  clean_names() %>%
+  rename(sector_description = sector, 
+         source_description = source) %>%
+  pivot_longer(cols = starts_with("x"), 
+               names_to = "year", 
+               values_to = "storage_factor") %>%
+  mutate(sector_description = str_to_lower(sector_description), 
+         source_description = str_to_lower(source_description), 
+         year = str_remove_all(year, "x") %>% as_factor())
+  
+  carbon_coefficients <- lst(carbon_factors, 
+                             carbon_ratio, 
+                             neu_storage)
 
   return(carbon_coefficients)
   
@@ -1429,6 +1438,7 @@ scrape_data <- function(general_data) {
   GET(special_fuel_url, write_disk(local_excel_path, overwrite = TRUE))
   # Read from temp file
 
+
   diesel_distribution <- read_excel(local_excel_path) %>%
     clean_names() %>%
     # Remove unneeded rows
@@ -1466,7 +1476,10 @@ scrape_data <- function(general_data) {
       by = "state_name"
     ) %>%
     # No longer need national total or full state name
-    select(-national_total, -state_name)
+    select(-national_total, -state_name) %>%
+    # NOTE: diesel dist value for OR 2018 missing; interpolated instead
+    mutate(diesel_percent = if_else(state == "OR" & year == "2018", 
+           0.0139, diesel_percent))
 
   # Scrape FWHA Fuel Use National FFC
   # Retrieve gasoline Excel file data
@@ -1987,6 +2000,13 @@ get_territories_data <- function(carbon_coefficients,
     left_join(carbon_coefficients$carbon_factors,
       by = c("source_description", "year")
     ) %>%
+        left_join(carbon_coefficients$neu_storage %>%
+                    mutate(source_description = if_else(
+                      source_description == "other oils", 
+                      "other petroleum liquids", 
+                      source_description)),
+      by = c("source_description", "year")
+    ) %>%
    # Fill in missing carbon factors for coal and other petroleum
     mutate(carbon_factor = case_when(
       source_description == "other petroleum liquids" ~ 20.0,
@@ -1994,7 +2014,11 @@ get_territories_data <- function(carbon_coefficients,
       .default = carbon_factor
     ), 
            # MMT CO2  = btu * carbon factor/1000 * 44/12
-      mmt_co2 = tbtu / 1000 * carbon_factor * carbon_coefficients$carbon_ratio)
+      mmt_co2 = tbtu / 1000 * carbon_factor *  carbon_coefficients$carbon_ratio, 
+    mmt_co2 = if_else(source_description %in% 
+                        c("other petroleum liquids", "lubricants"), 
+                      mmt_co2 * (1 - storage_factor), 
+                      mmt_co2))
   
   # Apply labels to variables
   carbon_emissions_territories <- general_data$apply_variable_labels(
@@ -2026,7 +2050,18 @@ state_ffc_adjust_data <- function(seds,
   
   
   seds <- general_data$standardize_ffc(seds, general_data$msn_names) %>%
-    filter(year != "1989")
+    filter(year != "1989") %>%
+    # ZERO OUT all pentanes plus and unfinished oils
+    mutate(value = case_when(
+      source_description == "pentanes plus" ~ 0,
+      source_description == "unfinished oils" ~ 0,
+      .default = value
+    ),
+    # Make source description for coking coal
+    source_description = if_else(msn == "CLKCB", 
+                                 "coking coal", 
+                                 source_description)
+    ) 
   
   ## Residential------------------------------------------------
 
@@ -2698,7 +2733,13 @@ state_ffc_adjust_data <- function(seds,
         # Tennessee only
         state = "TN"
       ),
-
+    
+    # Coking coal
+    coking_coal = seds_ind_adjusted %>%
+      filter(msn == "CLKCB") %>%
+      mutate(
+        neu_adjusted_value = adjusted_value), 
+    
     # Natural gas
     natural_gas = state_adjustments$neu_adjustments %>%
       # Natural gas has a very long source name in the NEU data
@@ -2726,37 +2767,21 @@ state_ffc_adjust_data <- function(seds,
 
     # LPG
     lpg = seds %>%
-      filter(msn %in% c("HLICB", "PPICB")) %>%
-      # Subtract pentanes plus from HGL
-      mutate(value = abs(diff(value)), .by = c(state, year)) %>%
-      # Group_size shows that each group has exactly two rows. Good!
-      # Pentanes plus computed below, so remove from this element:
-      filter(msn != "PPICB") %>%
+      filter(msn == "HLICB") %>%
       # Change source description to reflect new value
       mutate(source_description = "hydrocarbon gas liquids") %>%
-      # Join with neu adjustments to get neu factor
-      left_join(state_adjustments$feedstock_export_adjustments,
-        by = c("year", "source_description", "sector_description")
+      # Join with neu adjustments
+      left_join(state_adjustments$neu_adjustments,
+                by = c("year", "source_description", "sector_description")
       ) %>%
+
       # Get sum of all states' lpg
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # Rename MSN and calculate adjusted value
       mutate(
         msn = "combined lpg",
-        neu_adjusted_value = feedstock_adjustment * (value / states_sum_value)
+        neu_adjusted_value = neu_factor * (value / states_sum_value)
       ),
-
-    # Pentanes plus
-    pentanes_plus = seds %>%
-      filter(msn == "PPICB") %>%
-      # Join with neu adjustments to get neu factor
-      left_join(state_adjustments$neu_adjustments,
-        by = c("year", "source_description", "sector_description")
-      ) %>%
-      # Get sum of all states' pentanes plus
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Calculate adjusted value
-      mutate(neu_adjusted_value = neu_factor * (value / states_sum_value)),
 
     # Petroleum coke
     petroleum_coke = seds %>%
@@ -2792,7 +2817,17 @@ state_ffc_adjust_data <- function(seds,
       # Get sum of all states' still gas
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
       # Calculate adjusted value
-      mutate(neu_adjusted_value = neu_factor * (value / states_sum_value))
+      mutate(neu_adjusted_value = neu_factor * (value / states_sum_value)), 
+    
+    
+    # Calculate state sum value for all of these NEU sources 
+    other_neu = seds %>%
+      filter(msn %in% c(
+        "ARICB", "LUICB", "FNICB", 
+        "FOICB", "SNICB", "WXICB",
+        "MSICB", "LUACB")) %>%
+    mutate(states_sum_value = sum(value), .by = c(msn, year))
+    
   ) %>%
     # Collapse list into a single data frame
     list_rbind() %>%
@@ -2806,30 +2841,22 @@ state_ffc_adjust_data <- function(seds,
     seds_com_adjusted,
     seds_ind_adjusted,
     seds_tra_adjusted,
-    seds_ele_adjusted,
-    seds_ibf_adjusted,
-    seds_neu_adjusted
+    seds_ele_adjusted
   )
 
   # Aggregate all data and make IBF & NEU adjustments
-  seds_all_adjusted <- list_rbind(seds_adjusted %>%
-    # Remove IBF and NEU data for now
-    discard(names(.) %in%
-      c(
-        "seds_ibf_adjusted",
-        "seds_neu_adjusted"
-      ))) %>%
+  seds_all_adjusted <- list_rbind(seds_adjusted) %>%
     select(state:adjusted_value, -eia_description) %>%
     ## Subtract NEU and IBF------------------------------
     # Join with NEU adjusted data
-    left_join(seds_adjusted$seds_neu_adjusted,
-      by = c(
-        "sector_description", "source_description", "year",
-        "state", "msn"
-      )
-    ) %>%
+    left_join(seds_neu_adjusted, 
+              by = c(
+                "sector_description", "source_description", "year",
+                "state", "msn"
+              )
+              ) %>%
     # Join with IBF adjusted data
-    left_join(seds_adjusted$seds_ibf_adjusted,
+    left_join(seds_ibf_adjusted,
       by = c(
         "sector_description", "source_description", "year",
         "state", "msn"
@@ -2843,29 +2870,19 @@ state_ffc_adjust_data <- function(seds,
         adjusted_value - ibf_adjusted_value,
         adjusted_value
       ),
-      # Some MSNs are 100% NEU. For these, NEU value = 100% of adjusted value
-      neu_adjusted_value = if_else(
-        msn %in% c(
-          "ARICB", "LUICB", "FNICB", "CLKCB",
-          "FOICB", "SNICB", "WXICB",
-          "MSICB", "LUACB"
-        ),
-        adjusted_value, neu_adjusted_value
-      ),
       neu_ibf_adjusted_value = if_else(
         # Subtract NEU only if NEU applies (i.e., isn't NA)
         !is.na(neu_adjusted_value),
         neu_ibf_adjusted_value - neu_adjusted_value,
-        neu_ibf_adjusted_value
-      )
+        neu_ibf_adjusted_value)
     ) 
-    
 
+  
   # Apply labels to variables
-  seds_all_adjusted <- general_data$apply_variable_labels(
-    seds_all_adjusted,
-    general_data$ghgi_variables
-  )
+  # seds_all_adjusted <- general_data$apply_variable_labels(
+  #   seds_all_adjusted,
+  #   general_data$ghgi_variables
+  # )
 
   state_ffc_adjusted <- lst(seds_all_adjusted, 
                             seds_ind_adjusted, 
@@ -2909,7 +2926,7 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
         "electric power coal",
       source_description == "coal" & sector_code == "OC" ~
         "industrial other coal",
-      source_description == "coal" & sector_code == "KC" ~
+      source_description == "coking coal" & sector_code == "KC" ~
         "industrial coking coal",
       source_description == "coal" & sector_code == "AC" ~
         "transportation coal",
@@ -2921,22 +2938,30 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
                 filter(source_description %in% c("other oils", 
                                                  "naphtha", 
                                                  "special naphtha")),
-              by = c("source_description", "sector_description", "year")) %>%
+              by = c("source_description", 
+                     "sector_description", 
+                     "year")) %>%
+    left_join(state_adjustments$misc_adjustments %>% 
+                select(year, cb_other_oil_adj), 
+              by = "year") %>%
     mutate(feedstock_adjustment = replace_na(feedstock_adjustment, 0), 
-           neu_ibf_adjusted_value = if_else(source_description %in% 
-                                              c("other oils", 
-                                                "naphtha", 
-                                                "special naphtha"), 
-                                            pmax(0, 
-                                                 neu_ibf_adjusted_value + 
-                                                   (feedstock_adjustment * 
-                                                      (neu_ibf_adjusted_value / 
-                                                         states_sum_value))), 
-           neu_ibf_adjusted_value)) %>%
-    # ZERO OUT all pentanes plus and unfinished oils
+           other_oils_adjustment = feedstock_adjustment + cb_other_oil_adj, 
+           neu_ibf_adjusted_value = case_when(
+             source_description == "other oils" ~
+               pmax(0, neu_adjusted_value + (other_oils_adjustment * (neu_adjusted_value / states_sum_value))),
+             source_description %in% 
+               c("naphtha", 
+                 "special naphtha") ~ 
+               pmax(0, 
+                    neu_ibf_adjusted_value + 
+                      (feedstock_adjustment * 
+                         (neu_adjusted_value / 
+                            states_sum_value))), 
+                       .default = neu_ibf_adjusted_value)) %>%
+    # zero out lubricants and asphalt (these are counted below in NEU)
     mutate(neu_ibf_adjusted_value = case_when(
-      source_description == "pentanes plus" ~ 0,
-      source_description == "unfinished oils" ~ 0,
+      source_description == "lubricants" ~ 0,
+      source_description == "asphalt & road oil" ~ 0,
       .default = neu_ibf_adjusted_value
     )) %>%
     left_join(carbon_coefficients$carbon_factors,
@@ -2974,7 +2999,7 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
                 filter (source_description != "still gas", 
                         source_description != "lpg") %>%
                 mutate(source_description = case_when(
-                  str_detect(source_description, "hgl") ~ "hydrocarbon gas liquids",
+                  source_description == "hgl (non-energy use)" ~ "hydrocarbon gas liquids",
                   source_description == "still gas (non-energy)" ~ "still gas", 
                   .default = source_description
                 )),
@@ -2990,18 +3015,30 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
         "other coal", 
         source_description), 
       # If divide by zero occurs, make it zero (pentanes plus only)
-      mmt_co2_neu = if_else(is.nan(mmt_co2_neu), 0, mmt_co2_neu), 
-      # zero out pentanes plus 
-      mmt_co2_neu = if_else(source_description == "pentanes plus", 0, mmt_co2_neu)
+      mmt_co2_neu = if_else(is.nan(mmt_co2_neu), 0, mmt_co2_neu)
     )
-           
+  
+  # Apply NEU storage factors where applicable
+  carbon_emissions_state_ffc <- carbon_emissions_state_ffc %>%
+    left_join(carbon_coefficients$neu_storage,
+              by = c("source_description",
+                     "sector_description",
+                     "year")) %>%
+    mutate(mmt_co2_neu = mmt_co2_neu * (1 - storage_factor))
     
-    
+  # Apply NEU storage factors where applicable
+  carbon_emissions_state_neu <- carbon_emissions_state_neu %>%
+    left_join(carbon_coefficients$neu_storage,
+              by = c("source_description",
+                     "sector_description",
+                     "year")) %>%
+    mutate(mmt_co2_neu = mmt_co2_neu * (1 - storage_factor))
+  
   # Apply labels to variables
-  carbon_emissions_state_ffc <- general_data$apply_variable_labels(
-    carbon_emissions_state_ffc,
-    general_data$ghgi_variables
-  )
+  # carbon_emissions_state_ffc <- general_data$apply_variable_labels(
+  #   carbon_emissions_state_ffc,
+  #   general_data$ghgi_variables
+  # )
 
 
   carbon_emissions_state <- lst(carbon_emissions_state_ffc, 
@@ -3778,6 +3815,7 @@ write_to_invdb <- function(
            GHG = "CO2",
            Fuel1 = case_when(
              source_description == "coal" ~ "Coal", 
+             source_description == "coking coal" ~ "Coal", 
              source_description == "natural gas" ~ "Natural Gas", 
              .default = "Petroleum")) %>%
     group_by(`Data Type`, Sector, Subsector,  Category, 
@@ -3786,7 +3824,7 @@ write_to_invdb <- function(
     arrange(desc(Year)) %>%
     pivot_wider(names_from = Year, values_from = mmt_co2)
   
-  neu_territories_invdb <- carbon_emissions_territories %>%  
+  neu_territories_invdb <- carbon_emissions_territories %>% 
     # Create or modify fields to conform to InvDB
     mutate(`Data Type` = "GHG", 
            Sector = "Energy",
@@ -3803,7 +3841,7 @@ write_to_invdb <- function(
     arrange(desc(Year)) %>%
     pivot_wider(names_from = Year, values_from = mmt_co2)
  
-  # NEU: naptha, s naphtha, other oil, misc, asphalt, waxes, lubrs, coking coal
+  # NEU: naptha, s naphtha, other oil, misc, asphalt, waxes, lubr, coking coal
  neu_invdb_1 <-
    carbon_emissions_state$carbon_emissions_state_ffc %>%
     # Create or modify fields to conform to InvDB
@@ -3822,9 +3860,11 @@ write_to_invdb <- function(
                      "FOICB", "FNICB", "SNICB", 
                      "WXICB", "MSICB")) 
     
- # NEU: other coal, pentanes, nat gas, pet coke, diesel, still gas, lpg
+ # NEU: other coal, nat gas, pet coke, diesel, still gas, lpg
  neu_invdb_2 <-
    carbon_emissions_state$carbon_emissions_state_neu %>%
+   filter(msn %in% c("CLOCB", "net natural gas", "PCICB", 
+                     "DFICB", "SGICB", "combined lpg")) %>%
    # Create or modify fields to conform to InvDB
    mutate(`Data Type` = "GHG", 
           Sector = "Energy",
