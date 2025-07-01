@@ -35,7 +35,9 @@ read_xl_data <- function(path) {
 }
 
 # Source custom functions for FFC data
-source("functions.R")
+source("functions_national.R")
+source("functions_state.R")
+source("functions_both.R")
 
 # Define the Pipeline-------------------------------------------
 
@@ -315,38 +317,38 @@ list(
   # ),
 
   ### State--------------------------------------------
-  tar_target(
-    state_ffc_figures,
-    state_ffc_ggplot_figures(
-      state_ffc_adjusted$seds_all_adjusted,
-      state_ffc_adjusted$seds_ind_adjusted,
-      state_adjustments,
-      carbon_emissions_state
-    )
-  ),
+  # tar_target(
+  #   state_ffc_figures,
+  #   state_ffc_ggplot_figures(
+  #     state_ffc_adjusted$seds_all_adjusted,
+  #     state_ffc_adjusted$seds_ind_adjusted,
+  #     state_adjustments,
+  #     carbon_emissions_state
+  #   )
+  # ),
 
-  tar_target(saved_state_ffc_figures,
-    {
-      saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
-      "saved_state_ffc_figures.rds"
-    },
-    format = "file"
-  ),
+  # tar_target(saved_state_ffc_figures,
+  #   {
+  #     saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
+  #     "saved_state_ffc_figures.rds"
+  #   },
+  #   format = "file"
+  # ),
 
-  tar_target(
-    state_ffc_tables,
-    state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
-                        carbon_emissions_state)
-  ),
-
-  tar_target(saved_state_ffc_tables,
-    {
-      saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
-      "saved_state_ffc_tables.rds"
-    },
-    format = "file"
-  ),
-  
+  # tar_target(
+  #   state_ffc_tables,
+  #   state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
+  #                       carbon_emissions_state)
+  # ),
+  # 
+  # tar_target(saved_state_ffc_tables,
+  #   {
+  #     saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
+  #     "saved_state_ffc_tables.rds"
+  #   },
+  #   format = "file"
+  # ),
+  # 
   ## InvDB Output-------------------------------
   
   # NEED TO FINALIZE INVDB TEMPLATES BEFORE IMPLEMENTING
@@ -356,8 +358,8 @@ list(
       # carbon_emissions_national,
       carbon_emissions_territories,
       carbon_emissions_state)
-  ),
-  
+  )
+)
   ### National--------------------------------------------
   # tar_quarto(
   #   national_ffc_final_report,
@@ -367,13 +369,13 @@ list(
   # ),
 
   ### State----------------------------------------------
-  tar_quarto(
-    state_ffc_final_report,
-    path = "state_ffc_final_report.qmd",
-    extra_files = c("saved_state_ffc_tables.rds", 
-                    "saved_state_ffc_figures.rds")
-  )
-)
+#   tar_quarto(
+#     state_ffc_final_report,
+#     path = "state_ffc_final_report.qmd",
+#     extra_files = c("saved_state_ffc_tables.rds", 
+#                     "saved_state_ffc_figures.rds")
+#   )
+# )
 
 
 # Run the pipeline (only executes targets that require updating)
