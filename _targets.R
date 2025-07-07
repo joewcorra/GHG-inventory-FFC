@@ -103,7 +103,7 @@ list(
   ),
 
   ## Load data files (if updates detected)-------------------------------
-  
+
   ### Both national and state------------------------------
   tar_target(
     harmonized_data,
@@ -114,11 +114,11 @@ list(
     carbon_factors,
     read_xl_data(carbon_factors_file)
   ),
-  
+
   tar_target(
     neu_storage,
     read_csv(neu_storage_file)
-  ), 
+  ),
 
   ### National--------------------------------------------
   tar_target(
@@ -130,7 +130,7 @@ list(
     misc_corrections,
     read_xl_data(misc_corrections_file)
   ),
-  
+
   ### State-----------------------------------------------
   tar_target(
     international_bunker_fuels,
@@ -149,14 +149,14 @@ list(
 
   tar_target(
     foks_diesel,
-    read_xl_data(foks_diesel_file) %>% 
-      pluck(4) 
+    read_xl_data(foks_diesel_file) %>%
+      pluck(4)
   ),
 
   tar_target(
     foks_residual,
     read_xl_data(foks_residual_file) %>%
-      pluck(4) 
+      pluck(4)
   ),
 
   ## Data Transformation-------------------------------------------
@@ -178,7 +178,7 @@ list(
     carbon_coefficients,
     get_carbon_factors(
       general_data,
-      carbon_factors, 
+      carbon_factors,
       neu_storage
     )
   ),
@@ -234,156 +234,164 @@ list(
   ),
 
   ### State---------------------------------------------------
-  tar_target(
-    seds,
-    state_ffc_get_seds_data(general_data)
-  ),
+tar_target(
+  seds,
+  state_ffc_get_seds_data(general_data)
+),
 
-  tar_target(
+tar_target(
+  territories,
+  get_territories_data(general_data)
+),
+
+tar_target(
+  state_adjustments,
+  state_ffc_get_adjustments_data(
+    national_ffc_adjusted,
+    international_bunker_fuels,
+    misc_adjustments,
+    non_energy_use,
+    ippu_distributions,
+    foks_diesel,
+    foks_residual
+  )
+),
+
+tar_target(
+  carbon_emissions_territories,
+  territories_ffc_adjust_data(
+    carbon_coefficients,
     territories,
-    get_territories_data(general_data)
-  ),
-  
-  tar_target(
+    general_data
+  )
+),
+
+tar_target(
+  state_ffc_adjusted,
+  state_ffc_adjust_data(
+    seds,
     state_adjustments,
-    state_ffc_get_adjustments_data(
-      national_ffc_adjusted,
-      international_bunker_fuels,
-      misc_adjustments,
-      non_energy_use,
-      ippu_distributions,
-      foks_diesel,
-      foks_residual
-    )
-  ),
+    scraped_data,
+    general_data
+  )
+),
 
-  tar_target(
-    ,
-    adjust_territories_data(
-      carbon_coefficients,
-      territories
-    )
-  ),
-
-  tar_target(
+tar_target(
+  carbon_emissions_state_neu,
+  state_neu_calculate_emissions(
     state_ffc_adjusted,
-    state_ffc_adjust_data(
-      seds,
-      state_adjustments,
-      scraped_data,
-      general_data
-    )
-  ),
+    carbon_coefficients,
+    general_data, 
+    state_adjustments
+  )),
 
-  tar_target(
-    carbon_emissions_state,
-    state_ffc_calculate_emissions(
-      state_ffc_adjusted,
-      carbon_coefficients,
-      general_data, 
-      state_adjustments
-    )
-  ),
+tar_target(
+  carbon_emissions_state_ffc,
+  state_ffc_calculate_emissions(
+    state_ffc_adjusted,
+    carbon_coefficients,
+    general_data,
+    state_adjustments
+  )),
 
-  ## Figures, Tables, and Quarto Reports--------------------------------
+#   ## Figures, Tables, and Quarto Reports--------------------------------
+# 
+#   ### National-------------------------------------------------
+#   # tar_target(
+#   #   national_ffc_figures,
+#   #   national_ffc_ggplot_figures(
+#   #     national_ffc_adjusted,
+#   #     carbon_emissions_national
+#   #   )
+#   # ),
+#   #
+#   # tar_target(saved_national_ffc_figures,
+#   #   {
+#   #     saveRDS(national_ffc_figures,
+#   #       file = "saved_national_ffc_figures.rds"
+#   #     )
+#   #     "saved_national_ffc_figures.rds"
+#   #   },
+#   #   format = "file"
+#   # ),
+#   #
+#   # tar_target(
+#   #   national_ffc_tables,
+#   #   national_ffc_gt_tables(national_ffc_adjusted,
+#   #                          carbon_emissions_national)
+#   # ),
+#   #
+#   # tar_target(saved_national_ffc_tables,
+#   #   {
+#   #     saveRDS(national_ffc_tables,
+#   #       file = "saved_national_ffc_tables.rds"
+#   #     )
+#   #     "saved_national_ffc_tables.rds"
+#   #   },
+#   # ),
+#   #
+#   # ### State--------------------------------------------
+#   # tar_target(
+#   #   state_ffc_figures,
+#   #   state_ffc_ggplot_figures(
+#   #     state_ffc_adjusted$seds_all_adjusted,
+#   #     state_ffc_adjusted$seds_ind_adjusted,
+#   #     state_adjustments,
+#   #     carbon_emissions_state_ffc
+#   #   )
+#   # ),
+#   #
+#   # tar_target(saved_state_ffc_figures,
+#   #   {
+#   #     saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
+#   #     "saved_state_ffc_figures.rds"
+#   #   },
+#   #   format = "file"
+#   # ),
+#   #
+#   # tar_target(
+#   #   state_ffc_tables,
+#   #   state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
+#   #                       carbon_emissions_state_ffc)
+#   # ),
+#   #
+#   # tar_target(saved_state_ffc_tables,
+#   #   {
+#   #     saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
+#   #     "saved_state_ffc_tables.rds"
+#   #   },
+#   #   format = "file"
+#   # ),
+#
+#   ## InvDB Output-------------------------------
 
-  ### National-------------------------------------------------
-  tar_target(
-    national_ffc_figures,
-    national_ffc_ggplot_figures(
-      national_ffc_adjusted,
-      carbon_emissions_national
-    )
-  ),
-
-  tar_target(saved_national_ffc_figures,
-    {
-      saveRDS(national_ffc_figures,
-        file = "saved_national_ffc_figures.rds"
-      )
-      "saved_national_ffc_figures.rds"
-    },
-    format = "file"
-  ),
-
-  tar_target(
-    national_ffc_tables,
-    national_ffc_gt_tables(national_ffc_adjusted,
-                           carbon_emissions_national)
-  ),
-
-  tar_target(saved_national_ffc_tables,
-    {
-      saveRDS(national_ffc_tables,
-        file = "saved_national_ffc_tables.rds"
-      )
-      "saved_national_ffc_tables.rds"
-    },
-  ),
-
-  ### State--------------------------------------------
-  tar_target(
-    state_ffc_figures,
-    state_ffc_ggplot_figures(
-      state_ffc_adjusted$seds_all_adjusted,
-      state_ffc_adjusted$seds_ind_adjusted,
-      state_adjustments,
-      carbon_emissions_state_ffc
-    )
-  ),
-
-  tar_target(saved_state_ffc_figures,
-    {
-      saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
-      "saved_state_ffc_figures.rds"
-    },
-    format = "file"
-  ),
-
-  tar_target(
-    state_ffc_tables,
-    state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
-                        carbon_emissions_state_ffc)
-  ),
-
-  tar_target(saved_state_ffc_tables,
-    {
-      saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
-      "saved_state_ffc_tables.rds"
-    },
-    format = "file"
-  ),
-
-  ## InvDB Output-------------------------------
-  
-  # NEED TO FINALIZE INVDB TEMPLATES BEFORE IMPLEMENTING
   tar_target(
     invdb,
     write_to_invdb(
       # carbon_emissions_national,
       carbon_emissions_territories,
-      carbon_emissions_state_ffc, 
+      carbon_emissions_state_ffc,
       carbon_emissions_state_neu)
-  ),
-  
-  ## National--------------------------------------------
-  tar_quarto(
-    national_ffc_final_report,
-    path = "national_ffc_final_report.qmd",
-    extra_files = c("saved_national_ffc_tables.rds",
-                    "saved_national_ffc_figures.rds")
-  ),
-
-## State----------------------------------------------
-  tar_quarto(
-    state_ffc_final_report,
-    path = "state_ffc_final_report.qmd",
-    extra_files = c("saved_state_ffc_tables.rds",
-                    "saved_state_ffc_figures.rds")
   )
+
+#   ## National--------------------------------------------
+#   tar_quarto(
+#     national_ffc_final_report,
+#     path = "national_ffc_final_report.qmd",
+#     extra_files = c("saved_national_ffc_tables.rds",
+#                     "saved_national_ffc_figures.rds")
+#   ),
+#
+# ## State----------------------------------------------
+#   tar_quarto(
+#     state_ffc_final_report,
+#     path = "state_ffc_final_report.qmd",
+#     extra_files = c("saved_state_ffc_tables.rds",
+#                     "saved_state_ffc_figures.rds")
+#   )
+# )
+
 )
-
-
 # Run the pipeline (only executes targets that require updating)
 # targets::tar_make()
 
