@@ -1448,13 +1448,13 @@ state_neu_calculate_emissions <- function(state_ffc_adjusted,
   
   neu <- state_ffc_adjusted$seds_neu_adjusted %>%
     # add: industrial other coal is a special case
-    rbind(state_ffc_adjusted$seds_ind_adjusted %>%
-            filter(msn == "CLOCB") %>%
-            mutate(neu_adjusted_value = adjusted_value, 
-                   petcoke_adjusted_value = NA) %>%
-            select(source_description, sector_description, 
-                   year, neu_adjusted_value, state, 
-                   msn, petcoke_adjusted_value)) %>%
+    # rbind(state_ffc_adjusted$seds_ind_adjusted %>%
+    #         filter(msn == "CLOCB") %>%
+    #         mutate(neu_adjusted_value = adjusted_value, 
+    #                petcoke_adjusted_value = NA) %>%
+    #         select(source_description, sector_description, 
+    #                year, neu_adjusted_value, state, 
+    #                msn, petcoke_adjusted_value)) %>%
     # join with feedstock exports
   left_join(state_adjustments$feedstock_export_adjustments %>%
               select(-sector_description),
@@ -1484,7 +1484,11 @@ state_neu_calculate_emissions <- function(state_ffc_adjusted,
       filter(source_description == "coking coal"),
     
     natural_gas = neu %>%
-      filter(source_description == "natural gas"),
+      filter(source_description == "natural gas") %>%
+      mutate(neu_adjusted_value = pmax(0, 
+                                       neu_adjusted_value + 
+                                         (feedstock_adjustment * 
+                                            feedstock_distribution))),
       
     petroleum_coke = neu %>%
       filter(source_description == "petroleum coke",
@@ -2507,11 +2511,6 @@ write_to_invdb <- function(
            GHG = "CO2",
            Fuel1 = "", 
            mmt_co2 = mmt_co2_neu) %>%
-    filter(Category %in% c("Industrial", "Transportation")) %>%
-    filter(msn %in% c("LUACB", "CLKCB", 
-                      "ARICB",  "LUICB",  
-                      "FOICB", "FNICB", "SNICB", 
-                      "WXICB", "MSICB")) %>%
     group_by(`Data Type`, Sector, Subsector,  Category, 
              Fuel1, GeoRef, GHG, Year = year) %>%
     summarize(mmt_co2 = sum(mmt_co2, na.rm = TRUE)) %>% 
