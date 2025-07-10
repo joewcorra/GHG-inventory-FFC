@@ -264,7 +264,7 @@ get_territories_data <- function(general_data) {
     # TEMPORARY: Add a row for coal until we know where it comes from
     add_row(source_description = "coal", heat_content = 22.3) %>%
     # Copy these constant values across all years
-    expand_grid(year = 1990:2022) %>%
+    expand_grid(year = 1990:latest_year-1) %>%
     # Make the year character to match EIA data
     mutate(year = as.character(year)) %>%
     # Merge with EIA heat content data (mogas and nat gas)
@@ -1530,21 +1530,26 @@ state_neu_calculate_emissions <- function(state_ffc_adjusted,
       mutate(neu_adjusted_value = pmax(0, 
                                        neu_adjusted_value + 
                                          (feedstock_adjustment * 
-                                            feedstock_distribution))),
+                                            neu_adjusted_value/states_sum_value))),
     
     special_naphtha = neu %>%
       filter(source_description == "special naphtha") %>%
       mutate(neu_adjusted_value = pmax(0, 
                                        neu_adjusted_value + 
                                          (feedstock_adjustment * 
-                                            feedstock_distribution))),
+                                            neu_adjusted_value/states_sum_value))),
     
     other_oils = neu %>%
       filter(source_description == "other oils") %>%
+      left_join(state_adjustments$misc_adjustments %>% 
+                  select(cb_other_oil_adj, year), 
+                by = "year") %>% 
       mutate(neu_adjusted_value = pmax(0, 
                                        neu_adjusted_value + 
-                                         (feedstock_adjustment * 
-                                            feedstock_distribution))),
+                                         (
+                                           (feedstock_adjustment - 
+                                             cb_other_oil_adj) * 
+                                             neu_adjusted_value/states_sum_value))),
     
     asphalt_road_oil = neu %>%
       filter(source_description == "asphalt & road oil") %>%
