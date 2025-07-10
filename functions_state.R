@@ -148,7 +148,24 @@ get_territories_data <- function(general_data) {
     rawToChar() %>% # convert to character data
     fromJSON() # convert from JSON to R object
   
+  # Manually create lubricants data for PR (not in EIA for some reason)
+  pr_lubricants <- tibble(state = "PR", 
+                          value = c(0.296, 0.247, 0.568, 0.760273973, 0.83, 
+                                     0.62, 0.644262295, 1.096, 0.548, 0.603, 
+                                     1.038251366, 0.823065753, 
+                                     0.960564384, 2.154621918, 2.256830601, 
+                                     2.035616438, 2.764383562, 2.649862286, 
+                                     1.17, 0.44, 0.44, 0.44,  0.44, 0.44, 0.44, 
+                                     0.44, 0.44, 0.44, 0.44, 0.44, 0.44, 0.44, 
+                                     0.44, 0.44),
+                          year = 1990:2023, 
+                          state_name = "Puerto Rico",
+                          source_description = "lubricants", 
+                          unit = "", 
+                          source = "", 
+                          dataFlagDescription = "")
   
+
   ff_territories <- api_territories %>%
     map(\(.x) pluck(.x, "data")) %>%
     list_rbind() %>%
@@ -175,7 +192,10 @@ get_territories_data <- function(general_data) {
         # source_description == "????" ~ "lubricants",
         .default = source_description
       )
-    )
+    ) %>% 
+    rbind(pr_lubricants)
+  
+
   
   # Retrieve FF Heat Content from EIA----------------------------------
   
