@@ -70,6 +70,11 @@ list(
     moves3_file,
     "data/moves3.xlsx"
   ),
+  
+  tar_file(
+    nonroad_file,
+    "data/nonroad_consumption.csv"
+  ),
 
   tar_file(
     misc_corrections_file,
@@ -124,6 +129,11 @@ list(
   tar_target(
     moves3,
     read_xl_data(moves3_file)
+  ),
+  
+  tar_target(
+    nonroad_consumption,
+    read_csv(nonroad_file)
   ),
 
   tar_target(

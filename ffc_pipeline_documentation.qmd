@@ -1,0 +1,583 @@
+---
+title: "Fossil Fuels Combustion: R Code Summary"
+format: docx
+editor: visual
+toc: true
+toc-title: "Table of Contents"
+toc-depth: 2
+toc-location: left
+---
+
+## Overview Summary
+
+------------------------------------------------------------------------
+
+### Overview of the FFC CO~2~ R Project
+
+This R project is designed to collect and process data related to CO~2~ emissions from fossil fuel combustion (FFC). It uses the `{targets}` package for R to efficiently manage and execute the tasks required for data processing. Here's how the different parts of the project work together:
+
+1.  **\_targets.R Script**:
+    -   This is the main file that orchestrates the entire process. It acts like a director, calling the other scripts to perform specific tasks.
+    -   It defines the sequence and dependencies of tasks, ensuring that data is processed in the correct order.
+2.  **ffc_both.R Script**:
+    -   This script is responsible for retrieving datasets and creating functions that are used for both national and state-level CO~2~ emissions.
+    -   It retrieves and processes several datasets, ensuring the data is ready for further analysis.
+3.  **ffc_national.R Script**:
+    -   This script focuses specifically on national-level CO~2~ emissions data. It requires inputs from ffc_both.R.
+    -   It retrieves national fossil fuels combustion data and, in conjunction with data and functions from ffc_both.R, it collates and transforms national-level CO~2~ emissions data.
+    -   This script also generates outputs of national FFC CO~2~ emissions data, including figures, tables, reports, and data files in Excel and JSON formats.
+4.  **ffc_state.R Script**:
+    -   This script deals with state-level CO~2~ emissions data. It requires inputs from `ffc_both.R` and `ffc_national.R`.
+    -   It retrieves state-level fossil fuels combustion data and, in conjunction with data and functions from `ffc_both.R` and `ffc_national.R`, it collates and transforms state-level CO~2~ emissions data.
+    -   This script also generates outputs of state FFC CO~2~ emissions data, including figures, tables, reports, and data files in Excel and JSON formats.
+
+### How They Work Together
+
+-   The \_targets.R file coordinates the execution of these scripts, ensuring that the run in sequence and use the correct data.
+-   By separating the tasks into these scripts, the project can efficiently handle large datasets and provide both national and state-level calculations CO~2~ emissions.
+-   This modular approach allows for easier maintenance and updates, as each script can be modified independently without affecting the others.
+
+------------------------------------------------------------------------
+
+The workflow for each of the scripts that comprise this R project is summarized below.
+
+## `_targets.R` Workflow Summary
+
+Summary: What This `{targets}` Pipeline Does
+
+This data pipeline compiles, transforms, and analyzes data by calling functions from each of the three source scripts: `ffc_both.R`, `ffc_national.R`, and `ffc_state.R`. The following four steps describe this process in broad terms. For detailed descriptions of the functions described in each step, see the script workflow summaries below.
+
+**1. Loading Data**
+
+In this pipeline, while the majority of data is sourced through APIs or web scraping, there are several static files stored locally that need to be integrated. The `{targets}` package efficiently manages these files by verifying their metadata and loading them only if they have been updated.
+
+`{targets}` manages the following files:
+
+`data_harmonization.xlsx`: data dictionary with standardized value and variable names
+
+`carbon_factors.xlsx`: carbon coefficients for calculating emissions
+
+`neu_storage.csv`: Percent of non-energy use that is sequestered, by source and sector
+
+`moves3.xlsx`: Fuel consumed and miles traveled by vehicle class, from OTAQ's MOVES model
+
+`nonroad_consumption.csv`: Fuel consumption from assorted non-road sources
+
+`misc_corrections.xlsx`: Adjustments for various industrial sources, derived from GHGI IPPU results
+
+`international_bunker_fuels.xlsx`: IBF consumption totals for jet fuel and marine vessel fuel
+
+`non_energy_use.xlsx`: NEU total across assorted industrial and transportation sources
+
+`ippu_distributions.xlsx`: Percent distributions (by state() of various IPPU emissions sources
+
+`FOKS Diesel Fuel Bunker 2020.xls`: Bunker fuel distribution data for diesel fuel by state. No longer updated after 2020. Previously available from EIA.
+
+`FOKS Resid Fuel Bunker 2020.xls`: Bunker fuel distribution data for residual fuel by state. No longer updated after 2020. Previously available from EIA.
+
+------------------------------------------------------------------------
+
+**2. How the Data Is Processed**
+
+Once the data is loaded, it goes through multiple transformation steps. These steps include:
+
+Data Setup: Organizes and labels data so that it can be used consistently across the rest of the process.
+
+Scraping Additional Data: Pulls in supplemental data from online sources.
+
+Applying Carbon Emissions Factors: Matches activity data (like fuel use) to carbon coefficients to estimate emissions per unit of fuel.
+
+Creating Adjustments:
+
+For national data, adjustments are made for transportation emissions, international fuel use, and miscellaneous corrections.
+
+For state data, additional adjustments account for emissions from U.S. territories, specialized fuel use, and industrial distributions.
+
+------------------------------------------------------------------------
+
+**3. How Emissions Are Calculated**
+
+National Emissions: Adjusted national fuel data is combined with emissions factors to calculate total greenhouse gas emissions.
+
+State Emissions:
+
+Data is processed separately for each state and U.S. territory.
+
+Emissions from both energy and non-energy uses of fossil fuels are calculated.
+
+Separate emissions estimates are developed for special cases, such as U.S. territories.
+
+------------------------------------------------------------------------
+
+**4. How the Results Are Output**
+
+Once emissions are calculated, the results are used to create:
+
+Visual Figures such as graphs showing trends and comparisons.
+
+Data Tables formatted for reporting.
+
+Final Reports for national and state emissions, compiled using a reporting tool that outputs professional-quality documents.
+
+Database Exports: Emissions results are written to a structured database called "InvDB" for further use.
+
+------------------------------------------------------------------------
+
+## `ffc_both.R` Workflow Summary
+
+**Overview**
+
+This script prepares and transforms data and creates functions used for both national- and state-level fossil fuel combustion (FFC) emissions estimates. It does three main things:
+
+-   Organizes and labels key data structures
+
+-   Standardizes and labels data for analysis
+
+-   Pulls in supplemental fuel data from public website
+
+-   Creates functions used by both `ffc_state.R` and `ffc_national.R`
+
+------------------------------------------------------------------------
+
+**`ffc_both` Function 1: data_setup()**
+
+This function prepares foundational data and tools used throughout the pipeline.
+
+What It Does:
+
+-   Creates helper functions
+
+standardize_ffc(): Cleans and standardizes names of fuels and sectors.
+
+apply_variable_labels(): Adds descriptive labels to variables for later use.
+
+-   Processes harmonized input data
+
+Extracts values, variable definitions, and inventory mappings from the harmonized data source.
+
+-   Creates reference tables for interpretation
+
+Sources table: Maps fuel source codes to readable names (e.g., “NG” → “natural gas”).
+
+Sectors table: Maps sector codes to readable names (e.g., “IC” → “industrial sector”).
+
+-   Scrapes metadata on fuel types
+
+Downloads a public Excel file from the U.S. Energy Information Administration (EIA) containing master fuel codes (called MSNs).
+
+Joins the MSNs with the source and sector tables to get full fuel descriptions.
+
+Manually adds extra MSN codes that are needed but missing from the official file.
+
+-   Prepares state/territory names and codes
+
+Builds a crosswalk of 2-letter state codes, full state names, and flags for U.S. territories.
+
+-   Prepares a list of MSN codes to focus on
+
+Defines which MSNs will be used when calculating state and national emissions.
+
+-   Returns a named list of objects
+
+This includes the standardized data, reference tables, lookup codes, and functions needed by the rest of the pipeline.
+
+------------------------------------------------------------------------
+
+**`ffc_both` Function 2: get_carbon_factors()**
+
+This function prepares the carbon intensity data that will be used to convert fuel use into emissions.
+
+What It Does:
+
+-   Defines a standard carbon ratio
+
+Calculates the conversion factor from carbon to carbon dioxide (44/12).
+
+-   Processes carbon coefficient data
+
+Reads both fixed and year-specific carbon factors from an Excel file.
+
+Merges the two sources, fills in missing values where needed, and reshapes the data so there’s one row per year and fuel type.
+
+-   Standardizes fuel names
+
+Applies the earlier standardize_ffc() function to ensure naming is consistent.
+
+-   Processes carbon storage data
+
+Prepares another dataset showing how much carbon is stored (rather than emitted) for different fuels and sectors.
+
+Reshapes this dataset for merging with other emission calculations later.
+
+-   Returns a list of carbon-related inputs
+
+This includes emission factors, the carbon ratio, and carbon storage rates by year.
+
+------------------------------------------------------------------------
+
+**`ffc_both` Function 3: scrape_data()**
+
+This function retrieves annual fuel use and distribution data for gasoline and diesel from the Federal Highway Administration (FHWA).
+
+What It Does:
+
+1\. Determines the most recent available year
+
+Assumes that the latest available FHWA data is from 2 years ago.
+
+2\. Scrapes gasoline data (by state and national)
+
+Downloads the gasoline Excel file.
+
+For states: Calculates each state’s share of total gasoline use.
+
+For the nation: Extracts total annual gallons used.
+
+3\. Scrapes diesel data (by state and national)
+
+Downloads the diesel Excel file.
+
+For states: Calculates each state’s share of total diesel use.
+
+For the nation: Extracts total diesel gallons used per year.
+
+4\. Applies fixes
+
+Corrects an identified issue with Oregon’s 2018 diesel data by applying a manual estimate.
+
+5\. Returns the cleaned and organized scraped data
+
+Includes four outputs: state distributions and national totals for both gasoline and diesel.
+
+------------------------------------------------------------------------
+
+📌 **Summary of the Script’s Workflow**
+
+This script sets up shared components for national and state emissions calculations by:
+
+Standardizing input data
+
+Building lookup and metadata tables
+
+Preparing carbon intensity values
+
+Scraping public fuel use data
+
+It creates clean, labeled, and harmonized datasets that are ready for use in later steps of the emissions modeling pipeline.
+
+------------------------------------------------------------------------
+
+## `ffc_national.R` Workflow Summary
+
+This script processes U.S. national fossil fuel consumption data to estimate CO₂ emissions. It pulls data from government APIs, applies multiple adjustments, and outputs emissions-ready data for reporting. It includes five core functions:
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 1: national_ffc_read_eia_data()**
+
+Purpose:
+
+Pulls national fuel consumption data from the U.S. Energy Information Administration (EIA) and prepares it for analysis.
+
+What It Does:
+
+Connects to the EIA API using a secure key.
+
+Pulls data year-by-year (1990 to the most recent available year minus two).
+
+Cleans and filters the downloaded data, focusing on fuels relevant to industrial, transportation, commercial, residential, and electricity sectors.
+
+Special Additions:
+
+Adds missing breakdowns for industrial coal and hydrocarbon gas liquids (LPG).
+
+Reads pre-processed LPG data from a CSV file.
+
+Retrieves heat content values to support later adjustments (e.g., converting gallons to BTUs).
+
+Retrieves vessel fuel and ethanol fuel data for adjusting transportation fuel emissions.
+
+Outputs:
+
+A list with:
+
+Cleaned fuel consumption data
+
+Heat content values
+
+Vessel bunkering data
+
+Ethanol usage data
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 2: get_mobile_adjustments_data()**
+
+Purpose:
+
+Applies fuel-specific corrections for on-road and off-road vehicles.
+
+What It Does:
+
+Uses the MOVES3 model (EPA’s transportation emissions model) and FHWA data to:
+
+Adjust gasoline (mogas) and diesel fuel use by removing off-road components
+
+Prevent double-counting of ethanol in gasoline
+
+Adjusts for recreational boating fuel use using both top-down (total minus on-road) and bottom-up (engine-level) approaches.
+
+Applies adjustments to non-transportation sectors to ensure only transport-related fuel is included in those categories.
+
+Outputs:
+
+A list with adjusted national gasoline and diesel fuel data ready for emissions calculations.
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 3. get_ibf_adjustments_data()**
+
+Purpose:
+
+Corrects for international bunker fuels (IBF) used in shipping and aviation, which are not included in national totals.
+
+What It Does:
+
+Reads adjustments from a spreadsheet for:
+
+Jet fuel used in international flights
+
+Distillate and residual marine fuels
+
+These are subtracted from the national transportation fuel totals.
+
+Outputs:
+
+A list of fuel amounts to be removed from national totals due to international use.
+
+------------------------------------------------------------------------
+
+**`ffc_national`Function 4. get_misc_adjustments_data()**
+
+Purpose:
+
+Applies additional one-off corrections and technical adjustments.
+
+What It Does:
+
+Reads correction factors from a spreadsheet, including:
+
+Carbon black
+
+Ammonia production
+
+Eastman gas plant adjustments
+
+Iron and steel (I&S) manufacturing corrections
+
+Outputs:
+
+A tidy dataset of year-by-year adjustments that will be applied to specific fuels.
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 5. national_ffc_adjust_data()**
+
+Purpose:
+
+Creates a cleaned, fully adjusted national fuel consumption dataset ready for emissions calculations.
+
+What It Does:
+
+Applies:
+
+Mobile source adjustments (from get_mobile_adjustments_data)
+
+Bunker fuel adjustments (from get_ibf_adjustments_data)
+
+Miscellaneous corrections (from get_misc_adjustments_data)
+
+Handles sector-by-sector transformations:
+
+Residential, Commercial, Electric Power: Mostly kept as-is.
+
+Industrial Sector: Receives many detailed fuel-specific adjustments.
+
+Transportation Sector: Adjusted to remove international fuels and corrected for ethanol or marine fuel uses.
+
+Flags fuels like lubricants, waxes, and naphtha as fully non-emissive for carbon accounting purposes.
+
+Output:
+
+A full national dataset with corrected, emissions-ready fuel consumption values.
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 6. national_ffc_calculate_emissions()**
+
+Purpose:
+
+Converts adjusted fuel consumption into carbon dioxide (CO₂) emissions.
+
+What It Does:
+
+Merges adjusted consumption with carbon coefficients.
+
+Calculates emissions using the formula:
+
+emissions = energy consumed × carbon factor × CO₂/C ratio
+
+Applies variable labels for easier interpretation in reports.
+
+Output:
+
+A finalized dataset showing annual CO₂ emissions by fuel and sector.
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 7. national_ffc_ggplot_figures() (placeholder)**
+
+Purpose:
+
+Placeholder function for creating visualizations of emissions trends.
+
+------------------------------------------------------------------------
+
+**`ffc_national` Function 8. national_ffc_gt_tables()**
+
+Purpose:
+
+Builds a formatted table summarizing national emissions.
+
+What It Does:
+
+Placeholder code currently shows a sample table using the mtcars dataset.
+
+Designed to be expanded to output real emissions data in a professional-looking table.
+
+------------------------------------------------------------------------
+
+📌 **Summary of the Script’s Workflow**
+
+-   Data Retrieval: Pulls fuel use data from EIA APIs (1990–present)
+
+-   Adjustments: Removes fuel uses not relevant to domestic emissions (e.g., recreational boats, international flights)
+
+-   Calculations: Converts fuel use to CO₂ using standard emissions factors
+
+-   Outputs: Provides emissions-ready datasets, with visuals and tables prepared for reporting
+
+------------------------------------------------------------------------
+
+## `ffc_state.R` Workflow Summary
+
+This script calculates greenhouse gas emissions for each U.S. state and territory based on fossil fuel consumption. It uses data from federal energy agencies, corrects and adjusts it to reflect state-specific realities, and produces emissions totals ready for reporting.
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 1. state_ffc_get_seds_data()**
+
+Pulls in state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).\
+\
+- Filters to include only relevant fossil fuel codes\
+- Standardizes fuel and sector names\
+- Focuses on years 1990–2022\
+- Joins state and sector names for clarity\
+- Outputs a labeled dataset of fossil fuel consumption per state and year
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 2. get_territories_data()**
+
+Prepares placeholder fossil fuel data for U.S. territories not fully covered by EIA.\
+\
+- Initializes values to zero for future adjustments or manual data insertion
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 3. state_ffc_get_adjustments_data()**
+
+Combines multiple sources of corrections:\
+- International bunker fuels\
+- Miscellaneous corrections\
+- Non-energy petroleum uses\
+- Industrial process distributions\
+- Specialized marine fuel data\
+\
+Produces a unified dataset of adjustments to apply to state fuel data.
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 4. territories_ffc_adjust_data()**
+
+Applies emissions calculations to placeholder territory data using emissions factors.\
+\
+- Joins territory fuel data with carbon coefficients\
+- Uses standard CO₂ calculation formulas
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 5. state_ffc_adjust_data()**
+
+Combines:\
+- Raw state fuel data\
+- Adjustments from various sources\
+- National scraped data (e.g., gasoline and diesel distributions)\
+\
+Produces both sector-level and total adjusted fuel use datasets for emissions calculation.
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 6. state_neu_calculate_emissions()**
+
+Calculates emissions from non-energy uses of fossil fuels (e.g., lubricants, waxes).\
+\
+- Joins adjusted NEU data with carbon coefficients\
+- Applies standard CO₂ emissions formula
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 7. state_ffc_calculate_emissions()**
+
+Main function for calculating emissions from state fossil fuel use.\
+\
+- Joins adjusted fuel data with emissions factors\
+- Outputs annual CO₂ emissions by fuel type and sector
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 8. state_ffc_ggplot_figures()**
+
+Generates emissions charts for each state:\
+- Emissions by fuel type\
+- Emissions by sector\
+- Industrial coal and natural gas emissions
+
+------------------------------------------------------------------------
+
+**`ffc_state` Function 9. state_ffc_gt_tables()**
+
+Creates formatted tables summarizing emissions data:\
+- Fuel types\
+- Total emissions\
+- Share of total emissions per fuel
+
+------------------------------------------------------------------------
+
+📌 **Summary of the Script’s Workflow**
+
+-   Data Retrieval Pulls fuel use data from EIA APIs (1990–present)
+
+-   Adjustments
+
+-   Calculations
+
+-   Outputs Provides
+
+------------------------------------------------------------------------
+
+## Appendix A: Advantages of R
+
+------------------------------------------------------------------------
+
+## Appendix B: TBD

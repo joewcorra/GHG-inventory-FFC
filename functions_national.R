@@ -79,32 +79,32 @@ national_ffc_read_eia_data <- function(general_data) {
   
   ## HGL Component Data-----------------------------------------
   
-  # # Also includes pentanes plus 
-  # eia_api_lpg <- paste0(
-  #   "https://api.eia.gov/v2/petroleum/cons/psup/data/?frequency=annual&", 
-  #   "data[0]=value&",
-  #   # "facets[series][]=MPPUPUS1&", # pentanes
-  #   # "facets[series][]=MUOUPUS1&",  # unfinished oils
-  #   "facets[series][]=MBIUPUS1&", # isobutane-isobutylene
-  #   "facets[series][]=MBNUPUS1&", # butane-butylene
-  #   "facets[series][]=METUPUS1&", # ethane-ethylene
-  #   "facets[series][]=MPRUPUS1&", # propane-propylene
-  #   "start=1990&end=", latest_year,
-  #   "&sort[0][column]=period&sort[0][direction]=desc&", 
-  #   "offset=0&length=5000&api_key=", key
-  # ) %>%
-  #   GET() %>% # retrieve page from url
-  #   content("raw") %>% # extract content as a raw vector
-  #   rawToChar() %>% # convert to character data
-  #   fromJSON() # convert from JSON to R object
-  # 
-  # lpg_components <- pluck(eia_api_lpg, "response", "data") %>%
-  #   select(
-  #     year = period, 
-  #     eia_description = 'series-description', value, unit = units
-  #   ) %>%
-  #   # Make value numeric
-  #   mutate(value = as.numeric(value))
+  # Also includes pentanes plus
+  eia_api_lpg <- paste0(
+    "https://api.eia.gov/v2/petroleum/cons/psup/data/?frequency=annual&",
+    "data[0]=value&",
+    # "facets[series][]=MPPUPUS1&", # pentanes
+    # "facets[series][]=MUOUPUS1&",  # unfinished oils
+    "facets[series][]=MBIUPUS1&", # isobutane-isobutylene
+    "facets[series][]=MBNUPUS1&", # butane-butylene
+    "facets[series][]=METUPUS1&", # ethane-ethylene
+    "facets[series][]=MPRUPUS1&", # propane-propylene
+    "start=1990&end=", latest_year,
+    "&sort[0][column]=period&sort[0][direction]=desc&",
+    "offset=0&length=5000&api_key=", key
+  ) %>%
+    GET() %>% # retrieve page from url
+    content("raw") %>% # extract content as a raw vector
+    rawToChar() %>% # convert to character data
+    fromJSON() # convert from JSON to R object
+
+  lpg_components <- pluck(eia_api_lpg, "response", "data") %>%
+    select(
+      year = period,
+      eia_description = 'series-description', value, unit = units
+    ) %>%
+    # Make value numeric
+    mutate(value = as.numeric(value))
 
   # Doing this requires unpublished EIA propane data, as well as
   # heat content by lpg and disaggregating combined lpgs
@@ -193,7 +193,8 @@ national_ffc_read_eia_data <- function(general_data) {
 
   ethanol_tra <- pluck(eia_api_ethanol, "response", "data") %>%
     mutate(msn = str_sub(msn, 1, 5), value = as.numeric(value)) %>%
-    select(-unit, eia_description = seriesDescription, year = period, ethanol = value)
+    select(-unit, eia_description = seriesDescription, 
+           year = period, ethanol = value)
 
   national_ffc_data <- lst(
     us_consumption, vessel_bunker_dist_fuel,
@@ -206,13 +207,28 @@ national_ffc_read_eia_data <- function(general_data) {
 
 # NATIONAL MOBILE DATA---------------------------------------------
 get_mobile_adjustments_data <- function(moves3,
+                                        nonroad_consumption,
                                         national_ffc_data,
                                         scraped_data) {
   # Applies to Commercial, Industrial, Transportation
   
   # Motor Gasoline------------------------------------------------------------
   ## MOVES Data---------------------------------------------------------
+# Simplified equation for total on road mogas consumption, mmbtu
+  # g <- outer(r - (p +q), s, 
+  # function(ri, sj) { (h * ri * sj) / (42 * sum(s)) })
+  # returns g as a matrix; take the sum(g)
 
+# Simplified equation for n road mogas consumption by class
+  # v <- outer(s, e, function(a, b) {
+  #   (h * (r - (p + q)) * (a / sum(s)) / (42 * 10^9)) * (1 - (b * 10^6 / sum(g)))
+  # })
+  # returns v as a matrix; take the sum(v)
+  
+# Simplified equation for total non-road gas consumption
+  # n <- i + c + t - 
+  
+  
   moves <- moves3$vmt %>%
     clean_names() %>%
     pivot_longer(
@@ -257,10 +273,32 @@ get_mobile_adjustments_data <- function(moves3,
 
   # Gasoline joules per gallon. Fixed value
   mogas_energy <- 43488 * 2839
-  mogas_annual_totals <- 1
-  mogas_nonroad_total <- 1
-  # THIS WORKS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  
+  # Fuel density for kg -> gallons conversions. Fixed values
+  diesel_density <- 0.85
+  mogas_density <- 0.74
+    
+  nonroad_consumption_cleaned <- nonroad_consumption %>%
+    clean_names() %>%
+    pivot_longer(cols = starts_with(c("x", "adj")), 
+                 names_to = "year", 
+                 values_to = "nonroad_consumption") %>%
+    mutate(year = parse_number(year) %>% 
+             as_factor(), 
+           across(where(is.character), 
+                  ~str_to_lower(.))) 
 
+  nonroad <- nonroad_consumption_cleaned %>%
+    # convert to kg to liters / density and divide to get gallons
+    mutate(    
+      nonroad_consumption = if_else(fuel == "diesel", 
+                                    nonroad_consumption / diesel_density / 3.785, 
+                                    nonroad_consumption / mogas_density / 3.785)) %>%
+  group_by(fuel, year) %>%
+    summarize(nonroad_consumption = sum(nonroad_consumption)) %>%
+    ungroup() 
+
+  
   mogas <- moves %>%
     filter(fuel_type == "gasoline") %>%
     left_join(scraped_data$gasoline_use_national, by = "year") %>%
@@ -271,11 +309,15 @@ get_mobile_adjustments_data <- function(moves3,
       by = "year"
     ) %>%
     left_join(national_ffc_data$ethanol_tra, by = "year") %>%
-    mutate(
-      mogas_nonroad_total = mogas_nonroad_total,
-      gas_use = fuel_use_percent * (
-        gasoline_use_gal * 1000 - mogas_nonroad_total),
-      tbtu = (gas_use / 42 * heat_content) / 10^9
+    left_join(nonroad %>%
+                filter(fuel != "diesel") %>%
+                group_by(year) %>%
+                summarize(nonroad_consumption_total = sum(nonroad_consumption)) %>%
+                ungroup(),
+              by = "year") %>%
+    mutate(mogas_use = fuel_use_percent * (
+      gasoline_use_gal * 1000 - nonroad_consumption_total),
+      tbtu = (mogas_use / 42 * heat_content) / 10^9
     ) %>%
     mutate(tbtu_sum = sum(tbtu), .by = year) %>%
     mutate(
@@ -283,61 +325,89 @@ get_mobile_adjustments_data <- function(moves3,
       tbtu_adjusted = tbtu * ethanol_adjustment_factor
     )
 
-  # Incomplete as of 10/3/24
   diesel <- moves %>%
     filter(fuel_type == "diesel") %>%
-    # This might not be the right diesel data..........
-    left_join(scraped_data$diesel_use_by_class, by = "year") %>%
+    # left_join(scraped_data$diesel_use_by_class, by = "year") %>%
+    left_join(scraped_data$diesel_use_national, by = "year") %>%
     left_join(
       national_ffc_data$heat_content %>%
         filter(msn == "DMTCKUS") %>%
         select(year, heat_content),
       by = "year"
-    )
-
+    ) %>%
+    left_join(nonroad %>%
+                filter(fuel == "diesel") %>%
+                group_by(year) %>%
+                summarize(nonroad_consumption_total = sum(nonroad_consumption)) %>%
+                ungroup(),
+              by = "year") %>%
+    mutate(diesel_use = fuel_use_percent * (
+      diesel_use_gal * 1000 - nonroad_consumption_total),
+      tbtu = (diesel_use / 42 * heat_content) / 10^9
+    ) %>%
+    mutate(tbtu_sum = sum(tbtu), .by = year)
+  
   ## Total Nonroad Mogas--------------------------------------------------
 
   # Total non-road motor gasoline use
-  total_nonroad_mogas <- us_consumption_mogas %>%
+  rec_boat_mogas_top_down <- us_consumption_mogas %>%
     group_by(year) %>%
     # Get total EIA mogas by year (tra + com + ind)
-    summarize(mogas_ethanol_adjusted = sum(mogas_ethanol_adjusted)) %>%
+    summarize(mogas_ethanol_adjusted = sum(mogas_ethanol_adjusted) * 100) %>%
     ungroup() %>%
     # Get MOVES3 on-road mogas totals
-    left_join(mogas_annual_totals %>%
-      select(year, onroad_mogas_excl_ethanol_v2), by = "year") %>%
+    left_join(mogas %>% 
+                group_by(year) %>%
+                summarize(gasoline_use_gal = sum(gasoline_use_gal, na.rm= TRUE)) %>%
+                ungroup(), 
+              by = "year") %>%
     # Annual non-road mogas = total mogas - on-road mogas
     mutate(nonroad_mogas = mogas_ethanol_adjusted -
-      onroad_mogas_excl_ethanol_v2)
+             gasoline_use_gal) %>%
+    # Join w/ heat content data for mogas 
+    left_join(national_ffc_data$heat_content %>%
+                # Motor gasoline only
+                filter(str_detect(eia_description, "asoline")), 
+              by = "year") %>%
+    mutate(rec_boat_mogas_top_down = heat_content * 
+             (nonroad_mogas / 42) / 10^9)
+    
 
   ## Rec Boat Mogas-------------------------------------------------------
 
   # Recreational boat motor gasoline total is the smaller of 1) rec boat gas
   # calculated by the bottom-up method, or 2) total non-road motor gasoline
 
-  # Placeholder values
-  # These data come from [Nonroad] workbook. Awaiting data access.
-  nonroad_2_stroke <- 1
-  nonroad_4_stroke <- 2
-
+  nonroad_2_stroke_boats <- nonroad_consumption_cleaned %>%
+    filter(fuel == "2 stroke", equipment_type == "recreational marine") %>%
+    group_by(year) %>%
+    summarize(two_stroke_boats = sum(nonroad_consumption, na.rm = TRUE))
+  nonroad_4_stroke_boats <- nonroad_consumption_cleaned %>%
+    filter(fuel == "4 stroke", equipment_type == "recreational marine") %>%
+    group_by(year) %>%
+    summarize(four_stroke_boats = sum(nonroad_consumption, na.rm = TRUE))
+  
   # First compute rec boat mogas by the bottom-up method
-  rec_boat_mogas_bottom_up <- heat_content %>%
+  rec_boat_mogas_bottom_up <- national_ffc_data$heat_content %>%
     # Motor gasoline only
     filter(str_detect(eia_description, "asoline")) %>%
     select(year, heat_content) %>%
-    # Will need a left_join here once we get the nonroad engine data
-    mutate(rec_boat_mogas_bottom_up = heat_content * ((nonroad_2_stroke +
-      nonroad_4_stroke) / 42) / 10^9)
-  # Are these parentheses correct?
+    # Join with rec boats consumption data
+    left_join(nonroad_2_stroke_boats, by = "year") %>%
+    left_join(nonroad_4_stroke_boats, by = "year") %>%
+    mutate(rec_boat_mogas_bottom_up = heat_content * 
+             ((two_stroke_boats +
+                 four_stroke_boats) / 42) / 10^9)
 
-  # Rec boat motor gas is the lower of two values. Start with the non-road data
-  rec_boat_mogas <- total_nonroad_mogas %>%
+  # Rec boat motor gas is the lower of two values
+  rec_boat_mogas <- rec_boat_mogas_top_down %>%
     # Join with the bottom-up data
     left_join(rec_boat_mogas_bottom_up, by = "year") %>%
     # Select whichever value is lower: non-road or bottom up
-    mutate(rec_boat_mogas = min(rec_boat_mogas_bottom_up, nonroad_mogas,
-      na.rm = TRUE
-    )) %>%
+    rowwise() %>%
+    mutate(rec_boat_mogas = min(rec_boat_mogas_bottom_up, 
+                                rec_boat_mogas_top_down,
+                                na.rm = TRUE)) %>%
     select(year, rec_boat_mogas)
 
   ## Perform Motor Gasoline Adjustments-----------------------------------
@@ -345,7 +415,7 @@ get_mobile_adjustments_data <- function(moves3,
   national_mogas <- us_consumption_mogas %>%
     # Join EIA consumption data with the MOVES3 annual results
     left_join(
-      mogas_annual_totals %>%
+      mogas %>%
         # Only a few columns are needed now
         select(
           year, onroad_mogas_excl_ethanol_v1,
@@ -384,9 +454,9 @@ get_mobile_adjustments_data <- function(moves3,
 
   # Retrieved from EIA
 
-  vessel_bunker_dist_fuel
+  # vessel_bunker_dist_fuel
   # Data needed for vessel fuel and rail
-  dist_fuel_vessel <- vessel_bunker_dist_fuel %>%
+  dist_fuel_vessel <- national_ffc_data$vessel_bunker_dist_fuel %>%
     # Dist fuel only
     filter(str_detect(eia_description, "istillate")) %>%
     # Convert units to million gallons
@@ -396,10 +466,10 @@ get_mobile_adjustments_data <- function(moves3,
 
   # From weird rail sources...awaiting data access.
 
-  dist_fuel_rail <- sum(
-    dist_fuel_rail_i, dist_fuel_rail_ii_iii,
-    dist_fuel_commuter, dist_fuel_amtrak
-  )
+  # dist_fuel_rail <- sum(
+  #   dist_fuel_rail_i, dist_fuel_rail_ii_iii,
+  #   dist_fuel_commuter, dist_fuel_amtrak
+  # )
 
   ## Biodiesel-------------------------------------------------------------
 
@@ -453,7 +523,7 @@ get_mobile_adjustments_data <- function(moves3,
     )) %>%
     ungroup() %>%
     # Join with heat content data for distillate fuel
-    left_join(heat_content %>%
+    left_join(national_ffc_data$heat_content %>%
       # Distillate fuel only
       filter(str_detect(eia_description, "istillate")), by = "year") %>%
     # Convert to barrels and multiply by heat content to get mmbtu
@@ -484,11 +554,9 @@ get_mobile_adjustments_data <- function(moves3,
   # Aggregate------------------------------------------------
 
   mobile_adjustments <- lst(national_mogas, national_diesel)
-
   
   return(mobile_adjustments)
 }
-
 
 # NATIONAL IBF DATA---------------------------------------------
 get_ibf_adjustments_data <- function(national_ffc_data,
@@ -509,35 +577,6 @@ get_ibf_adjustments_data <- function(national_ffc_data,
       3.1916, 3.18, 3.575, 2.72, 3.81
     )
   )
-
-  # Military Jet Fuel---------------------------------------------
-
-  # jet_fuel_military = sum of all jet fuels: JAB, JAA, JA1, JP4, JP5, JP8
-  # For each, account for both Navy and Air Force (what about the Army?)
-
-  # each fuel = millions of gallons * fuel_density * 1000000
-  # jet_fuel_military = sum(all of these)
-
-  # each fuel's gallons data = black box
-
-  # Civilian Jet Fuel----------------------------------------------
-
-  # data from Int'l Commercial Aviation (AEDT ) (TBTU)
-  # "Personal Communciation" data ie black box
-
-
-  # Marine Residual Fuel-------------------------------------------
-
-  # residual_fuel_marine <- residual_fuel_all * heat_content   / 1000
-  #
-  # residual_fuel_all <- (residual_vessels_american + residual_vessels_foreign) *  42  /  1000
-
-  # diesel_vessels_american & diesel_vessels_foreign are black box data
-
-  # They're using a fixed value for heat content instead of the annually variable
-  # Heat Content data. Need to look into that
-
-  # Marine Distillate Fuel-----------------------------------------
 
   # TEMPORARY!!!!!!!!!!!!!!------------------------------------
   tra_temp <- read_xl_data("data/misc_tra_data_temporary.xlsx")[[1]] %>%
@@ -567,8 +606,6 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 
   # jet_fuel_consumption <- jet_fuel_civilian + jet_fuel_military
 
-  # Requires heat_content from jet fuel which is CONSTANT at 5.670
-  # Correction: no, it doesn't need this
   # jet_fuel_heat_content <- 5.670
 
   # Aviation jet fuel (tbtu) = intl comm aviation (hard coded number in Transport workbook) +
@@ -608,257 +645,257 @@ get_misc_adjustments_data <- function(misc_corrections) {
 
 # NATIONAL DATA ADJUSTMENTS----------------------------
 national_ffc_adjust_data <- function(
-    # national_ffc_data,
-                                     # general_data, 
-                                     # mobile_adjustments,
-                                     # ibf_adjustments,
-                                     # misc_adjustments
-                                     ) {
+    national_ffc_data,
+    general_data,
+    mobile_adjustments,
+    ibf_adjustments,
+    misc_adjustments
+) {
   # Collate National consumption data-------------------------------------
-  
+
   # # Apply standardization function to national data
-  # national_ffc_data$us_consumption <- 
-  #   general_data$standardize_ffc(national_ffc_data$us_consumption, 
-  #                                general_data$msn_names)
-  # 
+  national_ffc_data$us_consumption <-
+    general_data$standardize_ffc(national_ffc_data$us_consumption,
+                                 general_data$msn_names)
+
   # ## Residential, Commercial, & Electric Power----------------------------
-  # 
+  #
   # # No adjustments EXCEPT dist fuel and mogas (see those scripts).
-  # 
-  # us_res_com_ele <- lst(
-  #   res = national_ffc_data$us_consumption %>%
-  #     filter(msn %in% c("CLRCB", "NNRCB", "DFRCB", "HLRCB", "KSRCB")),
-  #   com = national_ffc_data$us_consumption %>%
-  #     filter(msn %in% c(
-  #       "CLCCB", "NNCCB", "DFCCB", "EMCCB", "HLCCB",
-  #       "KSCCB", "MGCCB", "PCCCB", "RFCCB"
-  #     )),
-  #   ele = national_ffc_data$us_consumption %>% # NNEIB
-  #     filter(msn %in% c("CLEIB", "NNEIB", "DKEIB", "PCEIB", "RFEIB")),
-  # ) %>%
-  #   # ISSUES 3/28/24
-  #   # Electric power needs: distillate fuel
-  #   # Need to adjust for distillate fuel oil (com & res, but not electric?)
-  #   # need to adjust motor gas (com)
-  #   # commercial has ethanol in the dataset but not in the spreadsheet
-  # 
-  #   # Collapse list into a single data frame
-  #   list_rbind() %>%
-  #   # create 'adjusted_value' column to match ind and tra data
-  #   mutate(adjusted_value = value)
-  # 
-  # ## Industrial------------------------------------------------
-  # 
-  # # coking coal
-  # 
-  # us_ind <- lst(
-  # 
-  #   # Asphalt & Road Oil (NEU adjustment: 100%)
-  #   asphalt = national_ffc_data$us_consumption %>%
-  #     filter(msn == "ARICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Coking Coal (IPPU adjustment)
-  #   coking_coal = national_ffc_data$us_consumption %>%
-  #     # What is the MSN for coking coal?
-  #     filter(msn == "CLKCB") %>%
-  #     # Subtract IPPU adjustment
-  #     left_join(misc_adjustments, by = "year") %>%
-  #     mutate(
-  #       adjusted_value = value - coking_coal_adj, 
-  #       # Adjusted value no lower than zero
-  #       adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)
-  #     ),
-  # 
-  #   # Other Coal (NEU adjustment: Eastman Gas coal gasification;
-  #   # synthetic natural gas adjustment, coking coal adjustment,
-  #   # i & s adjustment
-  #   other_coal = national_ffc_data$us_consumption %>%
-  #     filter(msn == "CLCCB") %>%
-  #     # Subtract adjustments
-  #     left_join(misc_adjustments, by = "year") %>%
-  #     # Subtract adjustments
-  #     mutate(adjusted_value = value - 
-  #              eastman_adj - 
-  #              dakota_adj - 
-  #              coking_coal_adj - 
-  #              is_coal_adj 
-  #     ),
-  # 
-  #   # Natural Gas (NEU adjustment: special; blast furnace adjustment,
-  #   # coke oven adjustment, biogas adjustment,
-  #   # ammonia adjustment, and i & s adjustment)
-  #   # Supplemental gas already excluded
-  #   natural_gas = national_ffc_data$us_consumption %>%
-  #     filter(msn == "NNICB") %>%
-  #     left_join(misc_adjustments, by = "year") %>%
-  #     # Subtract adjustments
-  #     mutate(adjusted_value = value -
-  #              blast_furnace_adj - 
-  #              coke_oven_adj - 
-  #              biogas_adj - 
-  #              ammonia_adj - 
-  #              is_natgas_adj
-  #     ),
-  # 
-  #   # Residual Fuel (carbon black adjustment)
-  #   residual_fuel = national_ffc_data$us_consumption %>%
-  #     filter(msn == "RFICB") %>%
-  #     # Subtract carbon black adjustment
-  #     left_join(misc_adjustments, by = "year") %>%
-  #     mutate(
-  #       adjusted_value = value - cb_residual_adj, 
-  #       # Adjusted value no lower than zero
-  #       adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)
-  #     ),
-  # 
-  #   # Distillate Fuel (i&s adjustment, mogas/df adjustment)
-  #   distillate_fuel = national_ffc_data$us_consumption %>%
-  #     filter(msn == "DFICB") %>%
-  #     # Subtract iron & steel adjustment
-  #     left_join(misc_adjustments, by = "year") %>%
-  #     mutate(adjusted_value = value - is_diesel_adj), 
-  # 
-  #   # Motor gasoline (mogas/df adjustment)
-  #   motor_gasoline = national_ffc_data$us_consumption %>%
-  #     filter(msn %in% c("MGICB", "EMICB")) %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # Kerosene (no adjustment)
-  #   kerosene = national_ffc_data$us_consumption %>%
-  #     filter(msn == "KSICB") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # Petroleum Coke (NEU adjustment: special)
-  #   petroleum_coke = national_ffc_data$us_consumption %>%
-  #     filter(msn == "PCICB") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # LPG (AKA Propane) (no adjustment)
-  #   lpg = national_ffc_data$us_consumption %>%
-  #     filter(msn == "combined lpg") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # PQICB     PYICB (NEU adjustment: special)
-  #   # Propane and Propylene: Included w/ HLICB ?
-  # 
-  #   # Lubricants (NEU adjustment: 100%)
-  #   lubricants = national_ffc_data$us_consumption %>%
-  #     filter(msn == "LUICB") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # Misc Products (NEU adjustment: 100%)
-  #   misc_products = national_ffc_data$us_consumption %>%
-  #     filter(msn == "MSICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Naphtha (<401 deg. F) (NEU adjustment: 100%)
-  #   naphtha = national_ffc_data$us_consumption %>%
-  #     filter(msn == "FNICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Other Oil (>401 deg. F) (NEU adjustment: 100%)
-  #   other_oil = national_ffc_data$us_consumption %>%
-  #     filter(msn == "FOICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Pentanes Plus (NEU adjustment: special)
-  #   pentanes_plus = national_ffc_data$us_consumption %>%
-  #     filter(msn == "PPICB") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # Still Gas (NEU adjustment: special)
-  #   still_gas = national_ffc_data$us_consumption %>%
-  #     filter(msn == "SGICB") %>%
-  #     mutate(adjusted_value = value),
-  # 
-  #   # Special Naphtha (NEU adjustment: 100%)
-  #   special_naphtha = national_ffc_data$us_consumption %>%
-  #     filter(msn == "SNICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Waxes (NEU adjustment: 100%)
-  #   waxes = national_ffc_data$us_consumption %>%
-  #     filter(msn == "WXICB") %>%
-  #     # NEU adjustment is 100% of total
-  #     mutate(adjusted_value = value - value),
-  # 
-  #   # Unfinished Oils (no adjustment)
-  #   unfinished_oils = national_ffc_data$us_consumption %>%
-  #     filter(msn == "UOICB") %>%
-  #     mutate(adjusted_value = value) 
-  # ) %>%
-  #   # Collapse list into a single data frame
-  #   list_rbind() %>%
-  #   # Convert coal to "industrial sector"
-  #   mutate(sector_description = "industrial sector")
-  # 
-  # ## Transportation--------------------------------------------------
-  # 
-  # us_tra <- lst(
-  # 
-  #   # Coal
-  #   coal = national_ffc_data$us_consumption %>%
-  #     filter(msn == "CLACB"),
-  #   
-  #   # Natural Gas
-  #   natural_gas = national_ffc_data$us_consumption %>%
-  #     filter(msn == "NGACB"),
-  #   
-  #   # Lubricants (NEU adjustment)
-  #   lubricants = national_ffc_data$us_consumption %>%
-  #     filter(msn == "LUACB"),
-  # 
-  #   # Aviation Gasoline
-  #   aviation_gasoline = national_ffc_data$us_consumption %>%
-  #     filter(msn == "AVACB"),
-  # 
-  #   # Distillate Fuel (IBF adjustment, mogas/df adjustment)
-  #   distillate_fuel = national_ffc_data$us_consumption %>%
-  #     filter(msn == "DFACB") %>%
-  #     left_join(ibf_adjustments$ibf_marine_dist_fuel_adj),
-  # 
-  #   # Jet Fuel (IBF adjustment)
-  #   jet_fuel = national_ffc_data$us_consumption %>%
-  #     filter(msn == "JFACB") %>%
-  #     left_join(ibf_adjustments$ibf_jet_fuel_adj),
-  # 
-  #   # LPG (Propane) AKA HGL
-  #   lpg = national_ffc_data$us_consumption %>%
-  #     filter(msn == "HLACB"),
-  # 
-  #   # Motor Gasoline (mogas/df adjustment)
-  #   aviation_gasoline = national_ffc_data$us_consumption %>%
-  #     filter(msn == "MGACB"),
-  # 
-  #   # Residual Fuel (IBF adjustment)
-  #   residual_fuel = national_ffc_data$us_consumption %>%
-  #     filter(msn == "RFACB") %>%
-  #     left_join(ibf_adjustments$ibf_marine_residual_fuel_adj) 
-  # ) %>%
-  #   # Collapse list into a single data frame
-  #   list_rbind() %>%
-  #   # Calculate adjusted value across all elements
-  #   mutate(ibf_value = replace_na(ibf_value, 0), 
-  #     adjusted_value = value - ibf_value)
-  #   # mutate(adjusted_value = value - value), # NEU is 100% of lubricants
-  # 
-  # # Aggregate------------------------------------------------------
-  # 
-  # national_ffc_adjusted <- lst(us_res_com_ele, us_ind, us_tra) %>%
-  #   bind_rows()
+  #
+  us_res_com_ele <- lst(
+    res = national_ffc_data$us_consumption %>%
+      filter(msn %in% c("CLRCB", "NNRCB", "DFRCB", "HLRCB", "KSRCB")),
+    com = national_ffc_data$us_consumption %>%
+      filter(msn %in% c(
+        "CLCCB", "NNCCB", "DFCCB", "EMCCB", "HLCCB",
+        "KSCCB", "MGCCB", "PCCCB", "RFCCB"
+      )),
+    ele = national_ffc_data$us_consumption %>% # NNEIB
+      filter(msn %in% c("CLEIB", "NNEIB", "DKEIB", "PCEIB", "RFEIB")),
+  ) %>%
+    # ISSUES 3/28/24
+    # Electric power needs: distillate fuel
+    # Need to adjust for distillate fuel oil (com & res, but not electric?)
+    # need to adjust motor gas (com)
+    # commercial has ethanol in the dataset but not in the spreadsheet
+
+    # Collapse list into a single data frame
+    list_rbind() %>%
+    # create 'adjusted_value' column to match ind and tra data
+    mutate(adjusted_value = value)
+  #
+  ## Industrial------------------------------------------------
+
+  # coking coal
+
+  us_ind <- lst(
+
+    # Asphalt & Road Oil (NEU adjustment: 100%)
+    asphalt = national_ffc_data$us_consumption %>%
+      filter(msn == "ARICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Coking Coal (IPPU adjustment)
+    coking_coal = national_ffc_data$us_consumption %>%
+      # What is the MSN for coking coal?
+      filter(msn == "CLKCB") %>%
+      # Subtract IPPU adjustment
+      left_join(misc_adjustments, by = "year") %>%
+      mutate(
+        adjusted_value = value - coking_coal_adj,
+        # Adjusted value no lower than zero
+        adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)
+      ),
+
+    # Other Coal (NEU adjustment: Eastman Gas coal gasification;
+    # synthetic natural gas adjustment, coking coal adjustment,
+    # i & s adjustment
+    other_coal = national_ffc_data$us_consumption %>%
+      filter(msn == "CLCCB") %>%
+      # Subtract adjustments
+      left_join(misc_adjustments, by = "year") %>%
+      # Subtract adjustments
+      mutate(adjusted_value = value -
+               eastman_adj -
+               dakota_adj -
+               coking_coal_adj -
+               is_coal_adj
+      ),
+
+    # Natural Gas (NEU adjustment: special; blast furnace adjustment,
+    # coke oven adjustment, biogas adjustment,
+    # ammonia adjustment, and i & s adjustment)
+    # Supplemental gas already excluded
+    natural_gas = national_ffc_data$us_consumption %>%
+      filter(msn == "NNICB") %>%
+      left_join(misc_adjustments, by = "year") %>%
+      # Subtract adjustments
+      mutate(adjusted_value = value -
+               blast_furnace_adj -
+               coke_oven_adj -
+               biogas_adj -
+               ammonia_adj -
+               is_natgas_adj
+      ),
+
+    # Residual Fuel (carbon black adjustment)
+    residual_fuel = national_ffc_data$us_consumption %>%
+      filter(msn == "RFICB") %>%
+      # Subtract carbon black adjustment
+      left_join(misc_adjustments, by = "year") %>%
+      mutate(
+        adjusted_value = value - cb_residual_adj,
+        # Adjusted value no lower than zero
+        adjusted_value = if_else(adjusted_value < 0, 0, adjusted_value)
+      ),
+
+    # Distillate Fuel (i&s adjustment, mogas/df adjustment)
+    distillate_fuel = national_ffc_data$us_consumption %>%
+      filter(msn == "DFICB") %>%
+      # Subtract iron & steel adjustment
+      left_join(misc_adjustments, by = "year") %>%
+      mutate(adjusted_value = value - is_diesel_adj),
+
+    # Motor gasoline (mogas/df adjustment)
+    motor_gasoline = national_ffc_data$us_consumption %>%
+      filter(msn %in% c("MGICB", "EMICB")) %>%
+      mutate(adjusted_value = value),
+
+    # Kerosene (no adjustment)
+    kerosene = national_ffc_data$us_consumption %>%
+      filter(msn == "KSICB") %>%
+      mutate(adjusted_value = value),
+
+    # Petroleum Coke (NEU adjustment: special)
+    petroleum_coke = national_ffc_data$us_consumption %>%
+      filter(msn == "PCICB") %>%
+      mutate(adjusted_value = value),
+
+    # LPG (AKA Propane) (no adjustment)
+    lpg = national_ffc_data$us_consumption %>%
+      filter(msn == "combined lpg") %>%
+      mutate(adjusted_value = value),
+
+    # PQICB     PYICB (NEU adjustment: special)
+    # Propane and Propylene: Included w/ HLICB ?
+
+    # Lubricants (NEU adjustment: 100%)
+    lubricants = national_ffc_data$us_consumption %>%
+      filter(msn == "LUICB") %>%
+      mutate(adjusted_value = value),
+
+    # Misc Products (NEU adjustment: 100%)
+    misc_products = national_ffc_data$us_consumption %>%
+      filter(msn == "MSICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Naphtha (<401 deg. F) (NEU adjustment: 100%)
+    naphtha = national_ffc_data$us_consumption %>%
+      filter(msn == "FNICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Other Oil (>401 deg. F) (NEU adjustment: 100%)
+    other_oil = national_ffc_data$us_consumption %>%
+      filter(msn == "FOICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Pentanes Plus (NEU adjustment: special)
+    pentanes_plus = national_ffc_data$us_consumption %>%
+      filter(msn == "PPICB") %>%
+      mutate(adjusted_value = value),
+
+    # Still Gas (NEU adjustment: special)
+    still_gas = national_ffc_data$us_consumption %>%
+      filter(msn == "SGICB") %>%
+      mutate(adjusted_value = value),
+
+    # Special Naphtha (NEU adjustment: 100%)
+    special_naphtha = national_ffc_data$us_consumption %>%
+      filter(msn == "SNICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Waxes (NEU adjustment: 100%)
+    waxes = national_ffc_data$us_consumption %>%
+      filter(msn == "WXICB") %>%
+      # NEU adjustment is 100% of total
+      mutate(adjusted_value = value - value),
+
+    # Unfinished Oils (no adjustment)
+    unfinished_oils = national_ffc_data$us_consumption %>%
+      filter(msn == "UOICB") %>%
+      mutate(adjusted_value = value)
+  ) %>%
+    # Collapse list into a single data frame
+    list_rbind() %>%
+    # Convert coal to "industrial sector"
+    mutate(sector_description = "industrial sector")
+
+  ## Transportation--------------------------------------------------
+
+  us_tra <- lst(
+
+    # Coal
+    coal = national_ffc_data$us_consumption %>%
+      filter(msn == "CLACB"),
+
+    # Natural Gas
+    natural_gas = national_ffc_data$us_consumption %>%
+      filter(msn == "NGACB"),
+
+    # Lubricants (NEU adjustment)
+    lubricants = national_ffc_data$us_consumption %>%
+      filter(msn == "LUACB"),
+
+    # Aviation Gasoline
+    aviation_gasoline = national_ffc_data$us_consumption %>%
+      filter(msn == "AVACB"),
+
+    # Distillate Fuel (IBF adjustment, mogas/df adjustment)
+    distillate_fuel = national_ffc_data$us_consumption %>%
+      filter(msn == "DFACB") %>%
+      left_join(ibf_adjustments$ibf_marine_dist_fuel_adj),
+
+    # Jet Fuel (IBF adjustment)
+    jet_fuel = national_ffc_data$us_consumption %>%
+      filter(msn == "JFACB") %>%
+      left_join(ibf_adjustments$ibf_jet_fuel_adj),
+
+    # LPG (Propane) AKA HGL
+    lpg = national_ffc_data$us_consumption %>%
+      filter(msn == "HLACB"),
+
+    # Motor Gasoline (mogas/df adjustment)
+    aviation_gasoline = national_ffc_data$us_consumption %>%
+      filter(msn == "MGACB"),
+
+    # Residual Fuel (IBF adjustment)
+    residual_fuel = national_ffc_data$us_consumption %>%
+      filter(msn == "RFACB") %>%
+      left_join(ibf_adjustments$ibf_marine_residual_fuel_adj)
+  ) %>%
+    # Collapse list into a single data frame
+    list_rbind() %>%
+    # Calculate adjusted value across all elements
+    mutate(ibf_value = replace_na(ibf_value, 0),
+      adjusted_value = value - ibf_value)
+    # mutate(adjusted_value = value - value), # NEU is 100% of lubricants
+
+  # Aggregate------------------------------------------------------
+
+  national_ffc_adjusted <- lst(us_res_com_ele, us_ind, us_tra) %>%
+    bind_rows()
   
-  # TEMPORARY. FOR 2023 INV (5/8/2025) ONLY
-  national_ffc_adjusted <- read_csv("data/temporary_national_inv_data.csv") %>%
-    pivot_longer(cols = !c(sector, source), names_to = "year") %>%
-    rename(source_description = source, 
-           sector_description = sector, 
-           adjusted_value = value) 
+  # # TEMPORARY. FOR 2023 INV (5/8/2025) ONLY
+  # national_ffc_adjusted <- read_csv("data/temporary_national_inv_data.csv") %>%
+  #   pivot_longer(cols = !c(sector, source), names_to = "year") %>%
+  #   rename(source_description = source, 
+  #          sector_description = sector, 
+  #          adjusted_value = value) 
   
 }
 

@@ -445,10 +445,59 @@ scrape_data <- function(general_data) {
     # No longer need national total or full state name
     select(-national_total, -state_name)
   
+ 
+  # Scrape FWHA Fuel Use National FFC
+  # Retrieve gasoline Excel file data
+  GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
+  # Read from temp file
+  
+  gasoline_use_national <- read_excel(local_excel_path) %>%
+    clean_names() %>%
+    # Remove unneeded rows
+    filter(state == "Total") %>%
+    # Make all value columns numeric
+    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+    # Make data long; i.e., one row per year
+    pivot_longer(
+      cols = -1, names_to = "year",
+      values_to = "gasoline_use_gal"
+    ) %>%
+    # Remove letters from year column
+    mutate(year = str_remove(year, "[a-z]")) %>%
+    # Retain only 1990 onward
+    filter(year > 1989) %>%
+    select(-state)
+  
+  # URL for table VM-1, diesel fuel by class
+  # NOTE: NOt sure if this is the right data; see issues in Github
+  # Temporary file storage path
+  # local_excel_path <- tempfile(fileext = ".xlsx")
+  # 
+  # diesel_url <- paste0(
+  #   "https://www.fhwa.dot.gov/policyinformation/statistics/",
+  #   latest_year, "/xls/vm1.xlsx"
+  # )
+  # # https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
+  # GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
+  # 
+  # diesel_use_by_class <- read_excel(local_excel_path, skip = 5) %>%
+  #   clean_names() %>%
+  #   # Make all value columns numeric
+  #   mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+  #   # Make data long; i.e., one row per year
+  #   pivot_longer(
+  #     cols = -1, names_to = "year",
+  #     values_to = "gasoline_use_gal"
+  #   ) %>%
+  #   # Retain only year and value
+  #   select(year, gasoline_use_gal) %>%
+  #   # Remove letters from year column
+  #   mutate(year = str_remove(year, "[a-z]"))
+  # # Retain only 1990 onward
+  
   # Retrieve diesel Excel file data
   GET(special_fuel_url, write_disk(local_excel_path, overwrite = TRUE))
   # Read from temp file
-  
   
   diesel_distribution <- read_excel(local_excel_path) %>%
     clean_names() %>%
@@ -492,58 +541,35 @@ scrape_data <- function(general_data) {
     mutate(diesel_percent = if_else(state == "OR" & year == "2018", 
                                     0.0139, diesel_percent))
   
-  # Scrape FWHA Fuel Use National FFC
-  # Retrieve gasoline Excel file data
-  GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
-  # Read from temp file
-  
-  gasoline_use_national <- read_excel(local_excel_path) %>%
+  diesel_use_national <- read_excel(local_excel_path) %>%
     clean_names() %>%
     # Remove unneeded rows
-    filter(state == "Total") %>%
-    # Make all value columns numeric
-    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "gasoline_use_gal"
+    filter(
+      !is.na(state),
+      state != "Total"
     ) %>%
-    # Remove letters from year column
-    mutate(year = str_remove(year, "[a-z]")) %>%
-    # Retain only 1990 onward
-    filter(year > 1989) %>%
-    select(-state)
-  
-  # URL for table VM-1, diesel fuel by class
-  
-  # Temporary file storage path
-  local_excel_path <- tempfile(fileext = ".xlsx")
-  
-  diesel_url <- paste0(
-    "https://www.fhwa.dot.gov/policyinformation/statistics/",
-    latest_year, "/xls/vm1.xlsx"
-  )
-  # https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
-  GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
-  
-  diesel_use_by_class <- read_excel(local_excel_path) %>%
-    clean_names() %>%
     # Make all value columns numeric
     mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
     # Make data long; i.e., one row per year
     pivot_longer(
       cols = -1, names_to = "year",
-      values_to = "gasoline_use_gal"
+      values_to = "diesel_use_gal"
     ) %>%
     # Retain only year and value
-    select(year, gasoline_use_gal) %>%
+    select(year, diesel_use_gal) %>%
     # Remove letters from year column
-    mutate(year = str_remove(year, "[a-z]"))
+    mutate(year = str_remove(year, "[a-z]")) %>%
   # Retain only 1990 onward
+    filter(year >= 1990) %>%
+    group_by(year) %>%
+    summarize(diesel_use_gal = sum(diesel_use_gal, na.rm = TRUE)) %>%
+    ungroup()
+  
   
   scraped_data <- lst(
     diesel_distribution,
-    diesel_use_by_class,
+    # diesel_use_by_class,
+    diesel_use_national,
     gasoline_distribution,
     gasoline_use_national
   )
