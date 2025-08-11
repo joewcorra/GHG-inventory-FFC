@@ -362,25 +362,19 @@ Converts adjusted fuel consumption into equivalent carbon dioxide (CO₂) emissi
 
 **`ffc_national` Function 7. national_ffc_ggplot_figures() (placeholder)**
 
-Creates figures of emissions data for the *Inventory*. In-work as of Aug. 2025.
+-   Creates figures of emissions data for the *Inventory*. In-work as of Aug. 2025.
 
 ------------------------------------------------------------------------
 
 **`ffc_national` Function 8. national_ffc_gt_tables() (placeholder)**
 
-Creates tables of emissions data for the *Inventory*. In-work as of Aug. 2025.
+-   Creates tables of emissions data for the *Inventory*. In-work as of Aug. 2025.
 
 ------------------------------------------------------------------------
 
-📌 **Summary of the Script’s Workflow**
+**`ffc_national` Function 9. write_to_invdb_national() (placeholder)**
 
--   Data Retrieval: Pulls fuel use data from EIA APIs (1990–present)
-
--   Adjustments: Removes fuel uses not relevant to domestic emissions (e.g., recreational boats, international flights)
-
--   Calculations: Converts fuel use to CO₂ using standard emissions factors
-
--   Outputs: Provides datasets and reports, including data visualizations and tables
+This function processes national carbon emissions data, organizing it for output to the inventory database (InvDB) in Excel, CSV, and JSON formats. In-work as of Aug. 2025.
 
 ------------------------------------------------------------------------
 
@@ -394,102 +388,272 @@ This script calculates greenhouse gas emissions for each U.S. state and territor
 
 **`ffc_state` Function 1. state_ffc_get_seds_data()**
 
-Pulls in state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).\
-\
-- Filters to include only relevant fossil fuel codes\
-- Standardizes fuel and sector names\
-- Focuses on years 1990–2022\
-- Joins state and sector names for clarity\
-- Outputs a labeled dataset of fossil fuel consumption per state and year
+Pulls in state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).
+
+-   Retrieves SEDS data from the EIA API.
+
+    -   Connects to the EIA API using a secure key.
+
+    -   Defines a nested function, `get_state_results`, to query the EIA API for annual energy data by state and year.
+
+    -   Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
+
+    -   Measures the time taken for this operation.
+
+    -   Note: User has option of downloading the full time series, or downloading only the latest year and appending it to the existing `api_seds.csv` dataset.
+
+-   Cleans and collate SEDS data.
+
+    -   Cleans and filters the downloaded data, focusing on fuels for relevant sectors by applying filters created in `functions_both.R`.
+
+    -   Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
+
+    -   Converts consumption values from billions to millions of BTUs.
+
+    -   Performs a left join with dataframes `functions_both.R`from to add additional information on fuel source and sector.
+
+    -   Removes any duplicate rows that might have been added when new annual data was appended.
+
+    -   Standardizes the names and combines data for Liquefied Petroleum Gas (LPG) using a method from `functions_both.R.`
+
+-   Writes processed data to CSV.
+
+    -   Writes the processed data back to the `api_seds.csv` file.
+
+-   Outputs:
+
+    -   SEDS fuel consumption time series for 50 states and DC, 1990 to the most recent year of data.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 2. get_territories_data()**
 
-Prepares placeholder fossil fuel data for U.S. territories not fully covered by EIA.\
-\
-- Initializes values to zero for future adjustments or manual data insertion
+This function retrieves and processes fossil fuel consumption and heat content data for U.S. territories from the U.S. Energy Information Administration (EIA).
+
+-   Retrieves SEDS data from the EIA API.
+
+    -   Connects to the EIA API using a secure key.
+
+    -   Constructs a URL to query the EIA API for annual fossil fuel consumption data for U.S. territories, including American Samoa, Guam, Puerto Rico, U.S. Virgin Islands, U.S. Pacific Islands, and Wake Island. Retrieves the data and processes the JSON response into an R object.
+
+    -   Manually Create Puerto Rico Lubricants Data:
+
+-   Creates a dataset for lubricants consumption in Puerto Rico using manually specified values, as this data is not available from the EIA.
+
+-   Retrieves API consumption data.
+
+    -   Extracts and combines data from the API response.
+    -   Selects relevant columns and renames them for clarity.
+    -   Converts `value` to a numeric format and standardizes state codes and source descriptions.
+
+-   Combines API data with Puerto Rico data.
+
+    -   Combines the processed API consumption data with the manually-created Puerto Rico industrial lubricants data (not included in EIA data).
+
+-   Retrieves heat content data from API.
+
+    -   Queries the EIA API for heat content data for specific commodities, including motor gasoline and natural gas.
+    -   Processes the API response, extracting relevant columns and converting `heat_content` to numeric format.
+
+-   Scrapes additional heat content data.
+
+    -   Scrapes a PDF document from EIA to extract heat content data for other commodities not covered by the API, such as residual fuel oil, kerosene, and LPG.
+    -   Processes the extracted data, calculating the average heat content for LPGs.
+
+-   Standardize and Expand Heat Content Data:
+
+    -   Standardizes source descriptions and copies constant heat content values across all years.
+    -   Combines extracted PDF data with API data for motor gasoline and natural gas.
+
+-   Outputs:
+
+    -   Fuel consumption time series for U.S. territories.
+    -   Fuel heat content for U.S. territories.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 3. state_ffc_get_adjustments_data()**
 
-Combines multiple sources of corrections:\
-- International bunker fuels\
-- Miscellaneous corrections\
-- Non-energy petroleum uses\
-- Industrial process distributions\
-- Specialized marine fuel data\
-\
-Produces a unified dataset of adjustments to apply to state fuel data.
+This function processes various datasets related to state fossil fuel consumption adjustments, including international bunker fuels, non-energy use, industrial distributions, and specific fuel types. Here's a step-by-step description of what the function does:
+
+-   National inventory adjustments:
+    -   Selects relevant columns from the `national_ffc_adjusted` dataset, focusing on the year, sector, source description, and adjusted national value.
+-   International bunker fuels (IBF) adjustments:
+    -   Reads IBF data from an Excel workbook and reshapes it into a long format (one row per year).
+    -   Renames columns and standardizes source descriptions, converting specific fuel types to a consistent naming convention.
+-   Determines non-energy use (NEU) adjustments.
+    -   Collates NEU data compiled by the IPPU GHGI sector, previously used in `functions_national.R`.
+    -   Reshapes data into a long format and calculates the percentage contribution of each state to the national total for each year.`R`.
+-   Calculates iron & steel (I&S) distributions.
+    -   Collates I&S data compiled by the IPPU GHGI sector, previously used in `functions_national.R`.
+    -   Reshapes data into a long format and calculates the percentage contribution of each state to the national total for each year.
+-   Calculates ammonia distributions.
+    -   Collates I&S data compiled by the IPPU GHGI sector, previously used in `functions_national.R`.
+    -   Reshapes data into a long format and calculates the percentage contribution of each state to the national total for each year.
+-   Calculates petrochemical distributions.
+    -   Processes petrochemical distribution data (also from IPPU) and calculates state percentages.
+    -   Includes separate processing for carbon black distributions within petrochemicals.
+-   Calculates fuel oil and kerosene (FOKS) diesel distributions:
+    -   Processes diesel distribution data from an Excel workbook, reshaping it into a long format.
+    -   Extrapolates data for years beyond 2020 by copying 2020 data for subsequent years (2021, 2022, 2023), as this data is no longer being compiled by EIA.
+-   Calculates FOKS tesidual fuel distributions:
+    -   Processes residual fuel distribution data similarly to diesel.
+    -   Extrapolates data for years beyond 2020 by copying 2020 data for subsequent years (2021, 2022, 2023), as this data is no longer being compiled by EIA.
+-   Calculates feedstock export adjustments.
+    -   Reads data from export feedstocks (currently reading from Excel; later versions will read directly from `functions_national.R` output).
+-   Outputs:
+    -   Miscellaneous industrial use adjustments.
+    -   Adjustments to align state totals with numbers calculated in the national Inventory.
+    -   IBF adjustments.
+    -   NEU adjustments.
+    -   Iron and steel, ammonia, petrochemical, and carbon black distributions by state.
+    -   FOKS diesel and residual fuel distributions by state.
+    -   Feedstock export adjustments.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 4. territories_ffc_adjust_data()**
 
-Applies emissions calculations to placeholder territory data using emissions factors.\
-\
-- Joins territory fuel data with carbon coefficients\
-- Uses standard CO₂ calculation formulas
+This function processes fossil fuel consumption data for U.S. territories and calculates carbon emissions based on that consumption.
+
+-   Joins fossil fuel consumption with heat content data.
+    -   Starts with the `ff_territories` dataset.
+    -   Joins this data with `heat_content_territories` to get heat content information based on the year and source description.
+    -   Calculates total energy consumption in trillion BTUs.
+-   Calculates carbon equivalent emissions.
+    -   Joins the consumption data with `carbon_coefficients` to get carbon factors based on the source description and year.
+    -   Sets a constant storage factor of 0.1 for non-energy use (NEU); this is unique to territories.
+    -   Interpolates missing carbon factors if necessary.
+    -   Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
+    -   Adjusts emissions for other petroleum liquids and lubricants by applying the storage factor.
+-   Apply Variable Labels:
+    -   Applies metadata labels to data columns.
+-   Outputs:
+    -   Time series of carbon equivalent emissions by territory, sector, and source.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 5. state_ffc_adjust_data()**
 
-Combines:\
-- Raw state fuel data\
-- Adjustments from various sources\
-- National scraped data (e.g., gasoline and diesel distributions)\
-\
-Produces both sector-level and total adjusted fuel use datasets for emissions calculation.
+This function processes and adjusts fossil fuel consumption data for various sectors across U.S. states, incorporating adjustments for non-energy use (NEU) and international bunker fuels (IBF).
+
+-   Standardizes and filters SEDS data:
+    -   Standardizes the `seds` data using functions from `functions_both.R`.
+    -   Sets the consumption values for pentanes plus and unfinished oils to zero to avoid double counting.
+-   Adjusts residential sector consumption.
+    -   Processes residential sector data for various energy sources (coal, natural gas, distillate fuel, LPG, and others).
+    -   For coal and natural gas, calculates adjusted values using national inventory adjustment factors and sums of state values.
+    -   For LPGs, uses the original values directly as adjusted values.
+-   Adjusts commercial sector consumption.
+    -   Similar to the residential sector, processes commercial sector data for coal, distillate fuel, natural gas, gasoline, LPG, and other sources.
+    -   Calculates adjusted values using national inventory adjustment factors.
+-   Adjusts industrial sector consumption.
+    -   Processes industrial sector data for various sources, including coking coal, other coal, natural gas, residual fuel, distillate fuel, gasoline, petroleum coke, LPG, and other sources.
+    -   Uses various adjustment factors and distribution data to calculate adjusted values.
+-   Adjusts transportation sector consumption.
+    -   Processes transportation sector data for distillate fuel, gasoline, lubricants, jet fuel, residual fuel, coal, LPG, aviation gasoline, and natural gas.
+    -   Calculates adjusted values using national inventory adjustment factors and distribution data.
+-   Adjusts electric power sector consumption.
+    -   Processes electric power sector data for coal, natural gas, geothermal, residual fuel, petroleum coke, and distillate fuel.
+    -   Uses adjustment factors to calculate adjusted values.
+-   Adjusts IBF consumption.
+    -   Processes IBF data for distillate fuel, residual fuel, and jet fuel, using distribution data and adjustment factors.
+    -   Calculates IBF adjusted values and selects relevant columns for further processing.
+-   Adjusts NEU consumption.
+    -   Processes NEU data for various sources, including other coal, coking coal, natural gas, distillate fuel, LPG, petroleum coke, still gas, and other NEU sources.
+    -   Calculates NEU adjusted values using adjustment factors and distribution data.
+-   Aggregates adjusted data.
+    -   Aggregates all adjusted data from residential, commercial, industrial, transportation, and electric power sectors.
+    -   Subtracts adjusted NEU and IBF values from the adjusted industrial and transportation values to get the final adjusted energy consumption for those sectors.
+-   Outputs:
+    -   Time series of fossil fuels consumption by state, sector, and source.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 6. state_neu_calculate_emissions()**
 
-Calculates emissions from non-energy uses of fossil fuels (e.g., lubricants, waxes).\
-\
-- Joins adjusted NEU data with carbon coefficients\
-- Applies standard CO₂ emissions formula
+This function calculates carbon emissions for non-energy use (NEU) of various fossil fuel sources across U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
+
+-   Prepares NEU data.
+    -   Begins with the adjusted SEDS consumption data.
+    -   Joins with several datasets: feedstock export adjustments, NEU adjustments, and petrochemical distribution data.
+    -   Replaces any missing values in feedstock exports with zero.
+    -   Calculates the sum of NEU adjusted values for all states and renames petrochemical distribution percentages as feedstock distribution for clarity.
+-   Calculate NEU adjusted values for various sources.
+    -   Processes NEU data for different fossil fuel sources, such as coal, coking coal, natural gas, petroleum coke, hydrocarbon gas liquids (HGL), distillate fuel oil, waxes, still gas, miscellaneous petroleum products, naphtha, special naphtha, other oils, asphalt & road oil, and lubricants.
+    -   For each source, calculates adjusted NEU values by incorporating feedstock adjustments and distribution percentages.
+    -   Some sources use specific adjustment formulas, such as HGLs and other oils, which might include additional factors.
+-   Calculates carbon emissions.
+    -   Combines all NEU adjusted values into a single data frame.
+    -   Joins with carbon factors ensuring the correct factors are used for NEU sources.
+    -   Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
+-   Apply NEU storage factors.
+    -   Joins with NEU storage factors and applies these factors to adjust emissions where applicable.
+    -   Adjusts the final carbon emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
+-   Outputs:
+    -   Dataset containing carbon emissions for NEU by state across various fossil fuel sources.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 7. state_ffc_calculate_emissions()**
 
-Main function for calculating emissions from state fossil fuel use.\
-\
-- Joins adjusted fuel data with emissions factors\
-- Outputs annual CO₂ emissions by fuel type and sector
+This function calculates carbon emissions for fossil fuel consumption across different sectors in U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
+
+-   Standardizes source descriptions.
+    -   Begins with the adjusted SEDS consumption data.
+    -   Modifies source descriptions to align with those in the carbon factors dataset by handling specific naming conventions and sector codes.
+-   Adjusts for feedstock exports.
+    -   Joins with feedstock export adjustments for specific sources.
+    -   Joins with miscellaneous adjustments to include IPPU adjustment factors.
+    -   Updates NEU sources needing feedstock adjustments, ensuring non-negative values.
+-   Calculates carbon emissions.
+    -   Joins with carbon factors data to get the carbon coefficients for each source.
+    -   Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
+    -   Calculates specific emissions for NEU sources based on adjusted values and carbon factors, handling specific sources differently.
+-   Applies NEU storage factors.
+    -   Joins with NEU storage factors and applies these factors to adjust emissions for applicable sources.
+    -   Adjusts the final NEU emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
+-   Outputs: Dataset containing carbon emissions from energy use by state across various fossil fuel sources.
+-   
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 8. state_ffc_ggplot_figures()**
 
-Generates emissions charts for each state:\
-- Emissions by fuel type\
-- Emissions by sector\
-- Industrial coal and natural gas emissions
+Creates figures of emissions data for the *Inventory*.
 
 ------------------------------------------------------------------------
 
 **`ffc_state` Function 9. state_ffc_gt_tables()**
 
-Creates formatted tables summarizing emissions data:\
-- Fuel types\
-- Total emissions\
-- Share of total emissions per fuel
+Creates formatted tables for the *Inventory*.
 
 ------------------------------------------------------------------------
 
-📌 **Summary of the Script’s Workflow**
+**`ffc_state` Function 10.** **write_to_invdb()**
 
--   Data Retrieval Pulls fuel use data from EIA APIs (1990–present)
+This function processes carbon emissions data for U.S. territories and states, organizing it for output to the inventory database (InvDB) in Excel, CSV, and JSON formats.
 
--   Adjustments
-
--   Calculations
-
--   Outputs Provides
+-   Prepares territories emissions data:
+    -   Processes `carbon_emissions_territories` to create `territories_invdb`, focusing on fossil fuel combustion.
+    -   Adds fields to conform to InvDB formatting requirements.
+    -   Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
+-   Prepares non-energy use (NEU) territories data.
+    -   Processes `carbon_emissions_territories` for NEU sources to create `neu_territories_invdb`.
+    -   Similar to fossil fuel combustion, adds required fields and aggregates emissions data.
+-   Prepares NEU state data.
+    -   Processes `carbon_emissions_state_neu` to create `neu_invdb`.
+    -   Adds fields for InvDB compliance, aggregates emissions, and pivots data wide by year.
+-   Prepares state emissions data.
+    -   Processes `carbon_emissions_state_ffc` to create `ffc_invdb`.
+    -   Filters for specific sources, adds fields, and aggregates emissions data.
+    -   Pivots data wide by year and combines with territories and NEU data.
+-   Writes data to Excel.
+    -   Loads a blank Excel InvDB workbook template.
+    -   Writes the prepared data (`ffc_invdb`) to specific columns in the Excel sheet.
+    -   Saves the workbook as a new Excel file.
+-   Saves data in other formats.
+    -   Also saves the aggregated emissions data as CSV and JSON files.
 
 ------------------------------------------------------------------------
 
