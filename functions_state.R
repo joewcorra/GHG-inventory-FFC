@@ -1,5 +1,25 @@
 # STATE CONSUMPTION DATA-------------------------------------------
-
+#'
+#' @description This function retrieves state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).
+#' @details
+#' **Retrieval:** 
+#' - Downloads annual fossil fuel consumption data from EIA API for all U.S. states.
+#' - Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
+#' - Defines a nested function, `get_state_results()`, to query the EIA API for annual energy data by state and year.
+#' - Downloads either the entire time series and save to CSV, or loads an existing CSV and downloads only the most recent year of the time series.
+#' - Measures the time taken for this operation.
+#' - Uses the `general_data` object to identify the correct variable names and sector mappings.
+#' **Transform:** 
+#' - Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
+#' - Applies naming harmonization so sectors, fuels, and years align with GHGI data dictionary.
+#' - Removes any duplicate rows that might have been added when new annual data was appended.
+#' - Filters the dataset to include only fossil fuel energy sources relevant to GHGI reporting.
+#' - Aggregates hydrocarbon gas liquids (HGLs) data.
+#' **Collate/Output:** 
+#' - `seds`: tibble; used by 
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: 
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 state_ffc_get_seds_data <- function(general_data) {
   # read SEDS data from EIA API file pulled with epa_api.R
   seds <- read_csv("data/api_seds.csv") %>%
@@ -105,12 +125,30 @@ state_ffc_get_seds_data <- function(general_data) {
 }
 
 # TERRITORIES CONSUMPTION DATA-----------------------------------------
-
-# Retrieve heat content and consumption data from EIA via api and scraping
-
-# The procedure for retrieving and collating the FFC data for US territories
-# differs from the procedure for states.
-
+#'
+#' @description This function retrieves and processes fossil fuel consumption and heat content data for U.S. territories from the U.S. Energy Information Administration (EIA) API, using a process similar to `state_ffc_get_seds_data()`.
+#' @details
+#' **Retrieval:** 
+#' - Downloads annual fossil fuel consumption data from EIA API for all U.S. territories.
+#' - Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
+#' - Downloads PDF of fossil fuel heat content by year from EIA df document extracts data from document. 
+#' - Uses the `general_data` object to identify the correct variable names and sector mappings.
+#' **Transform:** 
+#' - Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
+#' - Applies naming harmonization so sectors, fuels, and years align with GHGI data dictionary.
+#' - Filters the dataset to include only fossil fuel energy sources relevant to GHGI reporting.
+#' - Manually creates time series for Puerto Rico lubricants data (not available from EIA).
+#' - Aggregates hydrocarbon gas liquids (HGLs) from EIA data. 
+#' **Collate/Output:** 
+#' `territories`: a list containing the following:
+#' `ff_territories`: a tibble
+#' `heat_content_territories`: a tibble
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return 
+#' @seealso [state_ffc_get_seds_data()], [territories_ffc_adjust_data()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 get_territories_data <- function(general_data) {
   # API Key----------------------------------------------------------------
   
@@ -299,6 +337,49 @@ get_territories_data <- function(general_data) {
                       heat_content_territories)
 }
 # STATE ADJUSTMENTS DATA (COMBINED)-----------------------------
+#'
+#' @description This function collates and transforms the datasets that are required to perform adjustments/corrections on the SEDS fossil fuel consumption data. Data include international bunker fuels, non-energy use, industrial distributions, and specific fuel types. 
+#' @details
+#' **Retrieval:** 
+#'  - Collates locally-stored CSv and Excel datasets retrieved in the `targets` pipeline.
+#'  - in-work: Pulls required data from national results in `national_ffc_adjusted`.
+#'  - in-work: Accesses `pins` board to retrieve CSv and Excel datasets.
+#' **Transform:** 
+#'  - Extracts required data from input datasets via selecting, pivoting, filtering, and mutating data as needed.
+#'  - National inventory adjustments: Selects year, sector_description, source_description, and adjusted_value.
+#'  - International bunker fuels (IBF) adjustments: Pivots data to long format and standardizes values.
+#'  - Non-energy use (NEU) adjustments: Obtains values of national NEU from IPPU data, then calculates percent NEU distribution by state. 
+#'  - Iron & steel (I&S) distributions: Obtains I&S values from national IPPU data, then calculates percent I&S distribution by state. 
+#'  - Ammonia distributions: Obtains ammonia values from national IPPU data, then calculates percent ammonia distribution by state. 
+#'  - Petrochemical and carbon black distributions: Obtains petrochemical values from national IPPU data, then calculates percent petrochemical and percent carbon black by state.
+#'  - Fuel oil and kerosene (FOKS) distributions: Processes diesel and residual fuel distribution data from EIA and pivots it into a long format. Extrapolates data for years beyond 2020, as FOKS data is no longer being compiled by EIA.
+#'  - Feedstock export adjustments: Reads data from export feedstocks (currently reading from Excel; later versions will read directly from functions_national.R output).
+#' **Collate/Output:** 
+#'   `state_adjustments`: a list containing the following: 
+#'   `misc_adjustments`: a tibble
+#'   `national_inv_adjustments`: a tibble
+#'   `ibf_adjustments`: a tibble
+#'   `neu_adjustments`: a tibble
+#'   `is_distribution`: a tibble
+#'   `ammonia_distribution`: a tibble
+#'   `petrochemicals_distribution`: a tibble
+#'   `petrochemicals_cb_distribution`: a tibble
+#'   `foks_diesel_distribution`: a tibble
+#'   `foks_residual_distribution`: a tibble
+#'   `feedstock_export_adjustments`: a tibble
+#'
+#' @param national_ffc_adjusted tibble created by `national_ffc_adjust_data()`
+#' @param international_bunker_fuels tibble loaded in `_targets.R` pipeline
+#' @param misc_adjustments tibble loaded in `_targets.R` pipeline
+#' @param non_energy_use tibble loaded in `_targets.R` pipeline
+#' @param ippu_distributions list of 4 tibbles loaded in `_targets.R` pipeline
+#' @param foks_diesel tibble loaded in `_targets.R` pipeline
+#' @param foks_residual tibble loaded in `_targets.R` pipeline
+#' @return 
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
                                            international_bunker_fuels,
                                            misc_adjustments,
@@ -306,16 +387,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
                                            ippu_distributions,
                                            foks_diesel,
                                            foks_residual) {
-  # NOTE
-  # This function currently exists in a hybrid form.
-  # It reads necessary national data from csv/Excel, but
-  # eventually it will get it directly from this pipeline.
-  # Here is a framework for the pipeline code:
-  
-  # foks_diesel_distribution & foks_residual_distribution may be read from
-  #   Excel sheet (see below) since they are no longer being updated
-  
-  
+
   # Adjustment factors data from national inventory------------
   
   # NOTE: MOGAS AND DIESEL VALUES ARE INCORRECT AT THIS TIME (2/27/2025)
@@ -548,7 +620,29 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
 }
 
 # TERRITORIES ADJUSTMENTS AND CO2 EMISSIONS-------------------------------
-
+#'
+#' @description This function processes fossil fuel consumption data for U.S. territories and calculates carbon emissions based on that consumption.
+#' @details
+#' **Retrieval:** 
+#' - No new data retrieved in this function. 
+#' **Transform:** 
+#' - Joins the two elements of the `territories` list, `ff_territories` and `heat_content_territories`, to get heat content information based on the year fossil fuel energy consumption source.
+#' - Sets a constant storage factor of 0.1 for non-energy use (NEU); this is unique to territories.
+#' - Interpolates missing carbon factors if necessary.
+#' - Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
+#'	- Adjusts emissions for other petroleum liquids and lubricants by applying the NEU storage factor.
+#'	- Applies metadata labels, derived from the data dictionary in `general_data`, to the column names.
+#' **Collate/Output:** 
+#' `carbon_emissions_territories`: a tibble
+#'
+#' @param carbon_coefficients a list created by `get_carbon_factors()`
+#' @param territories a list created by `get_territories_data`
+#' @param general_data a list created by `data_setup()`
+#' @return 
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 territories_ffc_adjust_data <- function(carbon_coefficients, 
                                         territories, 
                                         general_data) {
@@ -606,6 +700,24 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
 }
 
 # STATE FFC ADJUSTMENTS---------------------------
+#'
+#' @description This function processes and adjusts fossil fuel consumption data for various sectors across U.S. states, incorporating adjustments for non-energy use (NEU) and international bunker fuels (IBF).
+#' @details
+#' **Retrieval:** 
+#' - No new data retrieved in this function. 
+#' **Transform:** 
+#' 
+#' **Collate/Output:** 
+#' 
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @param seds Tibble created by `state_ffc_get_seds_data()`
+#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
+#' @return 
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_ffc_adjust_data <- function(seds,
                                   state_adjustments,
                                   scraped_data,
@@ -1458,7 +1570,20 @@ state_ffc_adjust_data <- function(seds,
 }
 
 # STATE NEU CO2 EMISSIONS--------------------------------------
-
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_neu_calculate_emissions <- function(state_ffc_adjusted,
                                           carbon_coefficients,
                                           general_data, 
@@ -1688,6 +1813,20 @@ return(carbon_emissions_state_neu)
 }
 
 # STATE FFC CO2 EMISSIONS-----------------------------------------
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_ffc_calculate_emissions <- function(state_ffc_adjusted,
                                           carbon_coefficients,
                                           general_data, 
@@ -1791,6 +1930,20 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
 }
 
 # STATE FIGURES--------------------------------------
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_ffc_ggplot_figures <- function(seds_all_adjusted,
                                      seds_ind_adjusted,
                                      state_adjustments,
@@ -2287,6 +2440,20 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
 
 
 # STATE TABLES----------------------------------------------
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 state_ffc_gt_tables <- function(seds_all_adjusted,
                                 carbon_emissions_state_ffc) {
   state_ffc_tables <- lst(
@@ -2478,6 +2645,20 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 
 
 # INVDB--------------------------------------------------
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 write_to_invdb <- function(
     # carbon_emissions_national, 
   carbon_emissions_territories, 
@@ -2625,6 +2806,20 @@ write_to_invdb <- function(
 
 
 # ACTIVITY DATA--------------------------------------------------
+#' One line summary in plain English
+#'
+#' @description What the function does in business terms (data in, data out).
+#' @details
+#' **Retrieval:** where data comes from (APIs/files)  
+#' **Transform:** key steps (filters, joins, adjustments)  
+#' **Collate/Output:** objects returned and how they’re used downstream
+#'
+#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @examples
+#' # minimal usage example
+#' # state_ffc_get_seds_data(general_data)
 write_ffc_activity <- function(
     # carbon_emissions_national, 
   carbon_emissions_territories, 

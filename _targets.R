@@ -7,6 +7,7 @@ library(quarto)
 library(tarchetypes)
 library(tidyverse)
 library(readxl)
+library(roxygen2)
 
 tar_option_set(
   error = "null",
