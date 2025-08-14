@@ -1,5 +1,74 @@
 
 # DATA SETUP------------------------------------
+#' Build shared dictionaries, helpers, and lookups for GHGI FFC workflows 
+#'
+#' @description
+#' Initializes cross-cutting metadata and utilities used across the
+#' state/national fossil fuel combustion (FFC) pipeline. This includes:
+#' - standardized **MSN** tables joined to human readable source/sector names,
+#' - state/territory key tables,
+#' - and two helper functions (`standardize_ffc()`, `apply_variable_labels()`).
+#'
+#' @details
+#' **Retrieval**
+#' - Reads harmonization inputs from `harmonized_data` (values, variables, InvDB keys).
+#' - Downloads EIA’s “Codes and Descriptions” workbook to a temp file and reads
+#' the MSN catalog (sheet 2, skip first 10 rows).
+#'
+#' **Transform**
+#' - Lowercases units/descriptions, derives `source_code`/`sector_code` from `msn`.
+#' - Joins the MSN catalog to curated `sources` and `sectors` lookups.
+#' - Adds “NN*” natural gas MSNs not present in SEDS for national calcs.
+#' - Builds a `state_name_key` (2 letter codes, names, `territory` flag).
+#'
+#' **Collate/Output**
+#' - Returns a `general_data` list with:
+#' - `ghgi_values`, `ghgi_variables`, `ghgi_invdb_values`
+#' - `msn_names`: list with `msn` (joined table), `msn_lookup` (vector of MSNs),
+#' `state_name_key`
+#' - `standardize_ffc` (helper), `apply_variable_labels` (helper)
+#'
+#' @section Helpers:
+#' **`standardize_ffc(data, msn_names)`**
+#' - Lowercases key text fields and standardizes sector/fuel naming to the GHGI dictionary.
+#' - Normalizes common variants (e.g., “distillate …” → “distillate fuel oil”,
+#' “hydrocarbon gas liquids/HGL/LPG/propane” → “lpg”, etc.).
+#' - Returns the input data with harmonized `sector_description`/`source_description`
+#' and `year` coerced to factor when present.
+#'
+#' **`apply_variable_labels(data, ghgi_variables)`**
+#' - Sets labelled metadata onto columns using `ghgi_variables` (`variable` → `metadata`).
+#' - Coerces `year` to factor when present.
+#'
+#' @param harmonized_data A list produced upstream (e.g., from your harmonization stage)
+#' with elements:
+#' - `values` (list of vectors/tibbles used for state codes, etc.),
+#' - `variables` (two column tibble: `variable`, `metadata`),
+#' - `invdb` (lookup values for InvDB exports).
+#'
+#' @return A named list `general_data` (see **Collate/Output**) used throughout the pipeline.
+#'
+#' @section Side effects:
+#' Downloads a temporary Excel file from EIA and deletes it after reading.
+#'
+#' @seealso [get_carbon_factors()], [scrape_data()],
+#' state/national FFC functions that accept `general_data`.
+#'
+#' @examples
+#' \dontrun{
+#' gen <- data_setup(harmonized_data)
+#' str(gen$msn_names$msn)
+#' }
+#'
+#' @family GHGI FFC pipeline – setup
+#' @importFrom httr GET write_disk
+#' @importFrom readxl read_excel
+#' @importFrom dplyr mutate select filter left_join add_row case_when rename
+#' @importFrom tidyr pivot_longer
+#' @importFrom stringr str_to_lower str_detect str_replace str_remove str_squish str_sub
+#' @importFrom purrr map
+#' @keywords internal
+#' 
 data_setup <- function(harmonized_data) {
   # Create Dataframes of MSNs and descriptions and state codes
   # Also create general-use functions
@@ -310,6 +379,60 @@ data_setup <- function(harmonized_data) {
 }
 
 # CARBON FACTORS-----------------------------------
+#' Prepare carbon factors, storage fractions, and the CO2/C ratio
+#'
+#' @description
+#' Assembles annually resolved carbon factors, fixed factors replicated across
+#' the time series, and NEU storage fractions, plus `carbon_ratio = 44/12`.
+#'
+#' @details
+#' **Retrieval**
+#' - Reads variable and fixed carbon factor tables from `carbon_factors`:
+#' `factors_variable`, `factors_fixed`.
+#' - Reads NEU storage fractions from `neu_storage` (wide years `xYYYY`).
+#'
+#' **Transform**
+#' - Normalizes `source_description` to lower case.
+#' - For fixed factors, replicates values across all years; for variable factors,
+#' keeps the per year values.
+#' - Pivots both to **long** format with `year` and `carbon_factor` (numeric),
+#' removing `"x"` prefix in years.
+#' - Standardizes naming with `general_data$standardize_ffc()` so factor names
+#' match downstream computations.
+#' - Converts NEU storage to long (`year`, `storage_factor`) with lower case
+#' `sector_description` / `source_description`.
+#'
+#' **Collate/Output**
+#' - Returns a list `carbon_coefficients` with:
+#' - `carbon_factors` (long),
+#' - `carbon_ratio` (44/12; labelled),
+#' - `neu_storage` (long).
+#'
+#' @param general_data The object returned by [data_setup()], used here for
+#' `standardize_ffc()` and labels.
+#' @param carbon_factors A list with elements:
+#' - `factors_variable` (per year carbon factors),
+#' - `factors_fixed` (single values repeated across years).
+#' @param neu_storage A wide table of NEU storage fractions by sector/source
+#' with columns `sector`, `source`, and `xYYYY` year columns.
+#'
+#' @return A named list (`carbon_coefficients`) used by emissions calculators.
+#'
+#' @seealso [data_setup()], state/national emissions calculators that
+#' join on `carbon_factors`/`neu_storage`.
+#'
+#' @examples
+#' \dontrun{
+#' cc <- get_carbon_factors(gen, carbon_factors, neu_storage)
+#' head(cc$carbon_factors)
+#' }
+#'
+#' @family GHGI FFC pipeline – factors
+#' @importFrom dplyr mutate select filter left_join rename
+#' @importFrom tidyr pivot_longer
+#' @importFrom stringr str_to_lower str_remove
+#' @keywords internal
+
 get_carbon_factors <- function(general_data,
                                carbon_factors, 
                                neu_storage) {
@@ -380,6 +503,62 @@ get_carbon_factors <- function(general_data,
   
 }
 # DATASCRAPING (NATIONAL AND STATE)-----------------------------------------
+#' Scrape FHWA fuel use distributions (state & national)
+#'
+#' @description
+#' Downloads FHWA spreadsheets for gasoline and special fuels (diesel) and
+#' produces state share distributions and national totals for use in
+#' transportation adjustments.
+#'
+#' @details
+#' **Retrieval**
+#' - Builds FHWA URLs for the most recent complete year (`current_year - 2`).
+#' - Downloads the gasoline (`mf226.xlsx`) and special fuel (`mf225.xlsx`)
+#' workbooks to a temporary file.
+#'
+#' **Transform**
+#' - For **state distributions** (gasoline/diesel):
+#' - Cleans headers, removes totals/empty rows, pivots `xYYYY` → `year`.
+#' - Computes state shares per year (`*_percent`), joins 2 letter state codes,
+#' fixes “District of Columbia” naming; restricts to 1990+.
+#' - For **national totals**:
+#' - Extracts totals from the same sheets and pivots to `year` with gallons.
+#' - Applies a one off interpolation fix for OR diesel share in 2018.
+#'
+#' **Collate/Output**
+#' - Returns `scraped_data` list with:
+#' - `gasoline_distribution` (state, year, gasoline_percent),
+#' - `diesel_distribution` (state, year, diesel_percent),
+#' - `gasoline_use_national` (year, gasoline_use_gal),
+#' - `diesel_use_national` (year, diesel_use_gal).
+#'
+#' @param general_data The object from [data_setup()], used for the
+#' `state_name_key` join and year cutoffs.
+#'
+#' @return A named list `scraped_data` for downstream national/state adjustments.
+#'
+#' @section Side effects:
+#' Downloads temporary Excel files from FHWA; temporary files are overwritten
+#' during execution and not retained.
+#'
+#' @seealso [data_setup()], national/state transportation adjustment functions
+#' that join the FHWA distributions.
+#'
+#' @examples
+#' \dontrun{
+#' sc <- scrape_data(gen)
+#' head(sc$gasoline_distribution)
+#' }
+#'
+#' @family GHGI FFC pipeline – scraping
+#' @importFrom httr GET write_disk
+#' @importFrom readxl read_excel
+#' @importFrom dplyr mutate select filter left_join group_by summarize ungroup rename
+#' @importFrom tidyr pivot_longer
+#' @importFrom stringr str_remove str_squish str_detect
+#' @keywords internal
+#' 
+scrape_data <- function(general_data) { ... }
 
 scrape_data <- function(general_data) {
   # Set year to match most recent available year (current year minus two)

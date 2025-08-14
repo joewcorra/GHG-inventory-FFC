@@ -1,5 +1,54 @@
 # Functions
-
+#' Retrieve national fossil fuel consumption and auxiliary inputs from EIA
+#'
+#' @description Retrieves U.S. national fossil fuel consumption from EIA APIs,
+#' heat content series, vessel bunkering diesel volumes, and ethanol used
+#' in transportation; harmonizes fields to your GHGI data dictionary.
+#'
+#' @details
+#' **Retrieval:**
+#' - Calls EIA Total Energy API by year (1990..latest_year) via a helper
+#'   `get_national_results(year)` to avoid the 5,000 row limit.
+#' - Pulls HGL component series from the petroleum product supply API
+#'   (ETH/PROP/… series). For production use, reads preprocessed
+#'   `data/lpg_national.csv` in place of unpublished EIA splits.
+#' - Retrieves heat content for distillate, motor gasoline, and HGL
+#'   (DMTCKUS, MGTCKUS, HLTCKUS).
+#' - Retrieves vessel bunkering distillate fuel (EIA 821 use, NUS, VAB).
+#' - Retrieves ethanol in transportation (EMACBUS).
+#'
+#' **Transform:**
+#' - Collates API payloads, cleans names, selects `year`, `msn`, `value`, `unit`,
+#'   coerces types, truncates MSN to 5 chars, and filters to TBtu fuels of interest.
+#' - Joins to `general_data$msn_names$msn` to attach source/sector labels, de dupes,
+#'   and standardizes via `general_data$standardize_ffc()`.
+#' - Splits industrial coal into **coking coal** and **other coal** using MSN
+#'   codes (KC/OC), reattaches and removes the aggregate industrial coal (CLICB).
+#' - Replaces industrial HGL with combined LPG from `lpg_national.csv`;
+#'   removes HLICB to avoid double counting.
+#' - Parses heat content and bunkering volumes; ethanol is kept as annual totals.
+#'
+#' **Collate/Output:**
+#' - Returns a list with tibbles:
+#'   - `us_consumption`: standardized national consumption by source/sector (TBtu).
+#'   - `vessel_bunker_dist_fuel`: distillate bunkering volumes (million gal).
+#'   - `heat_content`: heat content (MMBtu/bbl) by MSN and year.
+#'   - `ethanol_tra`: ethanol consumption (TBtu equivalent inputs for adjustments).
+#'
+#' @param general_data List from `data_setup()`; must contain
+#' `msn_names$msn_lookup`, `msn_names$msn`, and `standardize_ffc()`.
+#'
+#' @return List with elements `us_consumption`, `vessel_bunker_dist_fuel`,
+#' `heat_content`, and `ethanol_tra` (all tibbles).
+#'
+#' @seealso [national_ffc_adjust_data()], [get_mobile_adjustments_data()],
+#' [get_ibf_adjustments_data()], [get_misc_adjustments_data()]
+#'
+#' @examples
+#' \dontrun{
+#' national <- national_ffc_read_eia_data(general_data)
+#' dplyr::glimpse(national$us_consumption)
+#' }
 # NATIONAL CONSUMPTION DATA-------------------------
 national_ffc_read_eia_data <- function(general_data) {
   
@@ -206,6 +255,61 @@ national_ffc_read_eia_data <- function(general_data) {
 
 
 # NATIONAL MOBILE DATA---------------------------------------------
+#' Build national mobile fuel adjustments (on road and non road)
+#'
+#' @description Uses MOVES3 shares, EIA heat content, ethanol, and
+#' ancillary non road activity to allocate total motor gasoline and
+#' distillate fuel between transportation vs. non transportation sectors.
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes in memory inputs: MOVES3 `vmt` and `fuel` shares (`moves3`),
+#' non road consumption (kg), national EIA consumption & heat content
+#' from `national_ffc_data`, and scraped totals for gasoline/diesel.
+#'
+#' **Transform:**
+#' - Tidies MOVES3 inputs into long `%` by `vehicle_type` × `year`,
+#' derives `fuel_type` (gasoline/diesel).
+#' - Cleans non road dataset; converts kg → gallons via density
+#' (diesel 0.85, mogas 0.74) and L→gal (3.785).
+#' - **Motor gasoline**: combines MOVES3 shares, national gasoline gallons,
+#' ethanol, non road subtraction, and heat content (MGTCKUS) to compute
+#' TBtu by class and year; applies ethanol displacement factor.
+#' - **Diesel**: combines MOVES3 diesel shares, national diesel gallons,
+#' non road subtraction, and heat content (DMTCKUS) to compute TBtu.
+#' - Builds “top down” and “bottom up” recreational boating gasoline and
+#' chooses the minimum for constraints.
+#' - Allocates non transportation vs. transportation motor gasoline based on
+#' MOVES3 on road and recreational boating totals; creates adjusted
+#' `mogas_adjusted` by meta sector.
+#' - For distillate: adds vessel bunkering (converted to gal), subtracts
+#' biodiesel (BDACB) from total, converts to TBtu with heat content,
+#' and computes bottom up transport vs. non transport splits.
+#'
+#' **Collate/Output:**
+#' - Returns a list with:
+#' - `national_mogas`: sector level adjusted gasoline TBtu by year.
+#' - `national_diesel`: adjusted distillate TBtu by sector/year with
+#' bottom up totals.
+#'
+#' @param moves3 List with elements `vmt` and `fuel` (wide by year with columns
+#' prefixed by `xYYYY`).
+#' @param nonroad_consumption Tibble of non road activity by `fuel` and
+#' `equipment_type` with year columns (e.g., `x2019`, `x2020`, `adj2021`).
+#' @param national_ffc_data List produced by [national_ffc_read_eia_data()].
+#' @param scraped_data List with `gasoline_use_national` and `diesel_use_national`
+#' (thousand gal) by `year`.
+#'
+#' @return List with tibbles `national_mogas` and `national_diesel`.
+#'
+#' @seealso [national_ffc_read_eia_data()], [national_ffc_adjust_data()]
+#'
+#' @examples
+#' \dontrun{
+#' mobiles <- get_mobile_adjustments_data(moves3, nonroad, national, scraped)
+#' dplyr::glimpse(mobiles$national_mogas)
+#' }
+
 get_mobile_adjustments_data <- function(moves3,
                                         nonroad_consumption,
                                         national_ffc_data,
@@ -559,6 +663,34 @@ get_mobile_adjustments_data <- function(moves3,
 }
 
 # NATIONAL IBF DATA---------------------------------------------
+#' Prepare misc. national adjustments (NEU/IPPU and special factors)
+#'
+#' @description Converts a corrections sheet to a long/wide tidy frame of
+#' year specific adjustment factors (e.g., Eastman, Dakota SNG, IPPU coal/gas).
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes `misc_corrections$corrections` (wide with `xYYYY` columns).
+#'
+#' **Transform:**
+#' - Cleans names; coerces numeric; pivots long to `year`/`value`;
+#' parses year; pivots wide to individual factor columns.
+#'
+#' **Collate/Output:**
+#' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
+#' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
+#'
+#' @param misc_corrections List with element `corrections` (data frame).
+#'
+#' @return Tibble of per year adjustment factors (one row per year).
+#'
+#' @seealso [national_ffc_adjust_data()]
+#'
+#' @examples
+#' \dontrun{
+#' misc_adj <- get_misc_adjustments_data(misc_corrections)
+#' }
+
 get_ibf_adjustments_data <- function(national_ffc_data,
                                      scraped_data) {
   # Fuel Densities----------------------------------------------
@@ -625,6 +757,34 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 }
 
 # NATIONAL DATA, MISC.----------------------------------------
+#' Prepare misc. national adjustments (NEU/IPPU and special factors)
+#'
+#' @description Converts a corrections sheet to a long/wide tidy frame of
+#' year specific adjustment factors (e.g., Eastman, Dakota SNG, IPPU coal/gas).
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes `misc_corrections$corrections` (wide with `xYYYY` columns).
+#'
+#' **Transform:**
+#' - Cleans names; coerces numeric; pivots long to `year`/`value`;
+#' parses year; pivots wide to individual factor columns.
+#'
+#' **Collate/Output:**
+#' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
+#' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
+#'
+#' @param misc_corrections List with element `corrections` (data frame).
+#'
+#' @return Tibble of per year adjustment factors (one row per year).
+#'
+#' @seealso [national_ffc_adjust_data()]
+#'
+#' @examples
+#' \dontrun{
+#' misc_adj <- get_misc_adjustments_data(misc_corrections)
+#' }
+
 get_misc_adjustments_data <- function(misc_corrections) {
   
    # National adjustments data-------------------------------------
@@ -644,6 +804,50 @@ get_misc_adjustments_data <- function(misc_corrections) {
 
 
 # NATIONAL DATA ADJUSTMENTS----------------------------
+#' Compute national adjusted fossil fuel consumption by sector/source
+#'
+#' @description Applies NEU, IPPU, IBF, and mobile re allocations to national
+#' EIA consumption; returns sector/source TBtu adjusted for reporting.
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes standardized `national_ffc_data$us_consumption` plus
+#' `mobile_adjustments` (mogas/diesel), `ibf_adjustments`, and
+#' per year `misc_adjustments`.
+#'
+#' **Transform:**
+#' - Residential/Commercial/Electric: passes through (with note that separate
+#' mogas/DF adjustments may apply elsewhere), creates `adjusted_value = value`.
+#' - Industrial: subtracts special factors (Eastman, Dakota SNG, IPPU coking coal,
+#' iron & steel for coal/diesel, blast furnace/coke oven/biogas/ammonia for gas);
+#' sets NEU 100% categories (asphalt, misc products, naphtha, other oil,
+#' special naphtha, waxes) to zero adjusted energy; carries through others.
+#' - Transportation: subtracts IBF for residual/distillate/jet; carries through
+#' other fuels; keeps “combined lpg” where applicable.
+#'
+#' **Collate/Output:**
+#' - Single tibble with `sector_description`, `source_description`, `year`,
+#' original `value`, and `adjusted_value` (TBtu).
+#'
+#' @param national_ffc_data List from [national_ffc_read_eia_data()].
+#' @param general_data List with `standardize_ffc()` and MSN mappings.
+#' @param mobile_adjustments List from [get_mobile_adjustments_data()] (currently
+#' not directly merged here; interface reserved).
+#' @param ibf_adjustments List from [get_ibf_adjustments_data()].
+#' @param misc_adjustments Tibble from [get_misc_adjustments_data()].
+#'
+#' @return Tibble of adjusted national consumption by sector/source/year.
+#'
+#' @seealso [national_ffc_read_eia_data()], [get_mobile_adjustments_data()],
+#' [get_ibf_adjustments_data()], [get_misc_adjustments_data()],
+#' [national_ffc_calculate_emissions()]
+#'
+#' @examples
+#' \dontrun{
+#' adj <- national_ffc_adjust_data(national, general_data, mobiles, ibf, misc_adj)
+#' dplyr::count(adj, sector_description, source_description)
+#' }
+
 national_ffc_adjust_data <- function(
     national_ffc_data,
     general_data,
@@ -900,6 +1104,37 @@ national_ffc_adjust_data <- function(
 }
 
 # NATIONAL CO2 EMISSIONS------------------------------------
+' Calculate national CO2 emissions from adjusted energy use
+#'
+#' @description Joins adjusted TBtu with carbon factors and computes
+#' CO2 emissions (MMT) using 44/12 molecular ratio.
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes `national_ffc_adjusted` from [national_ffc_adjust_data()].
+#' - Consumes `carbon_coefficients$carbon_factors` and `carbon_ratio`.
+#'
+#' **Transform:**
+#' - Computes `mmt_co2 = adjusted_value * (carbon_factor / 1000) * carbon_ratio`.
+#' - Applies variable labels via `general_data$apply_variable_labels()`.
+#'
+#' **Collate/Output:**
+#' - Tibble of emissions by sector/source/year with `mmt_co2`.
+#'
+#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
+#' @param carbon_coefficients List with `carbon_factors` (per fuel/year) and
+#' scalar `carbon_ratio` (44/12).
+#' @param general_data List providing `apply_variable_labels()`.
+#'
+#' @return Tibble with CO2 emissions (MMT) per sector/source/year.
+#'
+#' @seealso [national_ffc_adjust_data()]
+#'
+#' @examples
+#' \dontrun{
+#' co2_nat <- national_ffc_calculate_emissions(adj, carbon_coeffs, general_data)
+#' }
+
 national_ffc_calculate_emissions <- function(national_ffc_adjusted,
                                              carbon_coefficients,
                                              general_data) {
@@ -919,6 +1154,27 @@ national_ffc_calculate_emissions <- function(national_ffc_adjusted,
 }
 
 # NATIONAL FIGURES--------------------------------------
+#' Build national ggplot2 figures for FFC
+#'
+#' @description Placeholder that returns `NULL` until figures are implemented.
+#'
+#' @details
+#' **Retrieval/Transform:** Not yet implemented.
+#'
+#' **Collate/Output:**
+#' - Returns `NULL`. Intended to assemble a list of ggplot objects based on
+#' adjusted consumption and emissions.
+#'
+#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
+#' @param carbon_emissions_national Tibble from [national_ffc_calculate_emissions()].
+#'
+#' @return `NULL` (placeholder).
+#'
+#' @seealso [national_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#'
+#' @examples
+#' NULL
+
 national_ffc_ggplot_figures <- function(national_ffc_adjusted,
                                         carbon_emissions_national) {
   
@@ -928,6 +1184,33 @@ national_ffc_ggplot_figures <- function(national_ffc_adjusted,
 }
 
 # NATIONAL TABLES----------------------------------------------
+#' Produce national GT tables for FFC
+#'
+#' @description Returns a list of formatted `gt` tables (demo stub uses `mtcars`).
+#'
+#' @details
+#' **Retrieval:**
+#' - Consumes adjusted national energy and CO2 tables (not yet wired in demo).
+#'
+#' **Transform:**
+#' - Demonstrates table header, styling, stub configuration, grand totals, and
+#' footnotes that match report style.
+#'
+#' **Collate/Output:**
+#' - Returns a named list `national_ffc_tables` of `gt` objects for report export.
+#'
+#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
+#' @param carbon_emissions_national Tibble from [national_ffc_calculate_emissions()].
+#'
+#' @return Named list of `gt` tables.
+#'
+#' @seealso [gt::gt()]
+#'
+#' @examples
+#' \dontrun{
+#' tabs <- national_ffc_gt_tables(adj, co2_nat)
+#' }
+
 national_ffc_gt_tables <- function(national_ffc_adjusted,
                                    carbon_emissions_national) {
   national_ffc_tables <- lst()

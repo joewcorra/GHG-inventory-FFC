@@ -630,8 +630,8 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
 #' - Sets a constant storage factor of 0.1 for non-energy use (NEU); this is unique to territories.
 #' - Interpolates missing carbon factors if necessary.
 #' - Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
-#'	- Adjusts emissions for other petroleum liquids and lubricants by applying the NEU storage factor.
-#'	- Applies metadata labels, derived from the data dictionary in `general_data`, to the column names.
+#' - Adjusts emissions for other petroleum liquids and lubricants by applying the NEU storage factor.
+#' - Applies metadata labels, derived from the data dictionary in `general_data`, to the column names.
 #' **Collate/Output:** 
 #' `carbon_emissions_territories`: a tibble
 #'
@@ -706,9 +706,49 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
 #' **Retrieval:** 
 #' - No new data retrieved in this function. 
 #' **Transform:** 
-#' 
+#' - Standardizes the seds data using functions from functions_both.R.
+#' - Sets the consumption values for pentanes plus and unfinished oils to zero to avoid double counting.
+#' - Performs adjustments by sector, collecting the results of each sectors into a list element.
+#' - Adjusts residential sector consumption:
+#' - Processes residential sector data for various energy sources (coal, natural gas, distillate fuel, LPG, and others).
+#' - For coal and natural gas, calculates adjusted values using national inventory adjustment factors and sums of state values.
+#' - Subtracts supplemental natural gas to get net natural gas.
+#' - For LPGs, uses the original values directly as adjusted values.
+#' - Adjusts commercial sector consumption:
+#' - Similar to the residential sector, processes commercial sector data for coal, distillate fuel, natural gas, gasoline, LPG, and other sources.
+#' - Calculates adjusted values using national inventory adjustment factors.
+#' - Subtracts supplemental natural gas to get net natural gas.
+#' - Subtracts ethanol from total motor gasoline to get net gasoline.
+#' - Adjusts industrial sector consumption:
+#' - Processes industrial sector data for various sources, including coking coal, other coal, natural gas, residual fuel, distillate fuel, gasoline, petroleum coke, LPG, and other sources.
+#' - Calculates adjusted values using national inventory adjustment factors.
+#' - Subtracts supplemental natural gas to get net natural gas.
+#' - Subtracts ethanol from total motor gasoline to get net gasoline.
+#' - Applies IPPU adjustment factors to coking coal, other industrial coal, natural gas, diesel fuel, and residual fuel.
+#' - Adjusts transportation sector consumption:
+#' - Processes transportation sector data for distillate fuel, gasoline, lubricants, jet fuel, residual fuel, coal, LPG, aviation gasoline, and natural gas.
+#' - Calculates motor gasoline and diesel consumption using distribution data scraped from FWHA website.
+#' - Calculates consumption of other fuels using SEDS data.
+#' - Calculates adjusted values using national inventory adjustment factors and distribution data.
+#' - Subtracts supplemental natural gas to get net natural gas.
+#' - Adjusts electric power sector consumption:
+#' - Processes electric power sector data for coal, natural gas, geothermal, residual fuel, petroleum coke, and distillate fuel.
+#' - Uses adjustment factors from national data to calculate adjusted values.
+#' - Adjusts IBF consumption:
+#' - Calculates IBF diesel and residual fuel consumption using FOKS distribution data. 
+#' - Calculates jet fuel using SEDS data.
+#' - Calculates IBF adjusted values using national data and selects relevant columns for further processing.
+#' - Adjusts NEU consumption:
+#' - Processes NEU data for various sources, including other coal, coking coal, natural gas, distillate fuel, LPG, petroleum coke, still gas, and other NEU sources.
+#' - Calculates NEU adjusted values using NEU adjustment factors and IPPU distribution data.
+#' # Aggregates all adjusted data:
+#' - Aggregates all adjusted data from residential, commercial, industrial, transportation, and electric power sectors.
+#' - Subtracts adjusted NEU and IBF values from the applicable adjusted industrial and transportation values to get the final adjusted energy consumption for those sectors.
 #' **Collate/Output:** 
-#' 
+#'   - `state_ffc_adjusted`, list with three elements:
+#'   - `seds_all_adjusted`, tibble used by 
+#'   - `seds_ind_adjusted`, tibble used by 
+#'   - `seds_neu_adjusted`, tibble used by 
 #'
 #' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
 #' @param seds Tibble created by `state_ffc_get_seds_data()`
@@ -1117,7 +1157,6 @@ state_ffc_adjust_data <- function(seds,
       ) %>%
       # Rename adjustment factor for clarity
       rename(petro_coke_factor = national_value) %>%
-      # adjusted petro coke = petro coke factor * (petro coke / sum of states)
       mutate(adjusted_value = petro_coke_factor * (value / states_sum_value)),
     
     # LPG
@@ -1570,15 +1609,30 @@ state_ffc_adjust_data <- function(seds,
 }
 
 # STATE NEU CO2 EMISSIONS--------------------------------------
-#' One line summary in plain English
 #'
-#' @description What the function does in business terms (data in, data out).
+#' @description This function calculates carbon emissions for non-energy use (NEU) of various fossil fuel sources across U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
 #' @details
-#' **Retrieval:** where data comes from (APIs/files)  
-#' **Transform:** key steps (filters, joins, adjustments)  
-#' **Collate/Output:** objects returned and how they’re used downstream
+#' **Retrieval:** 
+#' - No new data retrieved in this function.  
+#' **Transform:** 
+#' - Begins with the adjusted SEDS consumption data.
+#' - Joins with several datasets: feedstock export adjustments, NEU adjustments, and petrochemical distribution data.
+#' -Replaces any missing values in feedstock exports with zero.
+#' - Calculates the sum of NEU adjusted values for all states and renames petrochemical distribution percentages as feedstock distribution for clarity.
+#' - Processes NEU data for different fossil fuel sources, such as coal, coking coal, natural gas, petroleum coke, hydrocarbon gas liquids (HGL), distillate fuel oil, waxes, still gas, miscellaneous petroleum products, naphtha, special naphtha, other oils, asphalt & road oil, and lubricants.
+#' - For each source, calculates adjusted NEU values by incorporating feedstock adjustments and distribution percentages.Some sources use specific adjustment formulas, such as HGLs and other oils, which include additional factors.
+#' - Calculates carbon emissions:
+#' - Combines all NEU adjusted values into a single data frame.
+#' - Joins with carbon factors ensuring the correct factors are used for NEU sources.
+#' - Calculates carbon emissions in MMT of CO2 by multiplying consumption by the appropriate carbon factor.
+#' - Adjusts the final carbon emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
+#' **Collate/Output:** 
+#' `carbon_emissions_state_neu`, a tibble used by
 #'
 #' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @param state_ffc_adjusted List created by `state_ffc_adjust_data()`
+#' @param carbon_coefficients List created by `get_carbon_factors()`
+#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
 #' @return Tibble with columns: state, year, sector_description, source_description, value …
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
@@ -1813,15 +1867,29 @@ return(carbon_emissions_state_neu)
 }
 
 # STATE FFC CO2 EMISSIONS-----------------------------------------
-#' One line summary in plain English
 #'
-#' @description What the function does in business terms (data in, data out).
+#' @description This function calculates carbon emissions for fossil fuel consumption across different sectors in U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
 #' @details
-#' **Retrieval:** where data comes from (APIs/files)  
-#' **Transform:** key steps (filters, joins, adjustments)  
-#' **Collate/Output:** objects returned and how they’re used downstream
+#' **Retrieval:** 
+#' - No new data retrieved in this function.  
+#' **Transform:** 
+#' - Begins with the adjusted SEDS consumption data.
+#' - Modifies source descriptions to align with those in the carbon factors dataset by handling specific naming conventions and sector codes.
+#' - Joins with feedstock export adjustments for specific sources.
+#' - Joins with miscellaneous adjustments to include IPPU adjustment factors.
+#' - Updates NEU sources needing feedstock adjustments, ensuring non-negative values.
+#' - Calculates carbon emissions:
+#' - Joins with carbon factors data to get the carbon coefficients for each source.
+#' - Calculates carbon emissions in MMT of CO2 by multiplying consumption by the appropriate carbon factor.
+#' - Calculates specific emissions for NEU sources based on adjusted values and carbon factors, handling specific sources differently.
+#' - Adjusts the final NEU emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
+#' **Collate/Output:** 
+#' `carbon_emissions_state_neu`, a tibble used by
 #'
 #' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @param state_ffc_adjusted List created by `state_ffc_adjust_data()`
+#' @param carbon_coefficients List created by `get_carbon_factors()`
+#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
 #' @return Tibble with columns: state, year, sector_description, source_description, value …
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
@@ -1930,15 +1998,22 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
 }
 
 # STATE FIGURES--------------------------------------
-#' One line summary in plain English
-#'
-#' @description What the function does in business terms (data in, data out).
+#' @description Creates figures of emissions and consumption data for the Inventory,including State-level Methodology, Chapter 2: Energy.
 #' @details
-#' **Retrieval:** where data comes from (APIs/files)  
-#' **Transform:** key steps (filters, joins, adjustments)  
-#' **Collate/Output:** objects returned and how they’re used downstream
+#' **Retrieval:** 
+#' - No new data retrieved in this function. 
+#' **Transform:** 
+#'  - Creates color palettes used in ggplot figures. 
+#'  - In-work: Reshapes national FFC data 
+#'  - Creates several tibbles from input data, selecting and reshaping where necessary to obtain appropriate data formats for plotting. 
+#'  - Creates 9 figures (including 2 sub-components) with figure numbers corresponding to those in State-level Methodology, Chapter 2: Energy.
+#' **Collate/Output:** 
+#' `state_ffc_figures`, a list used by 
 #'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
+#' @param seds_all_adjusted Tibble; list element of `state_ffc_adjusted`, created by `state_ffc_adjust_data()`
+#' @param seds_ind_adjusted Tibble; list element of `state_ffc_adjusted`, created by `state_ffc_adjust_data()`
+#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
+#' @param carbon_emissions_state_ffc Tibble created by `state_ffc_calculate_emissions()`
 #' @return Tibble with columns: state, year, sector_description, source_description, value …
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
@@ -2440,16 +2515,19 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
 
 
 # STATE TABLES----------------------------------------------
-#' One line summary in plain English
-#'
-#' @description What the function does in business terms (data in, data out).
+#' @description Creates tables of emissions and consumption data for the Inventory,including State-level Methodology, Chapter 2: Energy.
 #' @details
-#' **Retrieval:** where data comes from (APIs/files)  
-#' **Transform:** key steps (filters, joins, adjustments)  
-#' **Collate/Output:** objects returned and how they’re used downstream
+#' **Retrieval:** 
+#' - No new data retrieved in this function. 
+#' **Transform:** 
+#'  - Creates several gt tables from input data, selecting and reshaping where necessary to obtain appropriate data formats. 
+#'  - Creates 4 tables with numbers corresponding to those in State-level Methodology, Chapter 2: Energy.
+#' **Collate/Output:** 
+#' `state_ffc_tables`, a list used by 
 #'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' @param seds_all_adjusted List created by `state_ffc_adjust_data()`
+#' @param carbon_emissions_state_ffc Tibble created by `state_ffc_calculate_emissions()`
+#' @return `state_ffc_tables`, a list used by 
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
 #' # minimal usage example
@@ -2645,16 +2723,27 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 
 
 # INVDB--------------------------------------------------
-#' One line summary in plain English
-#'
-#' @description What the function does in business terms (data in, data out).
+#' @description This function processes carbon emissions data for U.S. territories and states, organizing it for output to the inventory database (InvDB) in Excel, CSV, and JSON formats.
 #' @details
-#' **Retrieval:** where data comes from (APIs/files)  
-#' **Transform:** key steps (filters, joins, adjustments)  
-#' **Collate/Output:** objects returned and how they’re used downstream
-#'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @return Tibble with columns: state, year, sector_description, source_description, value …
+#' **Retrieval:** 
+#' - No new data retrieved in this function. 
+#' **Transform:** 
+#' #' - Processes `carbon_emissions_territories` for FFC sources to create `ffc_territories_invdb`.
+#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
+#' - Processes `carbon_emissions_state_neu` for NEU sources to create `neu_territories_invdb`.
+#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
+#' #' - Processes `carbon_emissions_state_ffc` for NEU sources to create `ffc_territories_invdb`.
+#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
+#' - Adds fields to conform to InvDB formatting requirements.
+#' - Joins all data into a single tibble, `ffc_invdb`.
+#' **Collate/Output:** 
+#' - Writes `ffc_invdb` to InvDB Excel template
+#' - Writes `ffc_invdb` to JSON
+#' - Writes `ffc_invdb` to CSV
+#' @param carbon_emissions_territories Tibble created by `territories_ffc_adjust_data()`
+#' @param carbon_emissions_state_ffc Tibble created by `state_neu_calculate_emissions()`
+#' @param carbon_emissions_state_neu Tibble created by `state_ffc_calculate_emissions()`
+#' @return NA (side effects only)
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
 #' # minimal usage example
