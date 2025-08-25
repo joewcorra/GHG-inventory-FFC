@@ -1,6 +1,6 @@
 
 # DATA SETUP------------------------------------
-#' Build shared dictionaries, helpers, and lookups for GHGI FFC workflows 
+#' Build shared dictionaries, helpers, and lookups for GHGI FFC workflows
 #'
 #' @description
 #' Initializes cross-cutting metadata and utilities used across the
@@ -67,8 +67,9 @@
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_to_lower str_detect str_replace str_remove str_squish str_sub
 #' @importFrom purrr map
+#' @importFrom stats na.omit
 #' @keywords internal
-#' 
+#'
 data_setup <- function(harmonized_data) {
   # Create Dataframes of MSNs and descriptions and state codes
   # Also create general-use functions
@@ -80,18 +81,18 @@ data_setup <- function(harmonized_data) {
     standardized_data <- data %>%
       
       # Make selected columns lowercase (if they exist)
-      mutate(across(matches(c("sector_description", "source_description", 
-                              "eia_description", "unit")), 
-                    ~str_to_lower(.))) 
+      mutate(across(matches(c("sector_description", "source_description",
+                              "eia_description", "unit")),
+                    ~str_to_lower(.)))
     
     if ("sector_description" %in% colnames(standardized_data)) {
       # Make 'year' a factor
-      standardized_data <- standardized_data %>% 
+      standardized_data <- standardized_data %>%
         mutate(year = as_factor(year),
                
                # Standardize sector descriptions; add the word "sector"
                sector_description = case_when(
-                 str_detect(sector_description, "electric") ~  "electric power sector", 
+                 str_detect(sector_description, "electric") ~  "electric power sector",
                  msn == "CLOCB" ~  "industrial sector", # industrial coking coal
                  msn == "CLKCB" ~  "industrial sector", # other industrial coal
                  msn == "SFINB" ~  "industrial sector", # supp. gaseous fuels
@@ -99,30 +100,30 @@ data_setup <- function(harmonized_data) {
     }
     
     if ("source_description" %in% colnames(standardized_data)) {
-      standardized_data <- standardized_data %>% 
+      standardized_data <- standardized_data %>%
         mutate(
           source_description = str_replace(source_description, " and ", " & "),
           source_description = case_when(
-            source_description %in% 
+            source_description %in%
               unique(msn_names$msn$source_description) ~ source_description,
-            str_detect(source_description, "distillate") ~ "distillate fuel oil", 
-            str_detect(source_description, "residual") ~ "residual fuel oil", 
-            str_detect(source_description, "jet fuel") ~ "jet fuel", 
+            str_detect(source_description, "distillate") ~ "distillate fuel oil",
+            str_detect(source_description, "residual") ~ "residual fuel oil",
+            str_detect(source_description, "jet fuel") ~ "jet fuel",
             str_detect(source_description, "av(?=blend)") ~ "aviation gasoline",
-            str_detect(source_description, "(?=.*av)(?=.*blend)") ~ "aviation gasoline blending components", 
+            str_detect(source_description, "(?=.*av)(?=.*blend)") ~ "aviation gasoline blending components",
             str_detect(source_description, "utility coal") ~ "coal",
             str_detect(source_description, "other coal") ~ "coal",
             str_detect(source_description, "other oils") ~ "other oils",
-            str_detect(source_description, "<401 deg|naphtha less") ~ "petrochemical feedstocks, naphtha less than 401 degrees F", 
+            str_detect(source_description, "<401 deg|naphtha less") ~ "petrochemical feedstocks, naphtha less than 401 degrees F",
             str_detect(source_description, "misc") ~ "miscellaneous petroleum products",
-            str_detect(source_description, "(?=.*mo)(?=.*blend)") ~ "motor gasoline blending components", 
+            str_detect(source_description, "(?=.*mo)(?=.*blend)") ~ "motor gasoline blending components",
             str_detect(source_description, "lpg (propane)") ~ "lpg",
             str_detect(source_description, "liquefied petroleum gas") ~ "lpg",
             str_detect(source_description, "hgl|hydrocarbon gas liquids") ~ "lpg",
             .default = source_description)) }
     
     
-    return(standardized_data) 
+    return(standardized_data)
     
   }
   
@@ -167,17 +168,17 @@ data_setup <- function(harmonized_data) {
   # We must create tibbles of descriptors for sources & sectors of interest.
   
   # Tried to read directly from EIA, but not all sources are included in PDF!
-  # d <- pdftools::pdf_text("https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf") 
-  # 
+  # d <- pdftools::pdf_text("https://www.eia.gov/state/seds/sep_prices/notes/pr_guide.pdf")
+  #
   # e <- d %>%
-  #   str_split("\\s{2,}") %>% 
-  #   map(\(x) str_replace(x, "\\\n.*", "")) %>% 
-  #   map(as_tibble) %>% 
-  #   list_rbind() %>% 
+  #   str_split("\\s{2,}") %>%
+  #   map(\(x) str_replace(x, "\\\n.*", "")) %>%
+  #   map(as_tibble) %>%
+  #   list_rbind() %>%
   #   filter(str_detect(value, "=")) %>%
-  #   separate_wider_delim(cols = value, 
-  #                        names = c("code", "description"), 
-  #                        delim = "=") 
+  #   separate_wider_delim(cols = value,
+  #                        names = c("code", "description"),
+  #                        delim = "=")
   
   # Create 'sources' tibble
   sources <- tibble(
@@ -204,7 +205,7 @@ data_setup <- function(harmonized_data) {
       "electricity sales", "ethane", "ethylene",
       "petrochemical feedstocks, naphtha less than 401 degrees F",
       "petrochemical feedstocks, other oils equal to or greater than 401 degrees F",
-      "petrochemical feedstocks, still gas", "geothermal energy", 
+      "petrochemical feedstocks, still gas", "geothermal energy",
       "hydrocarbon gas liquids",
       "hydroelectric pumped storage",
       "isobutane", "isobutylene",
@@ -310,7 +311,7 @@ data_setup <- function(harmonized_data) {
     ) %>%
     add_row(
       msn = "NNEIB", sector_description = "electric power sector (generation)",
-      source_code = "NN", sector_code = "EI", 
+      source_code = "NN", sector_code = "EI",
       source_description = "natural gas consumed by the electric power sector (excluding supplemental gaseous fuels)"
     ) %>%
     add_row(
@@ -351,9 +352,9 @@ data_setup <- function(harmonized_data) {
     "CCNIB", "CLICB", "CLKCB", "CLOCB", "CLRCB", "CLACB",
     "CLCCB", "CLEIB", "COICB", "DFACB", "DFCCB", "DFEIB",
     "DFICB", "DKEIB", "DFRCB", "EMACB", "EMCCB", "EMICB", "EMTCB",
-    "EQICB", "EYICB", "FNICB", "FOICB", "GETCB", 
+    "EQICB", "EYICB", "FNICB", "FOICB", "GETCB",
     "HLACB", "HLCCB", "HLICB",
-    "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB", 
+    "HLRCB", "IQICB", "IYICB", "JFACB", "KSICB", "KSCCB",
     "KSRCB","LUACB", "LUICB", "MBICB", "MGACB", "MGCCB",
     "MGICB", "MSICB", "NGACB", "NGCCB", "NGEIB", "NGRCB", "NGICB",
     "NNCCB", "NNEIB", "NNICB", "NNRCB", "PCCCB", "PCEIB",
@@ -371,7 +372,7 @@ data_setup <- function(harmonized_data) {
     ghgi_variables,
     ghgi_invdb_values,
     msn_names,
-    apply_variable_labels, 
+    apply_variable_labels,
     standardize_ffc
   )
   
@@ -432,9 +433,8 @@ data_setup <- function(harmonized_data) {
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_to_lower str_remove
 #' @keywords internal
-
 get_carbon_factors <- function(general_data,
-                               carbon_factors, 
+                               carbon_factors,
                                neu_storage) {
   
   # Ratio of the molecular weight of carbon dioxide to carbon
@@ -480,23 +480,23 @@ get_carbon_factors <- function(general_data,
     mutate(
       year = str_remove(year, "x"),
       carbon_factor = as.numeric(carbon_factor)
-    ) 
+    )
   
   d <-general_data$standardize_ffc(carbon_factors, general_data$msn_names)
   
   neu_storage <- neu_storage %>%
     clean_names() %>%
-    rename(sector_description = sector, 
+    rename(sector_description = sector,
            source_description = source) %>%
-    pivot_longer(cols = starts_with("x"), 
-                 names_to = "year", 
+    pivot_longer(cols = starts_with("x"),
+                 names_to = "year",
                  values_to = "storage_factor") %>%
-    mutate(sector_description = str_to_lower(sector_description), 
-           source_description = str_to_lower(source_description), 
+    mutate(sector_description = str_to_lower(sector_description),
+           source_description = str_to_lower(source_description),
            year = str_remove_all(year, "x") %>% as_factor())
   
-  carbon_coefficients <- lst(carbon_factors, 
-                             carbon_ratio, 
+  carbon_coefficients <- lst(carbon_factors,
+                             carbon_ratio,
                              neu_storage)
   
   return(carbon_coefficients)
@@ -557,9 +557,7 @@ get_carbon_factors <- function(general_data,
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_remove str_squish str_detect
 #' @keywords internal
-#' 
-scrape_data <- function(general_data) { ... }
-
+#'
 scrape_data <- function(general_data) {
   # Set year to match most recent available year (current year minus two)
   latest_year <- year(Sys.Date()) - 2
@@ -599,7 +597,7 @@ scrape_data <- function(general_data) {
     ) %>%
     # Remove letters from year column
     mutate(
-      state = str_squish(state), 
+      state = str_squish(state),
       year = str_remove(year, "[a-z]"),
       # Get national total for each year by insta-grouping
       national_total = sum(gasoline_percent, na.rm = TRUE), .by = year
@@ -624,7 +622,7 @@ scrape_data <- function(general_data) {
     # No longer need national total or full state name
     select(-national_total, -state_name)
   
- 
+  
   # Scrape FWHA Fuel Use National FFC
   # Retrieve gasoline Excel file data
   GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
@@ -651,14 +649,14 @@ scrape_data <- function(general_data) {
   # NOTE: NOt sure if this is the right data; see issues in Github
   # Temporary file storage path
   # local_excel_path <- tempfile(fileext = ".xlsx")
-  # 
+  #
   # diesel_url <- paste0(
   #   "https://www.fhwa.dot.gov/policyinformation/statistics/",
   #   latest_year, "/xls/vm1.xlsx"
   # )
   # # https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
   # GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
-  # 
+  #
   # diesel_use_by_class <- read_excel(local_excel_path, skip = 5) %>%
   #   clean_names() %>%
   #   # Make all value columns numeric
@@ -694,7 +692,7 @@ scrape_data <- function(general_data) {
     ) %>%
     # Remove letters from year column
     mutate(
-      state = str_squish(state), 
+      state = str_squish(state),
       year = str_remove(year, "[a-z]"),
       # Get national total for each year by insta-grouping
       national_total = sum(diesel_percent, na.rm = TRUE), .by = year
@@ -717,7 +715,7 @@ scrape_data <- function(general_data) {
     # No longer need national total or full state name
     select(-national_total, -state_name) %>%
     # NOTE: diesel dist value for OR 2018 missing; interpolated instead
-    mutate(diesel_percent = if_else(state == "OR" & year == "2018", 
+    mutate(diesel_percent = if_else(state == "OR" & year == "2018",
                                     0.0139, diesel_percent))
   
   diesel_use_national <- read_excel(local_excel_path) %>%
@@ -738,7 +736,7 @@ scrape_data <- function(general_data) {
     select(year, diesel_use_gal) %>%
     # Remove letters from year column
     mutate(year = str_remove(year, "[a-z]")) %>%
-  # Retain only 1990 onward
+    # Retain only 1990 onward
     filter(year >= 1990) %>%
     group_by(year) %>%
     summarize(diesel_use_gal = sum(diesel_use_gal, na.rm = TRUE)) %>%
@@ -755,5 +753,3 @@ scrape_data <- function(general_data) {
   
   return(scraped_data)
 }
-
-
