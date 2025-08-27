@@ -23,10 +23,13 @@ git clone https://github.com/USEPA/GHG-inventory-FFC.git
 
 2. Ensure that you have the required R packages installed. You can install any missing dependencies by running the following in your R console:
 
-install.packages(c("assertr", "extrafont", "gt", "gtExtras", "httr", "janitor", 
-                            "jsonlite", "knitr", "labelled", "openxlsx", 
-                            "pdftools", "reactable", "readxl", "rvest", "quarto", "shiny",
-                            "showtext", "tarchetypes", "targets", "tictoc", "tidyverse", "visNetwork", "waldo"))
+install.packages(c(
+    "extrafont", "gt", "gtExtras", "httr", "janitor",
+    "jsonlite", "knitr", "labelled", "openxlsx",
+    "pdftools", "quarto", "reactable", "readxl", "roxygen2", "rvest",
+    "showtext", "tictoc", "tidyverse", 
+    "targets", "tarchetypes", "visNetwork"
+  )
 
 
 
@@ -36,13 +39,13 @@ This repository contains two main components:
 
 1. National FFC Emissions Calculation
 
-To compute emissions data at the national level, use the national_ffc_master_script.R. This script calls on other source scripts and compiles data from multiple sources.
+To compute emissions data at the national level, use functions_both.R and functions_national.R. These scripts call on other source scripts and compile data from multiple sources.
 
 
 
 2. State-Level FFC Emissions Calculation
 
-To compute emissions data at the state level, use state_ffc_master_script.R. This script processes state-specific data.
+To compute emissions data at the state level, use functions_both.R, functions_national.R, and functions_state.R. The latter script processes state-specific data.
 
 
 
