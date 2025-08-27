@@ -1,76 +1,15 @@
-Functions
 
-# NATIONAL CONSUMPTION DATA-------------------------
-#' Retrieve national fossil fuel consumption and auxiliary inputs from EIA
-#'
-#' @description Retrieves U.S. national fossil fuel consumption from EIA APIs,
-#' heat content series, vessel bunkering diesel volumes, and ethanol used
-#' in transportation; harmonizes fields to your GHGI data dictionary.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect str_sub
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - Calls EIA Total Energy API by year (1990..latest_year) via a helper
-#'   `get_national_results(year)` to avoid the 5,000 row limit.
-#' - Pulls HGL component series from the petroleum product supply API
-#'   (ETH/PROP/… series). For production use, reads preprocessed
-#'   `data/lpg_national.csv` in place of unpublished EIA splits.
-#' - Retrieves heat content for distillate, motor gasoline, and HGL
-#'   (DMTCKUS, MGTCKUS, HLTCKUS).
-#' - Retrieves vessel bunkering distillate fuel (EIA 821 use, NUS, VAB).
-#' - Retrieves ethanol in transportation (EMACBUS).
-#'
-#' **Transform:**
-#' - Collates API payloads, cleans names, selects `year`, `msn`, `value`, `unit`,
-#'   coerces types, truncates MSN to 5 chars, and filters to TBtu fuels of interest.
-#' - Joins to `general_data$msn_names$msn` to attach source/sector labels, de dupes,
-#'   and standardizes via `general_data$standardize_ffc()`.
-#' - Splits industrial coal into **coking coal** and **other coal** using MSN
-#'   codes (KC/OC), reattaches and removes the aggregate industrial coal (CLICB).
-#' - Replaces industrial HGL with combined LPG from `lpg_national.csv`;
-#'   removes HLICB to avoid double counting.
-#' - Parses heat content and bunkering volumes; ethanol is kept as annual totals.
-#'
-#' **Collate/Output:**
-#' - Returns a list with tibbles:
-#'   - `us_consumption`: standardized national consumption by source/sector (TBtu).
-#'   - `vessel_bunker_dist_fuel`: distillate bunkering volumes (million gal).
-#'   - `heat_content`: heat content (MMBtu/bbl) by MSN and year.
-#'   - `ethanol_tra`: ethanol consumption (TBtu equivalent inputs for adjustments).
-#'
-#' @param general_data List from `data_setup()`; must contain
-#' `msn_names$msn_lookup`, `msn_names$msn`, and `standardize_ffc()`.
-#'
-#' @return List with elements `us_consumption`, `vessel_bunker_dist_fuel`,
-#' `heat_content`, and `ethanol_tra` (all tibbles).
-#'
-#' @seealso [national_ffc_adjust_data()], [get_mobile_adjustments_data()],
-#' [get_ibf_adjustments_data()], [get_misc_adjustments_data()]
-#'
-#' @examples
-#' \dontrun{
-#' national <- national_ffc_read_eia_data(general_data)
-#' dplyr::glimpse(national$us_consumption)
-#' }
-national_ffc_read_eia_data <- function(general_data) {
-  
-  # API key generated 11/22/23
-  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
-  
-  # Change to match most recent available year (current year minus two)
-  latest_year <- lubridate::year(Sys.Date()) - 2
-  
-  
-  # Read EIA Consumption Data----------------------------------------------
-  
-  ## EIA Consumption Data--------------------------------------------------
-  
+# National Consumption Data-------------------------
+
   # Function to read data from EIA API, 1 year at a time
-  get_national_results <- function(year) {
+  get_national_results <- function() {
+    
+    # API key generated 11/22/23
+    key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+    
+    # Change to match most recent available year (current year minus two)
+    latest_year <- lubridate::year(Sys.Date()) - 2
+    
     # For now, to avoid exceeding the 5000-row data limit, we will pull
     # only one year and state per query. This requires n=51*years API queries.
     results <- paste0(
@@ -80,11 +19,10 @@ national_ffc_read_eia_data <- function(general_data) {
       "=desc&offset=0&length=5000&api_key=", key) %>% # our API key is required
       httr::GET() %>% # retrieve page from url
       httr::content("raw") %>% # extract content as a raw vector
-      jsonlite::rawToChar() %>% # convert to character data
+      rawToChar() %>% # convert to character data
       jsonlite::fromJSON() # convert from JSON to R object
-  }
   
-  ### Read National Data-----------------------------------------------
+  ## Read National Data-----------------------------------------------
   
   tictoc::tic()
   api_results <- expand_grid(
@@ -92,7 +30,7 @@ national_ffc_read_eia_data <- function(general_data) {
     purrr::pmap(function(year) get_national_results(year))
   tictoc::toc()
   
-  ### Collate National Data-------------------------------------------
+  ## Collate National Data-------------------------------------------
   
   # Extract national consumption data from API results
   us_consumption_all <- api_results %>%
@@ -108,13 +46,12 @@ national_ffc_read_eia_data <- function(general_data) {
   # Collate national data (not including industrial coal)
   us_consumption <- us_consumption_all %>%
     filter(unit == "trillion btu",
-           msn %in% general_data$msn_names$msn_lookup,
+           msn %in% msn_lookup,
            str_sub(msn, 3, 4) %in% c("AC", "RC", "IC", "CC", "EI")) %>%
-    left_join(general_data$msn_names$msn %>%
+    left_join(msn %>%
                 select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
-    distinct() %>%
-    general_data$standardize_ffc(general_data$msn_names)
+    distinct()
   
   # Collate industrial coal data, calculate and append
   us_ind_coal <- us_consumption_all %>%
@@ -150,7 +87,7 @@ national_ffc_read_eia_data <- function(general_data) {
   ) %>%
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() # convert from JSON to R object
   
   lpg_components <- purrr::pluck(eia_api_lpg, "response", "data") %>%
@@ -187,9 +124,20 @@ national_ffc_read_eia_data <- function(general_data) {
     # Remove ind HGL (replaced by combined lpg)
     filter(msn != "HLICB")
   
-  ## Heat Content Data----------------------------------------------
+  return(us_consumption)
   
-  # Heat content may vary and is used for some adjustments
+}
+
+# Heat Content Data----------------------------------------------
+  
+get_heat_content <- function() {
+  
+  # API key generated 11/22/23
+  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+  
+  # Change to match most recent available year (current year minus two)
+  latest_year <- lubridate::year(Sys.Date()) - 2
+  
   eia_api_heat <- paste0(
     "https://api.eia.gov/v2/total-energy/data/?frequency=annual&data[0]",
     "=value&facets[msn][]=DMTCKUS&facets[msn][]=MGTCKUS&facets[msn][]=HLTCKUS&",
@@ -199,7 +147,7 @@ national_ffc_read_eia_data <- function(general_data) {
   ) %>%
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() # convert from JSON to R object
   
   # Units in Millions of Btu / Barrel
@@ -211,9 +159,19 @@ national_ffc_read_eia_data <- function(general_data) {
     # Make heat content value numeric
     mutate(heat_content = as.numeric(heat_content))
   
+  return(eia_heat_content)
   
-  ## Vessel Bunkering Diesel Data----------------------------------
-  
+}
+
+  # Vessel Bunkering Diesel Data----------------------------------
+  get_vessel_bunker <- function() {
+    
+    # API key generated 11/22/23
+    key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+    
+    # Change to match most recent available year (current year minus two)
+    latest_year <- lubridate::year(Sys.Date()) - 2
+    
   eia_api_vessel_bunker <- paste0(
     "https://api.eia.gov/v2/petroleum/cons/821usea/data/?frequency=annual",
     "&data[0]=value&facets[duoarea][]=NUS&facets[process][]=VAB&start=1990&end=",
@@ -223,7 +181,7 @@ national_ffc_read_eia_data <- function(general_data) {
   ) %>%
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() # convert from JSON to R object
   
   # Units in Millions of Gallons
@@ -232,8 +190,16 @@ national_ffc_read_eia_data <- function(general_data) {
     # Make fuel consumption value numeric
     mutate(value = as.numeric(value))
   
-  ## Ethanol (Transportation) Data----------------------------------
+  return(vessel_bunker_dist_fuel)
   
+} 
+
+  # Ethanol (Transportation) Data----------------------------------
+ get_ethanol_tra <- function() {
+   
+   # API key generated 11/22/23
+   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+   
   eia_api_ethanol <- paste0(
     "https://api.eia.gov/v2/total-energy/data/?frequency",
     "=annual&data[0]=value&start=1990&end=2022&sort[0][column]",
@@ -244,7 +210,7 @@ national_ffc_read_eia_data <- function(general_data) {
   ) %>%
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() # convert from JSON to R object
   
   ethanol_tra <- purrr::pluck(eia_api_ethanol, "response", "data") %>%
@@ -252,14 +218,8 @@ national_ffc_read_eia_data <- function(general_data) {
     select(-unit, eia_description = seriesDescription,
            year = period, ethanol = value)
   
-  national_ffc_data <- lst(
-    us_consumption, vessel_bunker_dist_fuel,
-    heat_content, ethanol_tra
-  )
-  
-  return(national_ffc_data)
+  return(ethanol_tra)
 }
-
 
 # NATIONAL MOBILE DATA---------------------------------------------
 #' Build national mobile fuel adjustments (on road and non road)
@@ -309,7 +269,7 @@ national_ffc_read_eia_data <- function(general_data) {
 #' @param nonroad_consumption Tibble of non road activity by `fuel` and
 #' `equipment_type` with year columns (e.g., `x2019`, `x2020`, `adj2021`).
 #' @param national_ffc_data List produced by [national_ffc_read_eia_data()].
-#' @param scraped_data List with `gasoline_use_national` and `diesel_use_national`
+#' @param fhwa_data List with `gasoline_use_national` and `diesel_use_national`
 #' (thousand gal) by `year`.
 #'
 #' @return List with tibbles `national_mogas` and `national_diesel`.
@@ -324,8 +284,11 @@ national_ffc_read_eia_data <- function(general_data) {
 
 get_mobile_adjustments_data <- function(moves3,
                                         nonroad_consumption,
-                                        national_ffc_data,
-                                        scraped_data) {
+                                        ethanol_tra,
+                                        vessel_bunker_dist_fuel,
+                                        eia_heat_content,
+                                        us_consumption, 
+                                        fhwa_data) {
   # Applies to Commercial, Industrial, Transportation
   
   # Motor Gasoline------------------------------------------------------------
@@ -417,14 +380,14 @@ get_mobile_adjustments_data <- function(moves3,
   
   mogas <- moves %>%
     filter(fuel_type == "gasoline") %>%
-    left_join(scraped_data$gasoline_use_national, by = "year") %>%
+    left_join(fhwa_data$gasoline_use_national, by = "year") %>%
     left_join(
-      national_ffc_data$heat_content %>%
+      eia_heat_content %>%
         filter(msn == "MGTCKUS") %>%
         select(year, heat_content),
       by = "year"
     ) %>%
-    left_join(national_ffc_data$ethanol_tra, by = "year") %>%
+    left_join(ethanol_tra, by = "year") %>%
     left_join(nonroad %>%
                 filter(fuel != "diesel") %>%
                 group_by(year) %>%
@@ -443,10 +406,10 @@ get_mobile_adjustments_data <- function(moves3,
   
   diesel <- moves %>%
     filter(fuel_type == "diesel") %>%
-    # left_join(scraped_data$diesel_use_by_class, by = "year") %>%
-    left_join(scraped_data$diesel_use_national, by = "year") %>%
+    # left_join(fhwa_data$diesel_use_by_class, by = "year") %>%
+    left_join(fhwa_data$diesel_use_national, by = "year") %>%
     left_join(
-      national_ffc_data$heat_content %>%
+      eia_heat_content %>%
         filter(msn == "DMTCKUS") %>%
         select(year, heat_content),
       by = "year"
@@ -481,7 +444,7 @@ get_mobile_adjustments_data <- function(moves3,
     mutate(nonroad_mogas = mogas_ethanol_adjusted -
              gasoline_use_gal) %>%
     # Join w/ heat content data for mogas
-    left_join(national_ffc_data$heat_content %>%
+    left_join(eia_heat_content %>%
                 # Motor gasoline only
                 filter(str_detect(eia_description, "asoline")),
               by = "year") %>%
@@ -504,7 +467,7 @@ get_mobile_adjustments_data <- function(moves3,
     summarize(four_stroke_boats = sum(nonroad_consumption, na.rm = TRUE))
   
   # First compute rec boat mogas by the bottom-up method
-  rec_boat_mogas_bottom_up <- national_ffc_data$heat_content %>%
+  rec_boat_mogas_bottom_up <- eia_heat_content %>%
     # Motor gasoline only
     filter(str_detect(eia_description, "asoline")) %>%
     select(year, heat_content) %>%
@@ -572,7 +535,7 @@ get_mobile_adjustments_data <- function(moves3,
   
   # vessel_bunker_dist_fuel
   # Data needed for vessel fuel and rail
-  dist_fuel_vessel <- national_ffc_data$vessel_bunker_dist_fuel %>%
+  dist_fuel_vessel <- vessel_bunker_dist_fuel %>%
     # Dist fuel only
     filter(str_detect(eia_description, "istillate")) %>%
     # Convert units to million gallons
@@ -639,7 +602,7 @@ get_mobile_adjustments_data <- function(moves3,
     )) %>%
     ungroup() %>%
     # Join with heat content data for distillate fuel
-    left_join(national_ffc_data$heat_content %>%
+    left_join(eia_heat_content %>%
                 # Distillate fuel only
                 filter(str_detect(eia_description, "istillate")), by = "year") %>%
     # Convert to barrels and multiply by heat content to get mmbtu
@@ -709,7 +672,7 @@ get_mobile_adjustments_data <- function(moves3,
 #' }
 
 get_ibf_adjustments_data <- function(national_ffc_data,
-                                     scraped_data) {
+                                     fhwa_data) {
   # Fuel Densities----------------------------------------------
   
   # These are fixed (I think)
@@ -856,7 +819,6 @@ get_misc_adjustments_data <- function(misc_corrections) {
 #' original `value`, and `adjusted_value` (TBtu).
 #'
 #' @param national_ffc_data List from [national_ffc_read_eia_data()].
-#' @param general_data List with `standardize_ffc()` and MSN mappings.
 #' @param mobile_adjustments List from [get_mobile_adjustments_data()] (currently
 #' not directly merged here; interface reserved).
 #' @param ibf_adjustments List from [get_ibf_adjustments_data()].
@@ -882,11 +844,6 @@ national_ffc_adjust_data <- function(
     misc_adjustments
 ) {
   # Collate National consumption data-------------------------------------
-  
-  # # Apply standardization function to national data
-  national_ffc_data$us_consumption <-
-    general_data$standardize_ffc(national_ffc_data$us_consumption,
-                                 general_data$msn_names)
   
   # ## Residential, Commercial, & Electric Power----------------------------
   #
@@ -1147,7 +1104,6 @@ national_ffc_adjust_data <- function(
 #'
 #' **Transform:**
 #' - Computes `mmt_co2 = adjusted_value * (carbon_factor / 1000) * carbon_ratio`.
-#' - Applies variable labels via `general_data$apply_variable_labels()`.
 #'
 #' **Collate/Output:**
 #' - Tibble of emissions by sector/source/year with `mmt_co2`.
@@ -1155,7 +1111,6 @@ national_ffc_adjust_data <- function(
 #' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
 #' @param carbon_coefficients List with `carbon_factors` (per fuel/year) and
 #' scalar `carbon_ratio` (44/12).
-#' @param general_data List providing `apply_variable_labels()`.
 #'
 #' @return Tibble with CO2 emissions (MMT) per sector/source/year.
 #'
@@ -1177,9 +1132,6 @@ national_ffc_calculate_emissions <- function(national_ffc_adjusted,
     # MMT CO2  = btu * carbon factor/1000 * 44/12
     mutate(mmt_co2 = adjusted_value *
              (carbon_factor / 1000) * carbon_coefficients$carbon_ratio)
-  
-  # Apply labels to variables
-  carbon_emissions_national <- general_data$apply_variable_labels(carbon_emissions_national, general_data$ghgi_variables)
   
   return(carbon_emissions_national)
 }

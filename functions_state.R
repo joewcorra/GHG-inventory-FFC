@@ -21,7 +21,7 @@
 #' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
 #' @return Tibble with columns:
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-state_ffc_get_seds_data <- function(general_data) {
+state_ffc_get_seds_data <- function(msn_lookup, msn) {
   # read SEDS data from EIA API file pulled with epa_api.R
   seds <- read_csv("data/api_seds.csv") %>%
     janitor::clean_names() %>%
@@ -30,15 +30,11 @@ state_ffc_get_seds_data <- function(general_data) {
       value, unit
     ) %>%
     # filter(unit == "Billion Btu") %>%
-    filter(msn %in% general_data$msn_names$msn_lookup) %>%
-    left_join(general_data$msn_names$msn %>%
+    filter(msn %in% msn_lookup) %>%
+    left_join(msn %>%
                 select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
-    distinct() %>%
-    # # Convert to millions of BTUs
-    # mutate(value = value / 1000) %>%
-    # Standarize names and combine LPGs
-    general_data$standardize_ffc(general_data$msn_names)
+    distinct() 
   
   # Access SEDS data via EIA API
   # This script contains two options for retrieving SEDS data from the EIA API:
@@ -68,7 +64,7 @@ state_ffc_get_seds_data <- function(general_data) {
     ) %>% # our API key is required
       httr::GET() %>% # retrieve page from url
       httr::content("raw") %>% # extract content as a raw vector
-      jsonlite::rawToChar() %>% # convert to character data
+      rawToChar() %>% # convert to character data
       jsonlite::fromJSON() # convert from JSON to R object
     
     # The data limit from EIA's API is 5000 rows per query.
@@ -108,10 +104,10 @@ state_ffc_get_seds_data <- function(general_data) {
     select( state = state_id, year = period, msn = series_id,
             value, unit) %>%
     filter(unit == "Billion Btu") %>%
-    filter(msn %in% general_data$msn_names$msn_lookup) %>%
+    filter(msn %in% msn_lookup) %>%
     mutate(unit = str_to_lower(unit),
            year = as.character(year)) %>%
-    left_join(general_data$msn_names$msn %>%
+    left_join(msn %>%
                 select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
     distinct() %>%
@@ -135,7 +131,6 @@ state_ffc_get_seds_data <- function(general_data) {
 #' - Downloads annual fossil fuel consumption data from EIA API for all U.S. territories.
 #' - Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
 #' - Downloads PDF of fossil fuel heat content by year from EIA df document extracts data from document.
-#' - Uses the `general_data` object to identify the correct variable names and sector mappings.
 #' **Transform:**
 #' - Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
 #' - Applies naming harmonization so sectors, fuels, and years align with GHGI data dictionary.
@@ -146,7 +141,6 @@ state_ffc_get_seds_data <- function(general_data) {
 #' `territories`: a list containing the following:
 #' `ff_territories`: a tibble
 #' `heat_content_territories`: a tibble
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
 #' @return
 #' @seealso [state_ffc_get_seds_data()], [territories_ffc_adjust_data()]
 #' @examples
@@ -186,7 +180,7 @@ get_territories_data <- function(general_data) {
     "&api_key=", key) %>% # our API key is required
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() # convert from JSON to R object
   
   # Manually create lubricants data for PR (not in EIA for some reason)
@@ -256,7 +250,7 @@ get_territories_data <- function(general_data) {
   ) %>%
     httr::GET() %>% # retrieve page from url
     httr::content("raw") %>% # extract content as a raw vector
-    jsonlite::rawToChar() %>% # convert to character data
+    rawToChar() %>% # convert to character data
     jsonlite::fromJSON() %>% # convert from JSON to R object
     purrr::pluck("response", "data") %>%
     select(
@@ -647,13 +641,11 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
 #' - Interpolates missing carbon factors if necessary.
 #' - Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
 #' - Adjusts emissions for other petroleum liquids and lubricants by applying the NEU storage factor.
-#' - Applies metadata labels, derived from the data dictionary in `general_data`, to the column names.
 #' **Collate/Output:**
 #' `carbon_emissions_territories`: a tibble
 #'
 #' @param carbon_coefficients a list created by `get_carbon_factors()`
 #' @param territories a list created by `get_territories_data`
-#' @param general_data a list created by `data_setup()`
 #' @return
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
 #' @examples
@@ -704,12 +696,6 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
                         c("other petroleum liquids", "lubricants"),
                       mmt_co2 * (1 - storage_factor),
                       mmt_co2))
-  
-  # Apply labels to variables
-  carbon_emissions_territories <- general_data$apply_variable_labels(
-    carbon_emissions_territories,
-    general_data$ghgi_variables
-  )
   
   return(carbon_emissions_territories)
   
@@ -772,21 +758,18 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
 #'   - `seds_ind_adjusted`, tibble used by
 #'   - `seds_neu_adjusted`, tibble used by
 #'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
 #' @param seds Tibble created by `state_ffc_get_seds_data()`
 #' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
 #' @return
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+
 state_ffc_adjust_data <- function(seds,
                                   state_adjustments,
-                                  scraped_data,
+                                  fhwa_data,
                                   general_data) {
   
   
-  seds <- general_data$standardize_ffc(seds, general_data$msn_names) %>%
+  seds <- seds %>%
     filter(year != "1989") %>%
     # ZERO OUT all pentanes plus and unfinished oils
     mutate(value = case_when(
@@ -1227,7 +1210,7 @@ state_ffc_adjust_data <- function(seds,
   ## Transportation-----------------------------------------
   
   seds_tra_adjusted <- lst(
-    distillate_fuel = scraped_data$diesel_distribution %>%
+    distillate_fuel = fhwa_data$diesel_distribution %>%
       # Join with adjustments data
       left_join(
         state_adjustments$national_inv_adjustments %>%
@@ -1243,7 +1226,7 @@ state_ffc_adjust_data <- function(seds,
         msn = "DFACB"
       ),
     
-    gasoline = scraped_data$gasoline_distribution %>%
+    gasoline = fhwa_data$gasoline_distribution %>%
       # Join with adjustments data
       left_join(
         state_adjustments$national_inv_adjustments %>%
@@ -1615,13 +1598,6 @@ state_ffc_adjust_data <- function(seds,
         neu_ibf_adjusted_value - neu_adjusted_value,
         neu_ibf_adjusted_value)
     )
-  
-  
-  # Apply labels to variables
-  # seds_all_adjusted <- general_data$apply_variable_labels(
-  #   seds_all_adjusted,
-  #   general_data$ghgi_variables
-  # )
   
   state_ffc_adjusted <- lst(seds_all_adjusted,
                             seds_ind_adjusted,

@@ -13,7 +13,8 @@ targets::tar_option_set(
     "extrafont", "gt", "gtExtras", "httr", "janitor",
     "jsonlite", "knitr", "labelled", "openxlsx",
     "pdftools", "quarto", "reactable", "readxl", "roxygen2", "rvest",
-    "showtext", "tictoc", "tidyverse"
+    "showtext", "tictoc", "tidyverse",
+    "tanagerharmonize"
   )
 )
 # assertr, shiny, waldo
@@ -47,11 +48,6 @@ list(
   
   ### Both national and state----------------------
   tar_file(
-    harmonized_data_file,
-    "data_harmonization.xlsx"
-  ),
-  
-  tar_file(
     carbon_factors_file,
     # Sheets: Factors
     "data/carbon_factors.xlsx"
@@ -61,6 +57,12 @@ list(
     neu_storage_file,
     # Sheets: Factors
     "data/neu_storage.csv"
+  ),
+  
+  tar_file(
+    msn_file,
+    # Sheets: Factors
+    "data/msn.csv"
   ),
   
   ### National------------------------------------
@@ -109,18 +111,34 @@ list(
   
   ### Both national and state------------------------------
   tar_target(
-    harmonized_data,
-    read_xl_data(harmonized_data_file)
-  ),
-  
-  tar_target(
     carbon_factors,
     read_xl_data(carbon_factors_file)
   ),
   
   tar_target(
     neu_storage,
-    read_csv(neu_storage_file)
+    readr::read_csv(neu_storage_file)|>
+      tanagerharmonize::pre_clean()
+  ),
+  
+  tar_target(
+    msn,
+    readr::read_csv(msn_file) |>
+      tanagerharmonize::pre_clean()
+  ),
+  
+  tar_target(
+    data_dictionary_values,
+    readr::read_csv(file = system.file("extdata", 
+                                       "data_dictionary_values.csv", 
+                                       package = "tanagerharmonize"))
+  ),
+  
+  tar_target(
+    data_dictionary_variables,
+    readr::read_csv(file = system.file("extdata", 
+                                       "data_dictionary_variables.csv", 
+                                       package = "tanagerharmonize"))
   ),
   
   ### National--------------------------------------------
@@ -131,7 +149,8 @@ list(
   
   tar_target(
     nonroad_consumption,
-    read_csv(nonroad_file)
+    readr::read_csv(nonroad_file) |>
+      tanagerharmonize::pre_clean()
   ),
   
   tar_target(
@@ -171,39 +190,65 @@ list(
   
   ### Both national and state---------------------------------
   tar_target(
-    general_data,
-    # Contains ghgi_values, ghgi_variables, ghgi_invdb_values,
-    # msn_names, and apply_variable_labels
-    data_setup(harmonized_data)
+    msn_lookup,
+    lookup_msn()
   ),
   
   tar_target(
-    scraped_data,
-    scrape_data(general_data)
+    fhwa_data,
+    scrape_fhwa_data(data_dictionary_values), 
+    # Scrape FWHA data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
   ),
   
   tar_target(
     carbon_coefficients,
     get_carbon_factors(
-      general_data,
       carbon_factors,
-      neu_storage
-    )
+      neu_storage)
   ),
   
   ### National-----------------------------------------------
   tar_target(
-    national_ffc_data,
-    national_ffc_read_eia_data(general_data)
+    us_consumption,
+    get_national_results() |>
+      standardize_ffc(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
   ),
   
-  # Mobile is in-work ----where are mobile adjustments made in national data?
+  tar_target(
+    eia_heat_content,
+    get_heat_content(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
+  ),
+  
+  tar_target(
+    vessel_bunker_dist_fuel,
+    get_vessel_bunker(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
+  ),
+  
+  tar_target(
+    ethanol_tra,
+    get_ethanol_tra(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
+  ),
+
+  # Mobile is in-work 
   # tar_target(
   #   mobile_adjustments,
   #   get_mobile_adjustments_data(
   #     moves3,
   #     national_ffc_data,
-  #     scraped_data
+  #     ethanol_tra,
+  #     vessel_bunker_dist_fuel,
+  #     eia_heat_content, 
+  #     us_consumption,
+  #     fhwa_data
   #   )
   # ),
   
@@ -212,7 +257,7 @@ list(
     ibf_adjustments,
     get_ibf_adjustments_data(
       national_ffc_data,
-      scraped_data
+      fhwa_data
     )
   ),
   
@@ -244,12 +289,19 @@ list(
   ### State---------------------------------------------------
   tar_target(
     seds,
-    state_ffc_get_seds_data(general_data)
+    state_ffc_get_seds_data(msn_lookup, 
+                            msn) |>
+      standardize_ffc(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
   ),
   
   tar_target(
     territories,
-    get_territories_data(general_data)
+    get_territories_data() |>
+      standardize_ffc(), 
+    # Pull data only if it's a month old
+    cue = tar_cue_age(age = as.difftime(30, units = "days"))
   ),
   
   tar_target(
@@ -279,7 +331,7 @@ list(
     state_ffc_adjust_data(
       seds,
       state_adjustments,
-      scraped_data,
+      fhwa_data,
       general_data
     )
   ),
