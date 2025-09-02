@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+data/pins/
+misc_and_deprecated/

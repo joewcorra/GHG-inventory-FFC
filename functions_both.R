@@ -76,20 +76,21 @@ lookup_msn <- function() {
 #' @importFrom tidyr pivot_longer
 #' @importFrom stringr str_to_lower str_remove
 #' @keywords internal
-get_carbon_factors <- function(carbon_factors,
+get_carbon_factors <- function(carbon_factors_variable,
+                               carbon_factors_fixed,
                                neu_storage) {
   
   # Ratio of the molecular weight of carbon dioxide to carbon
   carbon_ratio <- 44/12
   
   # Read in variable carbon factors data from FFC excel workbook
-  carbon_factors_variable <- carbon_factors$factors_variable %>%
+  carbon_factors_variable <- carbon_factors_variable %>%
     clean_names() %>%
     rename(source_description = fuel_type) %>%
     mutate(source_description = str_to_lower(source_description))
   
   # Read in carbon factors data from FFC excel workbook
-  carbon_factors <- carbon_factors$factors_fixed %>%
+  carbon_factors <- carbon_factors_fixed %>%
     clean_names() %>%
     select(source_description = fuel_type, carbon_coefficient) %>%
     mutate(source_description = str_to_lower(source_description)) %>%
@@ -137,71 +138,19 @@ get_carbon_factors <- function(carbon_factors,
   
 }
 # DATASCRAPING (NATIONAL AND STATE)-----------------------------------------
-#' Scrape FHWA fuel use distributions (state & national)
-#'
-#' @description
-#' Downloads FHWA spreadsheets for gasoline and special fuels (diesel) and
-#' produces state share distributions and national totals for use in
-#' transportation adjustments.
-#'
-#' @details
-#' **Retrieval**
-#' - Builds FHWA URLs for the most recent complete year (`current_year - 2`).
-#' - Downloads the gasoline (`mf226.xlsx`) and special fuel (`mf225.xlsx`)
-#' workbooks to a temporary file.
-#'
-#' **Transform**
-#' - For **state distributions** (gasoline/diesel):
-#' - Cleans headers, removes totals/empty rows, pivots `xYYYY` → `year`.
-#' - Computes state shares per year (`*_percent`), joins 2 letter state codes,
-#' fixes “District of Columbia” naming; restricts to 1990+.
-#' - For **national totals**:
-#' - Extracts totals from the same sheets and pivots to `year` with gallons.
-#' - Applies a one off interpolation fix for OR diesel share in 2018.
-#'
-#' **Collate/Output**
-#' - Returns `fhwa_data` list with:
-#' - `gasoline_distribution` (state, year, gasoline_percent),
-#' - `diesel_distribution` (state, year, diesel_percent),
-#' - `gasoline_use_national` (year, gasoline_use_gal),
-#' - `diesel_use_national` (year, diesel_use_gal).
-#'
-#'
-#' @return A named list `fhwa_data` for downstream national/state adjustments.
-#'
-#' @section Side effects:
-#' Downloads temporary Excel files from FHWA; temporary files are overwritten
-#' during execution and not retained.
-#'
-#' @seealso [data_setup()], national/state transportation adjustment functions
-#' that join the FHWA distributions.
-#'
-#' @examples
-#' \dontrun{
-#' sc <- scrape_fhwa_data(gen)
-#' head(sc$gasoline_distribution)
-#' }
-#'
-#' @family GHGI FFC pipeline – scraping
-#' @importFrom httr GET write_disk
-#' @importFrom readxl read_excel
-#' @importFrom dplyr mutate select filter left_join group_by summarize ungroup rename
-#' @importFrom tidyr pivot_longer
-#' @importFrom stringr str_remove str_squish str_detect
-#' @keywords internal
-#'
+
 scrape_fhwa_data <- function(data_dictionary_values) {
+  
   # Set year to match most recent available year (current year minus two)
   latest_year <- year(Sys.Date()) - 2
   
   states <- data_dictionary_values %>% 
     filter(value_variable == "state") %>%
     select(state = value, state_name = value_description)
-  
-  # Scrape FWHA Fuel Use (State & National FFC)----------------------------
-  
+
   # Temporary file storage path
   local_excel_path <- tempfile(fileext = ".xlsx")
+  
   # URL for gasoline data by state, 1949 to present year
   gasoline_url <- paste0(
     "https://www.fhwa.dot.gov/policyinformation/statistics/",
@@ -375,7 +324,6 @@ scrape_fhwa_data <- function(data_dictionary_values) {
     summarize(diesel_use_gal = sum(diesel_use_gal, na.rm = TRUE)) %>%
     ungroup()
   
-  
   fhwa_data <- lst(
     diesel_distribution,
     # diesel_use_by_class,
@@ -385,11 +333,13 @@ scrape_fhwa_data <- function(data_dictionary_values) {
   )
   
   return(fhwa_data)
+  
 }
+  
 
 # STANDARDIZE DATA-------------------------------------------
 
-standardize_ffc <- function (data) {
+standardize_ffc <- function (data, msn_eia) {
 
   standardized_data <- data %>%
 
@@ -398,13 +348,21 @@ standardize_ffc <- function (data) {
                             "eia_description", "unit")),
                   ~str_to_lower(.)))
 
+  
+  if("year" %in% colnames(standardized_data)) {
+    
+    standardized_data <- standardized_data %>%
+      mutate(year = forcats::as_factor(year))
+             
+  }
+        
+  
   if ("sector_description" %in% colnames(standardized_data)) {
     # Make 'year' a factor
     standardized_data <- standardized_data %>%
-      mutate(year = as_factor(year),
-
+      
              # Standardize sector descriptions; add the word "sector"
-             sector_description = case_when(
+             mutate(sector_description = case_when(
                str_detect(sector_description, "electric") ~  "electric power sector",
                msn == "CLOCB" ~  "industrial sector", # industrial coking coal
                msn == "CLKCB" ~  "industrial sector", # other industrial coal
@@ -417,8 +375,7 @@ standardize_ffc <- function (data) {
       mutate(
         source_description = str_replace(source_description, " and ", " & "),
         source_description = case_when(
-          source_description %in%
-            unique(msn_names$msn$source_description) ~ source_description,
+          source_description %in% unique(msn_eia$source_description) ~ source_description,
           str_detect(source_description, "distillate") ~ "distillate fuel oil",
           str_detect(source_description, "residual") ~ "residual fuel oil",
           str_detect(source_description, "jet fuel") ~ "jet fuel",

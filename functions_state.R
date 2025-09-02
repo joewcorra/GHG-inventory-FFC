@@ -1,3 +1,27 @@
+
+# SCALE SEDS DATA-------------------------------------------------
+# Function to scale state data to comport to national calcs
+
+scale_to_national <- function(data) {
+  
+  scaled_data <- data %>%
+    # Join with the adjustment factor data (from national inventory)
+    left_join(state_adjustments$national_inv_adjustments,
+              by = c("source_description", "year", "sector_description")
+    ) %>%
+    # Sum SEDS values for state/year/MSN (min. value = 0)
+    mutate(state_sum_value = pmax(sum(value), 0), 
+           # Compute scaling factor
+           scaling_factor = national_value / state_sum_value, 
+           # Scale the SEDS values to national 
+           adjusted_value = value * scaling_factor, .by = c(msn, year))
+  
+  return(scaled_data)
+}
+
+
+
+
 # STATE CONSUMPTION DATA-------------------------------------------
 #'
 #' @description This function retrieves state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).
@@ -21,67 +45,40 @@
 #' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
 #' @return Tibble with columns:
 #' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-state_ffc_get_seds_data <- function(msn_lookup, msn) {
-  # read SEDS data from EIA API file pulled with epa_api.R
-  seds <- read_csv("data/api_seds.csv") %>%
-    janitor::clean_names() %>%
-    select(
-      state, year, msn,
-      value, unit
-    ) %>%
-    # filter(unit == "Billion Btu") %>%
-    filter(msn %in% msn_lookup) %>%
-    left_join(msn %>%
-                select(-unit), by = "msn") %>%
-    # Remove any duplicates caused by appending new annual data
-    distinct() 
-  
+state_ffc_get_seds_data <- function(msn_lookup, msn_eia, data_dictionary_values) {
   # Access SEDS data via EIA API
-  # This script contains two options for retrieving SEDS data from the EIA API:
-  # 1) retrieve entire dataset for all states + DC, 1990-present, inclusive;
-  # 2) retrieve most recent year of data and append to the existing SEDS csv.
   
   # # API key generated 11/22/23
   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
   
   # Get most recent year
   latest_year <- lubridate::year(Sys.Date()) - 2
-  # Function for Options 1 & 2---------------------------------------------
   
   # Function to Query EIA API
-  get_state_results <- function(state, year, offset) {
+  get_state_results <- function(state, year) {
     # For now, to avoid exceeding the 5000-row data limit, we will pull
     # only one year and state per query. This requires n=51*years API queries.
     results <- paste0(
       "https://api.eia.gov/v2/seds/data/?frequency=annual",
       "&data[0]=value",
-      "&facets[stateId][]=", state, # state input
-      "&start=", year - 1, # start = previous year
-      "&end=", year,
-      "&sort[0][column]=period&sort[0][direction]=desc&offset=",
-      offset, "&length=5000", # offset (usually 0)
-      "&api_key=", key
-    ) %>% # our API key is required
+      "&facets[stateId][]=", 
+      state, # state input
+      "&facets[seriesId][]=", 
+      str_flatten(msn_lookup, 
+                  collapse = "&facets[seriesId][]="),
+      "&start=", 
+      year - 1, # start = previous year
+      "&end=", 
+      year,
+      "&sort[0][column]=period&sort[0][direction]=desc&offset=0",
+      "&length=5000", 
+      "&api_key=", 
+      key) %>% # our API key is required
       httr::GET() %>% # retrieve page from url
-      httr::content("raw") %>% # extract content as a raw vector
-      rawToChar() %>% # convert to character data
+      httr::content(
+        as = "text", 
+        encoding = "UTF-8") %>% # extract content 
       jsonlite::fromJSON() # convert from JSON to R object
-    
-    # The data limit from EIA's API is 5000 rows per query.
-    # Here, we check the results to see if we exceeded that.
-    # Extract warnings (if they exist)
-    # limits <- purrr::pluck(results, "response", "warnings", "warning")
-    # limits <- ifelse(!is_empty(limits),
-    #                  paste0("data limit reached: ", limits), limits)
-    # print(limits)
-    
-    # Check if data limit (5000 rows) was reached, ignoring empty values
-    # limit_reached <- case_when(
-    #   limits == "nothing" ~ FALSE,
-    #   str_detect(limits, "incomplete return") ~ TRUE,
-    #   .default = FALSE)
-    # print(limit_reached)
-    
     return(results)
   }
   
@@ -89,13 +86,25 @@ state_ffc_get_seds_data <- function(msn_lookup, msn) {
   
   # Apply API data query function across all states and years.
   # Using tic and toc() will indicate the time elapsed. Expected: about 18 min.
+  
+  api_args <- tidyr::expand_grid(
+    state = data_dictionary_values %>%
+      filter(value_variable == "state") %>%
+      pull(value) %>%
+      str_to_upper(),
+    year = 1999:1999) 
+  
   tictoc::tic()
-  api_results <- expand_grid(
-    state = general_data$ghgi_values$state[1:51],
-    year = 1990:latest_year,
-    offset = 0) %>%
-    purrr::pmap(function(state, year, offset) get_state_results(state, year, offset))
+  api_results <- purrr::map2_dfr(api_args$state, api_args$year, 
+                                 ~get_state_results(state = .x, 
+                                                    year = .y))
   tictoc::toc()
+  
+  # API testing code
+  # safe_get <- purrr::safely(function(s, y) get_state_results(state = s, 
+  #                                                            year = y))
+  # checks <- purrr::map2(api_args$state, api_args$year, safe_get)
+  # 
   
   seds <- api_results %>%
     purrr::map(\(.x) purrr::pluck(.x, "response", "data")) %>%
@@ -107,7 +116,7 @@ state_ffc_get_seds_data <- function(msn_lookup, msn) {
     filter(msn %in% msn_lookup) %>%
     mutate(unit = str_to_lower(unit),
            year = as.character(year)) %>%
-    left_join(msn %>%
+    left_join(msn_eia %>%
                 select(-unit), by = "msn") %>%
     # Remove any duplicates caused by appending new annual data
     distinct() %>%
@@ -143,10 +152,7 @@ state_ffc_get_seds_data <- function(msn_lookup, msn) {
 #' `heat_content_territories`: a tibble
 #' @return
 #' @seealso [state_ffc_get_seds_data()], [territories_ffc_adjust_data()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
-get_territories_data <- function(general_data) {
+get_territories_data <- function() {
   # API Key----------------------------------------------------------------
   
   # API key generated 11/22/23
@@ -279,7 +285,7 @@ get_territories_data <- function(general_data) {
     "Isobutylene", "Pentanes Plus"
   )
   
-  eia_table_a1 <- pdf_text(
+  eia_table_a1 <- pdftools::pdf_text(
     "https://www.eia.gov/totalenergy/data/monthly/pdf/sec12_2.pdf"
   ) %>%
     stringr::str_remove_all("[()]")
@@ -375,7 +381,6 @@ get_territories_data <- function(general_data) {
 #' @param international_bunker_fuels tibble loaded in `_targets.R` pipeline
 #' @param misc_adjustments tibble loaded in `_targets.R` pipeline
 #' @param non_energy_use tibble loaded in `_targets.R` pipeline
-#' @param ippu_distributions list of 4 tibbles loaded in `_targets.R` pipeline
 #' @param foks_diesel tibble loaded in `_targets.R` pipeline
 #' @param foks_residual tibble loaded in `_targets.R` pipeline
 #' @return
@@ -387,7 +392,10 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
                                            international_bunker_fuels,
                                            misc_adjustments,
                                            non_energy_use,
-                                           ippu_distributions,
+                                           ippu_dist_ammonia, 
+                                           ippu_dist_petrochemical, 
+                                           ippu_dist_carbon_black, 
+                                           ippu_dist_iron_and_steel,
                                            foks_diesel,
                                            foks_residual) {
   
@@ -405,10 +413,11 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   # IBF adjustments data--------------------------------------------
   
   # Read in IBF data from FFC excel workbook. Only need one line:
-  ibf_adjustments <- international_bunker_fuels$ibf %>%
+  ibf_adjustments <- international_bunker_fuels %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
-    pivot_longer(cols = -1, names_to = "year", values_to = "ibf_value") %>%
+    pivot_longer(cols = -1, names_to = "year", 
+                 values_to = "ibf_value") %>%
     # Rename source column
     rename(source_description = gas_mode_and_fuel_type) %>%
     # Remove letters from 'year' column and standardize source descriptions
@@ -425,7 +434,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   
   # NEU data---------------------------------------------------------
   # Read in NEU data from FFC excel workbook
-  neu_adjustments <- non_energy_use$neu %>%
+  neu_adjustments <- non_energy_use %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
     pivot_longer(
@@ -443,7 +452,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   # I & S distributions data--------------------------------------------
   
   # Read in I & S data from FFC excel workbook
-  is_distribution <- ippu_distributions$iron_and_steel %>%
+  is_distribution <- ippu_dist_iron_and_steel %>%
     janitor::clean_names() %>%
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
@@ -466,7 +475,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     select(-national_total)
   
   # Read in ammonia data from FFC excel workbook
-  ammonia_distribution <- ippu_distributions$ammonia %>%
+  ammonia_distribution <- ippu_dist_ammonia %>%
     janitor::clean_names() %>%
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
@@ -489,7 +498,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     select(-national_total)
   
   # Read in petrochemical carbon black data from FFC excel workbook
-  petrochemicals_distribution <- ippu_distributions$petrochemical %>%
+  petrochemicals_distribution <- ippu_dist_petrochemical %>%
     janitor::clean_names() %>%
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
@@ -515,7 +524,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     select(-national_total)
   
   # Read in petrochemical carbon black data from FFC excel workbook
-  petrochemicals_cb_distribution <- ippu_distributions$carbon_black %>%
+  petrochemicals_cb_distribution <- ippu_dist_carbon_black %>%
     janitor::clean_names() %>%
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
@@ -569,7 +578,7 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   
   # Read in residual fuel data from FOKS excel workbook
   foks_residual_distribution <- foks_residual %>%
-    clean_names() %>%
+    janitor::clean_names() %>%
     # Make data long; i.e., one row per year
     pivot_longer(
       cols = -1, names_to = "year",
@@ -765,8 +774,7 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
 
 state_ffc_adjust_data <- function(seds,
                                   state_adjustments,
-                                  fhwa_data,
-                                  general_data) {
+                                  fhwa_data) {
   
   
   seds <- seds %>%
@@ -785,23 +793,10 @@ state_ffc_adjust_data <- function(seds,
   ## Residential------------------------------------------------
   
   seds_res_adjusted <- lst(
+    
     coal = seds %>%
       filter(msn == "CLRCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Deal with zeroes in the sums to avoid NaNs
-      mutate(
-        states_sum_value = if_else(
-          states_sum_value == 0, 1, states_sum_value
-        ),
-        # Multiply adjustment factor by states's value / the above sum
-        adjusted_value = national_value *
-          (value / states_sum_value)
-      ),
+     scale_to_national(),
     
     natural_gas = seds %>%
       # Separate list element required to find net natural gas
@@ -811,33 +806,16 @@ state_ffc_adjust_data <- function(seds,
       # Group_size shows that each group has exactly two rows. Good!
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFRCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      # Change MSN identifier. old MSN distinction no longer needed(?)
-      # However, MSN can be reconstituted from other _code fields if needed.
+      # Change MSN identifier
       mutate(
         msn = "net natural gas",
         source_description = "natural gas"
       ) %>%
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     distillate_fuel = seds %>%
       filter(msn == "DFRCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = year) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     # LPGs (propane and/or HGL)
     lpg = seds %>%
@@ -866,26 +844,11 @@ state_ffc_adjust_data <- function(seds,
   seds_com_adjusted <- lst(
     coal = seds %>%
       filter(msn == "CLCCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)),
+      scale_to_national(),
+    
     distillate_fuel = seds %>%
       filter(msn == "DFCCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     natural_gas = seds %>%
       # Separate list element required to find net natural gas
@@ -895,21 +858,12 @@ state_ffc_adjust_data <- function(seds,
       # Group_size shows that each group has exactly two rows. Good!
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "SFCCB") %>%
-      # Change MSN identifier. old MSN distinction no longer needed(?)
-      # However, MSN can be reconstituted from other _code fields if needed.
+      # Change MSN identifier
       mutate(
         msn = "net natural gas",
         source_description = "natural gas"
       ) %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     gasoline = seds %>%
       # Separate list element required to find net gasoline
@@ -919,17 +873,8 @@ state_ffc_adjust_data <- function(seds,
       # Group_size shows that each group has exactly two rows. Good!
       # Ethanol no longer needed (and value is now duplicative)
       filter(msn != "EMCCB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = national_value *
-               (value / states_sum_value)) %>%
-      # Change MSN identifier. old MSN distinction no longer needed(?)
-      # However, MSN can be reconstituted from other _code fields if needed.
+      scale_to_national() %>%
+      # Change MSN identifier
       mutate(
         msn = "net gasoline",
         source_description = "motor gasoline"
@@ -993,27 +938,25 @@ state_ffc_adjust_data <- function(seds,
       # Join with I & S distribution data
       left_join(state_adjustments$is_distribution, by = c("state", "year")) %>%
       mutate(
-        coke_factor = if_else(coking_coal_adj < sum_coking_coal, 0,
-                              coking_coal_adj - sum_coking_coal
-        ),
+        coke_factor = pmax(coking_coal_adj - sum_coking_coal, 0),
         other_coal_coke_adj =
           coke_factor * (coking_coal_value / sum_coking_coal),
         # SNG adjustment for North Dakota only
         sng_dakota_adj = if_else(state == "ND", dakota_adj, 0),
         # Multiply I & S factor by I & S state distribution percentages
         other_coal_is_adj = is_coal_adj * is_percent,
-        adjusted_value_pre = value -
+        adjusted_value = value -
           other_coal_coke_adj -
           sng_dakota_adj -
           other_coal_is_adj) %>%
       # Get sum of all states' adjusted values
       mutate(
-        states_sum_value = sum(adjusted_value_pre),
+        states_sum_value = sum(adjusted_value),
         .by = c(msn, year)
       ) %>%
       mutate(
         adjusted_value =
-          (adjusted_value_pre / states_sum_value) * national_value
+          (adjusted_value / states_sum_value) * national_value
       ),
     
     # Natural Gas
@@ -1044,26 +987,24 @@ state_ffc_adjust_data <- function(seds,
       left_join(state_adjustments$ammonia_distribution,
                 by = c("state", "year")
       ) %>%
-      # Change MSN identifier. old MSN distinction no longer needed(?)
-      # However, MSN can be reconstituted from other _code fields if needed.
       #  Ammonia factor * ammonia distribution = ammonia adjusted value
       mutate(
         natural_gas_ammonia_adj = ammonia_adj *
           ammonia_percent,
         #  I & S factor * I & S distribution = I & S adjusted value
         natural_gas_is_adj = is_natgas_adj * is_percent,
-        adjusted_value_pre = value -
+        adjusted_value = value -
           (natural_gas_ammonia_adj + natural_gas_is_adj)
       ) %>%
       # Get sum of all states' adjusted (preliminary) values
       mutate(
-        states_sum_value = sum(adjusted_value_pre),
+        states_sum_value = sum(adjusted_value),
         .by = c(msn, year)
       ) %>%
       # adj value / sum of all states' values * consumption = adjusted value
       mutate(
         adjusted_value =
-          (adjusted_value_pre / states_sum_value) *
+          (adjusted_value / states_sum_value) *
           national_value
       ),
     
@@ -1134,35 +1075,18 @@ state_ffc_adjust_data <- function(seds,
       # Group_size shows that each group has exactly two rows. Good!
       # Supplemental gas no longer needed (and value is now duplicative)
       filter(msn != "EMICB") %>%
-      # Get sum of all states' net gasoline
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # get adjustment factor for motor gasoline
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename adjustment factor for clarity
-      rename(motor_gas_factor = national_value) %>%
-      # Change MSN identifier. old MSN distinction no longer needed(?)
-      # However, MSN can be reconstituted from other _code fields if needed.
+      # Change MSN 
       mutate(
         msn = "net gasoline",
-        source_description = "motor gasoline",
-        # adjusted net gasoline = motor gas factor * gasoline - sum
-        adjusted_value = motor_gas_factor * (value / states_sum_value)
-      ),
+        source_description = "motor gasoline") %>%
+      scale_to_national(),
     
     # Petroleum Coke
     petroleum_coke = seds %>%
       filter(msn == "PCICB") %>%
       # Get sum of all states' petroleum_coke
       mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # get adjustment factor for petroleum coke
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename adjustment factor for clarity
-      rename(petro_coke_factor = national_value) %>%
-      mutate(adjusted_value = petro_coke_factor * (value / states_sum_value)),
+      scale_to_national(),
     
     # LPG
     lpg = seds %>%
@@ -1173,20 +1097,9 @@ state_ffc_adjust_data <- function(seds,
       # Remove pentanes plus from this list element:
       filter(msn != "PPICB") %>%
       # Change source description to reflect new value
-      mutate(source_description = "hydrocarbon gas liquids") %>%
-      # Join with adjustments to get adjustment factor
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename adjustment factor for clarity
-      rename(ind_lpg_factor = national_value) %>%
-      # Get sum of all states' lpg
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Rename MSN & source and calculate adjusted value
-      mutate(
-        msn = "combined lpg",
-        adjusted_value = ind_lpg_factor * (value / states_sum_value)
-      ),
+      mutate(source_description = "hydrocarbon gas liquids",
+        msn = "combined lpg") %>%
+      scale_to_national(),
     # ind_lpg_factor = US SEDS Total--LPG (state's HLICB - PPICB)
     
     # All other sources go in this list element
@@ -1285,17 +1198,8 @@ state_ffc_adjust_data <- function(seds,
       filter(msn == "NGACB") %>%
       # Join with the adjustment factor data (from national inventory)
       mutate(source_description = "natural gas") %>%
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # rename for clarity
-      rename(natural_gas_factor = national_value) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states' value / the above sum
-      mutate(
-        adjusted_value = natural_gas_factor *
-          (value / states_sum_value))
+      scale_to_national()
+    
   ) %>%
     # Collapse list into a single data frame
     purrr::list_rbind()
@@ -1305,17 +1209,7 @@ state_ffc_adjust_data <- function(seds,
   seds_ele_adjusted <- lst(
     coal = seds %>%
       filter(msn == "CLEIB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename for clarity
-      rename(coal_factor = national_value) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = coal_factor *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     natural_gas = seds %>%
       # find net natural gas
@@ -1331,54 +1225,25 @@ state_ffc_adjust_data <- function(seds,
         msn = "net natural gas",
         source_description = "natural gas"
       ) %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename for clarity
-      rename(natural_gas_factor = national_value) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = natural_gas_factor *
-               (value / states_sum_value)),
+      scale_to_national(),
     
     geothermal = seds %>%
       filter(msn == "GETCB") %>%
       mutate(sector_description = "electric power sector") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename for clarity
-      rename(geothermal_factor = national_value) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = geothermal_factor *
-               (value / states_sum_value)),
-    
+      scale_to_national(),
     
     residual_fuel = seds %>%
       filter(msn == "RFEIB") %>%
-      # Convert units
       mutate(adjusted_value = value),
+    
     petroleum_coke = seds %>%
       filter(msn == "PCEIB") %>%
       mutate(adjusted_value = value),
+    
     distillate_fuel = seds %>%
       filter(msn == "DFEIB") %>%
-      # Join with the adjustment factor data (from national inventory)
-      left_join(state_adjustments$national_inv_adjustments,
-                by = c("source_description", "year", "sector_description")
-      ) %>%
-      # Rename for clarity
-      rename(distillate_fuel_factor = national_value) %>%
-      # Get sum of all states' value
-      mutate(states_sum_value = sum(value), .by = c(msn, year)) %>%
-      # Multiply adjustment factor by states's value / the above sum
-      mutate(adjusted_value = distillate_fuel_factor *
-               (value / states_sum_value))
+      scale_to_national()
+    
   ) %>%
     # Collapse list into a single data frame
     purrr::list_rbind()
