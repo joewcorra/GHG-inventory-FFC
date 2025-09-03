@@ -85,8 +85,8 @@ list(
   # ),
   
   tar_target(
-    misc_corrections,
-    pin_read(board, "misc_corrections")
+    ippu_corrections,
+    pin_read(board, "ippu_corrections")
   ),
   
   # LPG national data is temporary until we can retrieve
@@ -136,6 +136,11 @@ list(
     pin_read(board, "foks_residual")
   ),
   
+  tar_target(
+    feedstock_export_adjustments,
+    pin_read(board, "feedstock_export_adjustments")
+  ),
+  
   ## Data Transformation-------------------------------------------
   
   ### Both national and state---------------------------------
@@ -149,7 +154,7 @@ list(
     scrape_fhwa_data(data_dictionary_values), 
     # Scrape FWHA data only if it's a month old
     cue = tar_cue_age(name = fhwa_data, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
   
   tar_target(
@@ -167,7 +172,7 @@ list(
       standardize_ffc(msn_eia),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = us_consumption, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
   
   tar_target(
@@ -175,7 +180,7 @@ list(
     get_heat_content(),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = eia_heat_content,
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
   
   tar_target(
@@ -183,7 +188,7 @@ list(
     get_vessel_bunker(),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = vessel_bunker_dist_fuel, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
   
   tar_target(
@@ -191,7 +196,7 @@ list(
     get_ethanol_tra(),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = ethanol_tra, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
 
   # Mobile is in-work
@@ -219,19 +224,20 @@ list(
   ),
 
   tar_target(
-    misc_adjustments,
-    get_misc_adjustments_data(misc_corrections)
+    ippu_adjustments,
+    get_ippu_adjustments_data(ippu_corrections)
   ),
 
+  
   tar_target(
     national_ffc_adjusted,
-    national_ffc_adjust_data(
-      us_consumption
+  read.csv("misc_and_deprecated/temporary_national_inv_data.csv")
+      # usconsumption, 
       # general_data,
       # mobile_adjustments,
       # ibf_adjustments,
-      # misc_adjustments
-    )
+      # ippu_adjustments
+    
   ),
 
   tar_target(
@@ -252,7 +258,7 @@ list(
       standardize_ffc(msn_eia),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = seds, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
 
   tar_target(
@@ -262,7 +268,7 @@ list(
       purrr::modify_at("ff_territories", ~standardize_ffc(., msn_eia)),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = territories, 
-                      age = as.difftime(30, units = "days"))
+                      age = as.difftime(90, units = "days"))
   ),
 
   tar_target(
@@ -270,14 +276,15 @@ list(
     state_ffc_get_adjustments_data(
       national_ffc_adjusted,
       international_bunker_fuels,
-      misc_adjustments,
+      ippu_adjustments,
       non_energy_use,
       ippu_dist_ammonia,
       ippu_dist_petrochemical,
       ippu_dist_carbon_black,
       ippu_dist_iron_and_steel,
       foks_diesel,
-      foks_residual
+      foks_residual,
+      feedstock_export_adjustments
     )
   ),
 

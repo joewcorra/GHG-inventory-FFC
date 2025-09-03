@@ -85,19 +85,17 @@ get_carbon_factors <- function(carbon_factors_variable,
   
   # Read in variable carbon factors data from FFC excel workbook
   carbon_factors_variable <- carbon_factors_variable %>%
-    clean_names() %>%
-    rename(source_description = fuel_type) %>%
-    mutate(source_description = str_to_lower(source_description))
+    tanagerharmonize::pre_clean() %>%
+    rename(source_description = fuel_type) 
   
   # Read in carbon factors data from FFC excel workbook
   carbon_factors <- carbon_factors_fixed %>%
-    clean_names() %>%
+    tanagerharmonize::pre_clean() %>%
     select(source_description = fuel_type, carbon_coefficient) %>%
-    mutate(source_description = str_to_lower(source_description)) %>%
     filter(
       # NA = not applicable, NC = not calculated. Remove all NA & NC
       !is.na(carbon_coefficient),
-      carbon_coefficient != "NC"
+      carbon_coefficient != "nc"
     ) %>%
     # Join with annually variable carbon factor data
     left_join(carbon_factors_variable, by = "source_description") %>%
@@ -117,18 +115,17 @@ get_carbon_factors <- function(carbon_factors_variable,
     mutate(
       year = str_remove(year, "x"),
       carbon_factor = as.numeric(carbon_factor)
-    )
+    ) %>%
+    # Remove rows w/ NA values (these are mostly header rows)
+    filter(!is.na(carbon_factor))
   
   neu_storage <- neu_storage %>%
-    clean_names() %>%
+    tanagerharmonize::pre_clean() %>%
     rename(sector_description = sector,
            source_description = source) %>%
     pivot_longer(cols = starts_with("x"),
                  names_to = "year",
-                 values_to = "storage_factor") %>%
-    mutate(sector_description = str_to_lower(sector_description),
-           source_description = str_to_lower(source_description),
-           year = str_remove_all(year, "x") %>% as_factor())
+                 values_to = "storage_factor")
   
   carbon_coefficients <- lst(carbon_factors,
                              carbon_ratio,

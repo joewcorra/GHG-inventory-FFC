@@ -653,7 +653,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
 #'
 #' @details
 #' **Retrieval:**
-#' - Consumes `misc_corrections$corrections` (wide with `xYYYY` columns).
 #'
 #' **Transform:**
 #' - Cleans names; coerces numeric; pivots long to `year`/`value`;
@@ -663,7 +662,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
 #' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
 #' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
 #'
-#' @param misc_corrections List with element `corrections` (data frame).
+#' @param ippu_corrections List with element `corrections` (data frame).
 #'
 #' @return Tibble of per year adjustment factors (one row per year).
 #'
@@ -671,7 +670,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
 #'
 #' @examples
 #' \dontrun{
-#' misc_adj <- get_misc_adjustments_data(misc_corrections)
+#' misc_adj <- get_ippu_adjustments_data(ippu_corrections)
 #' }
 
 get_ibf_adjustments_data <- function(national_ffc_data,
@@ -694,7 +693,8 @@ get_ibf_adjustments_data <- function(national_ffc_data,
   )
   
   # TEMPORARY!!!!!!!!!!!!!!------------------------------------
-  tra_temp <- read_xl_data("data/misc_tra_data_temporary.xlsx")[[1]] %>%
+  tra_temp <- readxl::read_excel("data/misc_tra_data_temporary.xlsx", 
+                                 sheet = 1) %>%
     filter(str_detect(source,"marine|jet")) %>%
     pivot_longer(cols = !source, names_to = "year", values_to = "ibf_value")
   
@@ -750,7 +750,7 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 #'
 #' @details
 #' **Retrieval:**
-#' - Consumes `misc_corrections$corrections` (wide with `xYYYY` columns).
+#' - Consumes `ippu_corrections$corrections` (wide with `xYYYY` columns).
 #'
 #' **Transform:**
 #' - Cleans names; coerces numeric; pivots long to `year`/`value`;
@@ -760,21 +760,18 @@ get_ibf_adjustments_data <- function(national_ffc_data,
 #' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
 #' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
 #'
-#' @param misc_corrections List with element `corrections` (data frame).
+#' @param ippu_corrections List with element `corrections` (data frame).
 #'
 #' @return Tibble of per year adjustment factors (one row per year).
 #'
 #' @seealso [national_ffc_adjust_data()]
-#'
-#' @examples
-#' \dontrun{
-#' misc_adj <- get_misc_adjustments_data(misc_corrections)
+
 #' }
 
-get_misc_adjustments_data <- function(misc_corrections) {
+get_ippu_adjustments_data <- function(ippu_corrections) {
   
   # National adjustments data-------------------------------------
-  misc_adjustments <- misc_corrections %>%
+  ippu_adjustments <- ippu_corrections %>%
     janitor::clean_names() %>%
     mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
     pivot_longer(cols = starts_with("x"),
@@ -786,7 +783,7 @@ get_misc_adjustments_data <- function(misc_corrections) {
   
   # Aggregate---------------------------------------------
   
-  return(misc_adjustments)
+  return(ippu_adjustments)
 }
 
 
@@ -805,7 +802,7 @@ get_misc_adjustments_data <- function(misc_corrections) {
 #' **Retrieval:**
 #' - Consumes standardized `us_consumption` plus
 #' `mobile_adjustments` (mogas/diesel), `ibf_adjustments`, and
-#' per year `misc_adjustments`.
+#' per year `ippu_adjustments`.
 #'
 #' **Transform:**
 #' - Residential/Commercial/Electric: passes through (with note that separate
@@ -825,12 +822,12 @@ get_misc_adjustments_data <- function(misc_corrections) {
 #' @param mobile_adjustments List from [get_mobile_adjustments_data()] (currently
 #' not directly merged here; interface reserved).
 #' @param ibf_adjustments List from [get_ibf_adjustments_data()].
-#' @param misc_adjustments Tibble from [get_misc_adjustments_data()].
+#' @param ippu_adjustments Tibble from [get_ippu_adjustments_data()].
 #'
 #' @return Tibble of adjusted national consumption by sector/source/year.
 #'
 #' @seealso [national_ffc_read_eia_data()], [get_mobile_adjustments_data()],
-#' [get_ibf_adjustments_data()], [get_misc_adjustments_data()],
+#' [get_ibf_adjustments_data()], [get_ippu_adjustments_data()],
 #' [national_ffc_calculate_emissions()]
 #'
 #' @examples
@@ -843,7 +840,7 @@ national_ffc_adjust_data <- function(
     us_consumption,
     mobile_adjustments,
     ibf_adjustments,
-    misc_adjustments
+    ippu_adjustments
 ) {
   # Collate National consumption data-------------------------------------
   
@@ -890,7 +887,7 @@ national_ffc_adjust_data <- function(
       # What is the MSN for coking coal?
       filter(msn == "CLKCB") %>%
       # Subtract IPPU adjustment
-      left_join(misc_adjustments, by = "year") %>%
+      left_join(ippu_adjustments, by = "year") %>%
       mutate(
         adjusted_value = value - coking_coal_adj,
         # Adjusted value no lower than zero
@@ -903,7 +900,7 @@ national_ffc_adjust_data <- function(
     other_coal = us_consumption %>%
       filter(msn == "CLOCB") %>%
       # Subtract adjustments
-      left_join(misc_adjustments, by = "year") %>%
+      left_join(ippu_adjustments, by = "year") %>%
       # Subtract adjustments
       mutate(adjusted_value = value -
                eastman_adj -
@@ -918,7 +915,7 @@ national_ffc_adjust_data <- function(
     # Supplemental gas already excluded
     natural_gas = us_consumption %>%
       filter(msn == "NNICB") %>%
-      left_join(misc_adjustments, by = "year") %>%
+      left_join(ippu_adjustments, by = "year") %>%
       # Subtract adjustments
       mutate(adjusted_value = value -
                blast_furnace_adj -
@@ -932,7 +929,7 @@ national_ffc_adjust_data <- function(
     residual_fuel = us_consumption %>%
       filter(msn == "RFICB") %>%
       # Subtract carbon black adjustment
-      left_join(misc_adjustments, by = "year") %>%
+      left_join(ippu_adjustments, by = "year") %>%
       mutate(
         adjusted_value = value - cb_residual_adj,
         # Adjusted value no lower than zero
@@ -943,7 +940,7 @@ national_ffc_adjust_data <- function(
     distillate_fuel = us_consumption %>%
       filter(msn == "DFICB") %>%
       # Subtract iron & steel adjustment
-      left_join(misc_adjustments, by = "year") %>%
+      left_join(ippu_adjustments, by = "year") %>%
       mutate(adjusted_value = value - is_diesel_adj),
     
     # Motor gasoline (mogas/df adjustment)
