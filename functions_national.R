@@ -301,7 +301,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # function(ri, sj) { (h * ri * sj) / (42 * sum(s)) })
   # returns g as a matrix; take the sum(g)
   
-  # Simplified equation for n road mogas consumption by class
+  # Simplified equation for non road mogas consumption by class
   # v <- outer(s, e, function(a, b) {
   #   (h * (r - (p + q)) * (a / sum(s)) / (42 * 10^9)) * (1 - (b * 10^6 / sum(g)))
   # })
@@ -311,14 +311,14 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # n <- i + c + t -
   
   
-  moves <- moves3$vmt %>%
+  moves <- moves3_vmt %>%
     janitor::clean_names() %>%
     pivot_longer(
       cols = starts_with("x"),
       values_to = "vmt_percent", names_to = "year"
     ) %>%
     left_join(
-      moves3$fuel %>%
+      moves3_fuel %>%
         janitor::clean_names() %>%
         pivot_longer(
           cols = starts_with("x"),
@@ -360,26 +360,21 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   diesel_density <- 0.85
   mogas_density <- 0.74
   
-  nonroad_consumption_cleaned <- nonroad_consumption %>%
-    janitor::clean_names() %>%
-    pivot_longer(cols = starts_with(c("x", "adj")),
-                 names_to = "year",
-                 values_to = "nonroad_consumption") %>%
-    mutate(year = readr::parse_number(year) %>%
-             forcats::as_factor(),
-           across(where(is.character),
-                  ~str_to_lower(.)))
-  
-  nonroad <- nonroad_consumption_cleaned %>%
-    # convert to kg to liters / density and divide to get gallons
-    mutate(
-      nonroad_consumption = if_else(fuel == "diesel",
-                                    nonroad_consumption / diesel_density / 3.785,
-                                    nonroad_consumption / mogas_density / 3.785)) %>%
-    group_by(fuel, year) %>%
-    summarize(nonroad_consumption = sum(nonroad_consumption)) %>%
+  nonroad <- nonroad_consumption %>%
+    # values are already in gallons
+    # Remove natural gas fuel
+    filter(fuel != "cng") %>%
+    # reclassify 2- and 4-stroke as gasoline
+    mutate(fuel = if_else(
+      fuel %in% c("4 stroke", "2 stroke"),
+      "motor gasoline",
+      fuel), 
+      nonroad_value = if_else(fuel == "diesel",
+                              value / diesel_density / 3.785,
+                              value / mogas_density / 3.785)) %>%
+    group_by(equipment, fuel, year) %>%
+    summarize(nonroad_value = sum(nonroad_value)) %>%
     ungroup()
-  
   
   mogas <- moves %>%
     filter(fuel_type == "gasoline") %>%
@@ -392,13 +387,14 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     ) %>%
     left_join(ethanol_tra, by = "year") %>%
     left_join(nonroad %>%
-                filter(fuel != "diesel") %>%
+                filter(equipment == "recreational marine", 
+                       fuel == "motor gasoline") %>%
                 group_by(year) %>%
-                summarize(nonroad_consumption_total = sum(nonroad_consumption)) %>%
+                summarize(recboat_consumption_total = sum(nonroad_value)) %>%
                 ungroup(),
               by = "year") %>%
     mutate(mogas_use = fuel_use_percent * (
-      gasoline_use_gal * 1000 - nonroad_consumption_total),
+      gasoline_use_gal * 1000 - recboat_consumption_total),
       tbtu = (mogas_use / 42 * heat_content) / 10^9
     ) %>%
     mutate(tbtu_sum = sum(tbtu), .by = year) %>%
@@ -420,7 +416,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     left_join(nonroad %>%
                 filter(fuel == "diesel") %>%
                 group_by(year) %>%
-                summarize(nonroad_consumption_total = sum(nonroad_consumption)) %>%
+                summarize(nonroad_consumption_total = sum(nonroad_value)) %>%
                 ungroup(),
               by = "year") %>%
     mutate(diesel_use = fuel_use_percent * (
@@ -460,14 +456,15 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # Recreational boat motor gasoline total is the smaller of 1) rec boat gas
   # calculated by the bottom-up method, or 2) total non-road motor gasoline
   
-  nonroad_2_stroke_boats <- nonroad_consumption_cleaned %>%
-    filter(fuel == "2 stroke", equipment_type == "recreational marine") %>%
+  nonroad_2_stroke_boats <- nonroad_consumption %>%
+    filter(fuel == "2 stroke", equipment == "recreational marine") %>%
     group_by(year) %>%
-    summarize(two_stroke_boats = sum(nonroad_consumption, na.rm = TRUE))
-  nonroad_4_stroke_boats <- nonroad_consumption_cleaned %>%
-    filter(fuel == "4 stroke", equipment_type == "recreational marine") %>%
+    summarize(two_stroke_boats = sum(value, na.rm = TRUE))
+  
+  nonroad_4_stroke_boats <- nonroad_consumption %>%
+    filter(fuel == "4 stroke", equipment == "recreational marine") %>%
     group_by(year) %>%
-    summarize(four_stroke_boats = sum(nonroad_consumption, na.rm = TRUE))
+    summarize(four_stroke_boats = sum(value, na.rm = TRUE))
   
   # First compute rec boat mogas by the bottom-up method
   rec_boat_mogas_bottom_up <- eia_heat_content %>%
@@ -486,10 +483,8 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     # Join with the bottom-up data
     left_join(rec_boat_mogas_bottom_up, by = "year") %>%
     # Select whichever value is lower: non-road or bottom up
-    dplyr::rowwise() %>%
-    mutate(rec_boat_mogas = min(rec_boat_mogas_bottom_up,
-                                rec_boat_mogas_top_down,
-                                na.rm = TRUE)) %>%
+    mutate(rec_boat_mogas = pmin(rec_boat_mogas_bottom_up,
+                                rec_boat_mogas_top_down)) %>%
     select(year, rec_boat_mogas)
   
   ## Perform Motor Gasoline Adjustments-----------------------------------

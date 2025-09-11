@@ -80,9 +80,10 @@ list(
     pin_read(board, "moves3_vmt")
   ),
   
-  # tar_target(
-  #   nonroad_consumption,
-  # ),
+  tar_target(
+    nonroad_consumption,
+    pin_read(board, "nonroad_consumption")
+  ),
   
   tar_target(
     ippu_corrections,

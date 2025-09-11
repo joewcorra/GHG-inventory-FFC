@@ -28,54 +28,6 @@ lookup_msn <- function() {
 
 # CARBON FACTORS-----------------------------------
 #' Prepare carbon factors, storage fractions, and the CO2/C ratio
-#'
-#' @description
-#' Assembles annually resolved carbon factors, fixed factors replicated across
-#' the time series, and NEU storage fractions, plus `carbon_ratio = 44/12`.
-#'
-#' @details
-#' **Retrieval**
-#' - Reads variable and fixed carbon factor tables from `carbon_factors`:
-#' `factors_variable`, `factors_fixed`.
-#' - Reads NEU storage fractions from `neu_storage` (wide years `xYYYY`).
-#'
-#' **Transform**
-#' - Normalizes `source_description` to lower case.
-#' - For fixed factors, replicates values across all years; for variable factors,
-#' keeps the per year values.
-#' - Pivots both to **long** format with `year` and `carbon_factor` (numeric),
-#' removing `"x"` prefix in years.
-#' - Converts NEU storage to long (`year`, `storage_factor`) with lower case
-#' `sector_description` / `source_description`.
-#'
-#' **Collate/Output**
-#' - Returns a list `carbon_coefficients` with:
-#' - `carbon_factors` (long),
-#' - `carbon_ratio` (44/12; labelled),
-#' - `neu_storage` (long).
-#'
-#' @param carbon_factors A list with elements:
-#' - `factors_variable` (per year carbon factors),
-#' - `factors_fixed` (single values repeated across years).
-#' @param neu_storage A wide table of NEU storage fractions by sector/source
-#' with columns `sector`, `source`, and `xYYYY` year columns.
-#'
-#' @return A named list (`carbon_coefficients`) used by emissions calculators.
-#'
-#' @seealso [data_setup()], state/national emissions calculators that
-#' join on `carbon_factors`/`neu_storage`.
-#'
-#' @examples
-#' \dontrun{
-#' cc <- get_carbon_factors(gen, carbon_factors, neu_storage)
-#' head(cc$carbon_factors)
-#' }
-#'
-#' @family GHGI FFC pipeline – factors
-#' @importFrom dplyr mutate select filter left_join rename
-#' @importFrom tidyr pivot_longer
-#' @importFrom stringr str_to_lower str_remove
-#' @keywords internal
 get_carbon_factors <- function(carbon_factors_variable,
                                carbon_factors_fixed,
                                neu_storage) {
@@ -339,21 +291,8 @@ scrape_fhwa_data <- function(data_dictionary_values) {
 standardize_ffc <- function (data, msn_eia) {
 
   standardized_data <- data %>%
+    tanagerharmonize::pre_clean()
 
-    # Make selected columns lowercase (if they exist)
-    mutate(across(matches(c("sector_description", "source_description",
-                            "eia_description", "unit")),
-                  ~str_to_lower(.)))
-
-  
-  if("year" %in% colnames(standardized_data)) {
-    
-    standardized_data <- standardized_data %>%
-      mutate(year = forcats::as_factor(year))
-             
-  }
-        
-  
   if ("sector_description" %in% colnames(standardized_data)) {
     # Make 'year' a factor
     standardized_data <- standardized_data %>%
