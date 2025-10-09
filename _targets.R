@@ -11,7 +11,7 @@ targets::tar_option_set(
   garbage_collection = TRUE,
   memory = "transient",
   packages = c(
-    "extrafont", "gt", "gtExtras", "httr", "janitor",
+    "gt", "gtExtras", "httr", "janitor",
     "jsonlite", "knitr", "labelled", "openxlsx",
     "pdftools", "quarto", "reactable", "readxl", "roxygen2", "rvest",
     "showtext", "tictoc", "tidyverse",
