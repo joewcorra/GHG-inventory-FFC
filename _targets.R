@@ -28,7 +28,7 @@ source("functions_state.R")
 source("functions_both.R")
 
 # Define the pins board for data retrieval
-board <- board_folder("data/pins", versioned = TRUE)
+board <- board_folder("pins", versioned = TRUE)
 
 # Define the Pipeline-------------------------------------------
 

@@ -1,0 +1,10 @@
+file: api_seds.rds
+file_size: 904309
+pin_hash: 0431fb88958c68fd
+type: rds
+title: 'api_seds: a pinned 118524 x 10 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1

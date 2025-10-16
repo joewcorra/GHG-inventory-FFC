@@ -1,0 +1,10 @@
+file: carbon_factors_fixed.rds
+file_size: 1166
+pin_hash: f52619acff084adc
+type: rds
+title: 'carbon_factors_fixed: a pinned 50 x 5 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1

@@ -1,0 +1,10 @@
+file: ippu_dist_iron_and_steel.rds
+file_size: 9675
+pin_hash: 5c9066a462028eea
+type: rds
+title: 'ippu_dist_iron_and_steel: a pinned 1768 x 6 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133904Z
+api_version: 1

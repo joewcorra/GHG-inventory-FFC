@@ -1,0 +1,10 @@
+file: moves3_vmt.rds
+file_size: 1784
+pin_hash: 122118d09befe1dc
+type: rds
+title: 'moves3_vmt: a pinned 297 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T183230Z
+api_version: 1

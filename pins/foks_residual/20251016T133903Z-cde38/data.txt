@@ -1,0 +1,10 @@
+file: foks_residual.rds
+file_size: 7901
+pin_hash: cde3804cdf1c00a2
+type: rds
+title: 'foks_residual: a pinned 1612 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1

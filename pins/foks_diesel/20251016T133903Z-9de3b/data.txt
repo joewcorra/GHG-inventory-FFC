@@ -1,0 +1,10 @@
+file: foks_diesel.rds
+file_size: 10717
+pin_hash: 9de3be7f55b5336e
+type: rds
+title: 'foks_diesel: a pinned 1581 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1

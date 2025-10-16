@@ -1,0 +1,10 @@
+file: misc_tra_data.rds
+file_size: 1663
+pin_hash: f19b4400327f1f71
+type: rds
+title: 'misc_tra_data: a pinned 330 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T182428Z
+api_version: 1

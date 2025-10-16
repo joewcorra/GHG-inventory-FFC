@@ -1,0 +1,10 @@
+file: ippu_dist_carbon_black.rds
+file_size: 3327
+pin_hash: 9d331c4bfbee4a22
+type: rds
+title: 'ippu_dist_carbon_black: a pinned 1768 x 6 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133904Z
+api_version: 1

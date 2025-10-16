@@ -1,0 +1,10 @@
+file: feedstock_export_adjustments.rds
+file_size: 1869
+pin_hash: f235bc724b83a8f6
+type: rds
+title: 'feedstock_export_adjustments: a pinned 204 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1

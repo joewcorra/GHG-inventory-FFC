@@ -1,0 +1,10 @@
+file: misc_corrections.rds
+file_size: 4906
+pin_hash: 858cec750062ce52
+type: rds
+title: 'misc_corrections: a pinned 680 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133904Z
+api_version: 1

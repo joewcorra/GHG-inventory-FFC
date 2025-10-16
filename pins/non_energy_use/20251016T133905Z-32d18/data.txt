@@ -1,0 +1,10 @@
+file: non_energy_use.rds
+file_size: 4485
+pin_hash: 32d18a61250d4df8
+type: rds
+title: 'non_energy_use: a pinned 544 x 4 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133905Z
+api_version: 1

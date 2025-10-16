@@ -1,0 +1,10 @@
+file: carbon_factors_variable.rds
+file_size: 2915
+pin_hash: 3fa721179b9e1f5e
+type: rds
+title: 'carbon_factors_variable: a pinned 544 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251016T133903Z
+api_version: 1
