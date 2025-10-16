@@ -106,12 +106,13 @@
   # For now we will read processed data from csv
   lpg_components <- lpg_national %>%
     janitor::clean_names() %>%
-    pivot_longer(cols = !lpg, names_to = "year") %>%
+    # pivot_longer(cols = !lpg, names_to = "year") %>%
     group_by(year, lpg) %>%
     summarize(value = sum(value, na.rm = TRUE)) %>%
     ungroup() %>%
-    mutate(year = readr::parse_number(year) %>%
-             forcats::as_factor(),
+    mutate(
+      # year = readr::parse_number(year) %>%
+      #        forcats::as_factor(),
            msn = "combined lpg",
            unit = "trillion btu",
            eia_description = NA_character_,
@@ -286,7 +287,7 @@ get_heat_content <- function() {
 
 get_mobile_adjustments_data <- function(moves3_vmt, 
                                         moves3_fuel,
-                                        nonroad_consumption,
+                                        misc_tra_data,
                                         ethanol_tra,
                                         vessel_bunker_dist_fuel,
                                         eia_heat_content,
@@ -313,17 +314,19 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   
   moves <- moves3_vmt %>%
     janitor::clean_names() %>%
-    pivot_longer(
-      cols = starts_with("x"),
-      values_to = "vmt_percent", names_to = "year"
-    ) %>%
+    # pivot_longer(
+    #   cols = starts_with("x"),
+    #   values_to = "vmt_percent", names_to = "year"
+    # ) %>%
+    rename(vmt_percent = value) %>%
     left_join(
       moves3_fuel %>%
-        janitor::clean_names() %>%
-        pivot_longer(
-          cols = starts_with("x"),
-          values_to = "fuel_use_percent", names_to = "year"
-        ),
+        # janitor::clean_names() %>%
+        # pivot_longer(
+        #   cols = starts_with("x"),
+        #   values_to = "fuel_use_percent", names_to = "year"
+        # ),
+        rename(fuel_use_percent = value), 
       by = c("vehicle_type", "year")
     ) %>%
     mutate(
@@ -360,21 +363,22 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   diesel_density <- 0.85
   mogas_density <- 0.74
   
-  nonroad <- nonroad_consumption %>%
-    # values are already in gallons
-    # Remove natural gas fuel
-    filter(fuel != "cng") %>%
-    # reclassify 2- and 4-stroke as gasoline
-    mutate(fuel = if_else(
-      fuel %in% c("4 stroke", "2 stroke"),
-      "motor gasoline",
-      fuel), 
-      nonroad_value = if_else(fuel == "diesel",
-                              value / diesel_density / 3.785,
-                              value / mogas_density / 3.785)) %>%
-    group_by(equipment, fuel, year) %>%
-    summarize(nonroad_value = sum(nonroad_value)) %>%
-    ungroup()
+  nonroad <- misc_tra_data %>%
+    # # values are already in gallons
+    # # Remove natural gas fuel
+    # filter(fuel != "cng") %>%
+    # # reclassify 2- and 4-stroke as gasoline
+    # mutate(fuel = if_else(
+    #   fuel %in% c("4 stroke", "2 stroke"),
+    #   "motor gasoline",
+    #   fuel), 
+    #   nonroad_value = if_else(fuel == "diesel",
+    #                           value / diesel_density / 3.785,
+    #                           value / mogas_density / 3.785)) %>%
+    # group_by(equipment, fuel, year) %>%
+    # summarize(nonroad_value = sum(nonroad_value)) %>%
+    # ungroup()
+    filter(source == "mogas_nonroad_total")
   
   mogas <- moves %>%
     filter(fuel_type == "gasoline") %>%
@@ -386,15 +390,11 @@ get_mobile_adjustments_data <- function(moves3_vmt,
       by = "year"
     ) %>%
     left_join(ethanol_tra, by = "year") %>%
-    left_join(nonroad %>%
-                filter(equipment == "recreational marine", 
-                       fuel == "motor gasoline") %>%
-                group_by(year) %>%
-                summarize(recboat_consumption_total = sum(nonroad_value)) %>%
-                ungroup(),
+    left_join(misc_tra_data %>%
+                filter(source == "mogas_rec_boats"),
               by = "year") %>%
     mutate(mogas_use = fuel_use_percent * (
-      gasoline_use_gal * 1000 - recboat_consumption_total),
+      gasoline_use_gal * 1000 - value),
       tbtu = (mogas_use / 42 * heat_content) / 10^9
     ) %>%
     mutate(tbtu_sum = sum(tbtu), .by = year) %>%
@@ -413,14 +413,17 @@ get_mobile_adjustments_data <- function(moves3_vmt,
         select(year, heat_content),
       by = "year"
     ) %>%
-    left_join(nonroad %>%
-                filter(fuel == "diesel") %>%
+    left_join(misc_tra_data %>%
+                filter(source %in% c("diesel_rec_boats", 
+                                     "diesel_rail", 
+                                     "diesel_marine_com", 
+                                     "diesel_marine_mil")) %>%
                 group_by(year) %>%
-                summarize(nonroad_consumption_total = sum(nonroad_value)) %>%
+                summarize(diesel_nonroad_consumption_total = sum(value)) %>%
                 ungroup(),
               by = "year") %>%
     mutate(diesel_use = fuel_use_percent * (
-      diesel_use_gal * 1000 - nonroad_consumption_total),
+      diesel_use_gal * 1000 - diesel_nonroad_consumption_total),
       tbtu = (diesel_use / 42 * heat_content) / 10^9
     ) %>%
     mutate(tbtu_sum = sum(tbtu), .by = year)
@@ -456,7 +459,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # Recreational boat motor gasoline total is the smaller of 1) rec boat gas
   # calculated by the bottom-up method, or 2) total non-road motor gasoline
   
-  nonroad_2_stroke_boats <- nonroad_consumption %>%
+  nonroad_2_stroke_boats <- misc_tra_data %>%
     filter(fuel == "2 stroke", equipment == "recreational marine") %>%
     group_by(year) %>%
     summarize(two_stroke_boats = sum(value, na.rm = TRUE))
@@ -768,12 +771,6 @@ get_ippu_adjustments_data <- function(ippu_corrections) {
   # National adjustments data-------------------------------------
   ippu_adjustments <- ippu_corrections %>%
     janitor::clean_names() %>%
-    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    pivot_longer(cols = starts_with("x"),
-                 names_to = "year",
-                 values_to = "value") %>%
-    mutate(year = readr::parse_number(year) %>%
-             forcats::as_factor()) %>%
     pivot_wider(names_from = misc_adjustment, values_from = value)
   
   # Aggregate---------------------------------------------

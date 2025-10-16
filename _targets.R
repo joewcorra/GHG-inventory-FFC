@@ -98,6 +98,12 @@ list(
     pin_read(board, "lpg_national")
   ),
   
+  # misc transportation data is temporary until we can retrieve
+  tar_target(
+    misc_tra_data,
+    pin_read(board, "misc_tra_data")
+  ),
+  
   ### State-----------------------------------------------
   tar_target(
     international_bunker_fuels,
@@ -142,6 +148,12 @@ list(
   tar_target(
     feedstock_export_adjustments,
     pin_read(board, "feedstock_export_adjustments")
+  ),
+  
+  # temporary
+  tar_target(
+    api_seds,
+    pin_read(board, "api_seds")
   ),
   
   ## Data Transformation-------------------------------------------
@@ -234,7 +246,7 @@ list(
   
   tar_target(
     national_ffc_adjusted,
-  read.csv("misc_and_deprecated/temporary_national_inv_data.csv")
+  read.csv("data/temporary_national_inv_data.csv")
       # usconsumption, 
       # general_data,
       # mobile_adjustments,
@@ -253,16 +265,16 @@ list(
   ),
 
   ### State---------------------------------------------------
-  tar_target(
-    seds,
-    state_ffc_get_seds_data(msn_lookup,
-                            msn_eia, 
-                            data_dictionary_values) |>
-      standardize_ffc(msn_eia),
-    # Pull data only if it's a month old
-    cue = tar_cue_age(name = seds, 
-                      age = as.difftime(90, units = "days"))
-  ),
+  # tar_target(
+  #   seds,
+  #   state_ffc_get_seds_data(msn_lookup,
+  #                           msn_eia, 
+  #                           data_dictionary_values) |>
+  #     standardize_ffc(msn_eia),
+  #   # Pull data only if it's a month old
+  #   cue = tar_cue_age(name = seds, 
+  #                     age = as.difftime(90, units = "days"))
+  # ),
 
   tar_target(
     territories,

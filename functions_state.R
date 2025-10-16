@@ -371,8 +371,9 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   ibf_adjustments <- international_bunker_fuels %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
-    pivot_longer(cols = -1, names_to = "year", 
-                 values_to = "ibf_value") %>%
+    # pivot_longer(cols = -1, names_to = "year", 
+    #              values_to = "ibf_value") %>%
+    rename(ibf_value = value) %>%
     # Rename source column
     rename(source_description = gas_mode_and_fuel_type) %>%
     # Remove letters from 'year' column and standardize source descriptions
@@ -392,10 +393,11 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   neu_adjustments <- non_energy_use %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -c(1, 2), names_to = "year",
-      values_to = "neu_factor"
-    ) %>%
+    # pivot_longer(
+    #   cols = -c(1, 2), names_to = "year",
+    #   values_to = "neu_factor"
+    # ) %>%
+    rename(neu_factor = value) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
@@ -412,12 +414,13 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
     # Keep only state codes and value by year
-    select(state, starts_with("x")) %>%
+    # select(state, starts_with("x")) %>%
     # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "is_percent"
-    ) %>%
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "is_percent"
+    # ) %>%
+    rename(is_percent = value) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
@@ -435,12 +438,13 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
     # Keep only state codes and value by year
-    select(state, starts_with("x")) %>%
+    # select(state, starts_with("x")) %>%
     # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "ammonia_percent"
-    ) %>%
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "ammonia_percent"
+    # ) %>%
+    rename(ammonia_percent = value) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
@@ -458,12 +462,13 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
     # Keep only state codes and value by year
-    select(state, starts_with("x")) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "petrochemical_percent"
-    ) %>%
+    # select(state, starts_with("x")) %>%
+    # # Make data long; i.e., one row per year
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "petrochemical_percent"
+    # ) %>%
+    rename(petrochemical_percent = value) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
@@ -484,12 +489,13 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
     # Don't need the national value; we compute it below
     filter(state != "National") %>%
     # Keep only state codes and value by year
-    select(state, starts_with("x")) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "petrochemical_cb_percent"
-    ) %>%
+    # select(state, starts_with("x")) %>%
+    # # Make data long; i.e., one row per year
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "petrochemical_cb_percent"
+    # ) %>%
+    rename(petrochemical_cb_percent = value) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
@@ -508,10 +514,10 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   foks_diesel_distribution <- foks_diesel %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "diesel_percent"
-    ) %>%
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "diesel_percent"
+    # ) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]") %>%
@@ -535,10 +541,10 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   foks_residual_distribution <- foks_residual %>%
     janitor::clean_names() %>%
     # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "residual_percent"
-    ) %>%
+    # pivot_longer(
+    #   cols = -1, names_to = "year",
+    #   values_to = "residual_percent"
+    # ) %>%
     # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]") %>%
@@ -560,13 +566,15 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
   # TEMPORARY--this will come from national data
   feedstock_export_adjustments <-
     feedstock_export_adjustments %>%
-    pivot_longer(cols = !source_description,
-                 names_to = "year",
-                 values_to = "feedstock_adjustment") %>%
-    mutate(source_description = str_to_lower(source_description),
+    # pivot_longer(cols = !source_description,
+    #              names_to = "year",
+    #              values_to = "feedstock_adjustment") %>%
+    mutate(
+      source_description = str_to_lower(source_description),
            sector_description = "industrial sector",
-           year = readr::parse_number(year) %>%
-             forcats::as_factor())
+           # year = readr::parse_number(year) %>%
+           #   forcats::as_factor()
+      )
   
   # Aggregate------------------------------------------------------
   

@@ -59,26 +59,29 @@ get_carbon_factors <- function(carbon_factors_variable,
     # First factor column no longer needed
     select(-carbon_coefficient) %>%
     # Pivot longer
-    pivot_longer(
-      cols = starts_with("x"),
-      names_to = "year", values_to = "carbon_factor"
-    ) %>%
+    # pivot_longer(
+    #   cols = starts_with("x"),
+    #   names_to = "year", values_to = "carbon_factor"
+    # ) %>%
     # Remove x and make values numeric
     mutate(
       year = str_remove(year, "x"),
-      carbon_factor = as.numeric(carbon_factor)
+      carbon_factor = as.numeric(value)
     ) %>%
+    select(-value) %>%
     # Remove rows w/ NA values (these are mostly header rows)
     filter(!is.na(carbon_factor))
   
   neu_storage <- neu_storage %>%
     tanagerharmonize::pre_clean() %>%
     rename(sector_description = sector,
-           source_description = source) %>%
-    pivot_longer(cols = starts_with("x"),
-                 names_to = "year",
-                 values_to = "storage_factor")
-  
+           source_description = source, 
+           storage_factor = value)
+  # %>%
+    # pivot_longer(cols = starts_with("x"),
+    #              names_to = "year",
+    #              values_to = "storage_factor")
+    # 
   carbon_coefficients <- lst(carbon_factors,
                              carbon_ratio,
                              neu_storage)
