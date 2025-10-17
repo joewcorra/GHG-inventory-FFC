@@ -82,10 +82,10 @@ list(
     pin_read(board, "moves3_vmt")
   ),
   
-  tar_target(
-    nonroad_consumption,
-    pin_read(board, "nonroad_consumption")
-  ),
+  # tar_target(
+  #   nonroad_consumption,
+  #   pin_read(board, "nonroad_consumption")
+  # ),
   
   tar_target(
     ippu_corrections,
@@ -169,7 +169,7 @@ list(
     scrape_fhwa_data(data_dictionary_values), 
     # Scrape FWHA data only if it's a month old
     cue = tar_cue_age(name = fhwa_data, 
-                      age = as.difftime(90, units = "days"))
+                      age = as.difftime(30, units = "days"))
   ),
   
   tar_target(

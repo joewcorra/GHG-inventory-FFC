@@ -330,15 +330,14 @@ get_mobile_adjustments_data <- function(moves3_vmt,
       by = c("vehicle_type", "year")
     ) %>%
     mutate(
-      year = str_sub(year, 2, 5),
       fuel_type = case_when(
         vehicle_type %in% c(
-          "MC", "LDGV", "LDGT",
-          "HDGV", "HDGB"
+          "mc", "ldgv", "ldgt",
+          "hdgv", "hdgb"
         ) ~ "gasoline",
         vehicle_type %in% c(
-          "LDDV", "LDDT",
-          "HDDT", "HDDB"
+          "lddv", "lddt",
+          "hddt", "lddb"
         ) ~ "diesel"
       )
     )
@@ -459,27 +458,29 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # Recreational boat motor gasoline total is the smaller of 1) rec boat gas
   # calculated by the bottom-up method, or 2) total non-road motor gasoline
   
-  nonroad_2_stroke_boats <- misc_tra_data %>%
-    filter(fuel == "2 stroke", equipment == "recreational marine") %>%
-    group_by(year) %>%
-    summarize(two_stroke_boats = sum(value, na.rm = TRUE))
-  
-  nonroad_4_stroke_boats <- nonroad_consumption %>%
-    filter(fuel == "4 stroke", equipment == "recreational marine") %>%
-    group_by(year) %>%
-    summarize(four_stroke_boats = sum(value, na.rm = TRUE))
+  # nonroad_2_stroke_boats <- misc_tra_data %>%
+  #   filter(fuel == "2 stroke", equipment == "recreational marine") %>%
+  #   group_by(year) %>%
+  #   summarize(two_stroke_boats = sum(value, na.rm = TRUE))
+  # 
+  # nonroad_4_stroke_boats <- nonroad_consumption %>%
+  #   filter(fuel == "4 stroke", equipment == "recreational marine") %>%
+  #   group_by(year) %>%
+  #   summarize(four_stroke_boats = sum(value, na.rm = TRUE))
   
   # First compute rec boat mogas by the bottom-up method
   rec_boat_mogas_bottom_up <- eia_heat_content %>%
     # Motor gasoline only
     filter(str_detect(eia_description, "asoline")) %>%
     select(year, heat_content) %>%
+    left_join(misc_tra_data %>% filter(source == "mogas_rec_boats")) %>%
+    rename(rec_boat_mogas_bottom_up = value)
     # Join with rec boats consumption data
-    left_join(nonroad_2_stroke_boats, by = "year") %>%
-    left_join(nonroad_4_stroke_boats, by = "year") %>%
-    mutate(rec_boat_mogas_bottom_up = heat_content *
-             ((two_stroke_boats +
-                 four_stroke_boats) / 42) / 10^9)
+    # left_join(nonroad_2_stroke_boats, by = "year") %>%
+    # left_join(nonroad_4_stroke_boats, by = "year") %>%
+    # mutate(rec_boat_mogas_bottom_up = heat_content *
+    #          ((two_stroke_boats +
+    #              four_stroke_boats) / 42) / 10^9)
   
   # Rec boat motor gas is the lower of two values
   rec_boat_mogas <- rec_boat_mogas_top_down %>%
@@ -498,8 +499,8 @@ get_mobile_adjustments_data <- function(moves3_vmt,
       mogas %>%
         # Only a few columns are needed now
         select(
-          year, onroad_mogas_excl_ethanol_v1,
-          onroad_mogas_excl_ethanol_v2,
+          year, gasoline_use_gal,
+          ethanol,
           onroad_mogas_incl_ethanol
         ),
       by = "year"
