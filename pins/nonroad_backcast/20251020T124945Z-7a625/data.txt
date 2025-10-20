@@ -1,0 +1,10 @@
+file: nonroad_backcast.rds
+file_size: 696
+pin_hash: 7a62551e845b2c3d
+type: rds
+title: 'nonroad_backcast: a pinned 34 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251020T124945Z
+api_version: 1

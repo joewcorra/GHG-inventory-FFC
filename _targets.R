@@ -104,6 +104,12 @@ list(
     pin_read(board, "misc_tra_data")
   ),
   
+  # Backcast nonroad data for mobile
+  tar_target(
+    nonroad_backcast,
+    pin_read(board, "nonroad_backcast")
+  ),
+  
   ### State-----------------------------------------------
   tar_target(
     international_bunker_fuels,
@@ -225,6 +231,7 @@ list(
   #     vessel_bunker_dist_fuel,
   #     eia_heat_content,
   #     us_consumption,
+  #     nonroad_backcast, 
   #     fhwa_data
   #   )
   # ),

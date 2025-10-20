@@ -226,64 +226,7 @@ get_heat_content <- function() {
 }
 
 # NATIONAL MOBILE DATA---------------------------------------------
-#' Build national mobile fuel adjustments (on road and non road)
-#'
-#' @description Uses MOVES3 shares, EIA heat content, ethanol, and
-#' ancillary non road activity to allocate total motor gasoline and
-#' distillate fuel between transportation vs. non transportation sectors.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - Consumes in memory inputs: MOVES3 `vmt` and `fuel` shares (`moves3`),
-#' non road consumption (kg), national EIA consumption & heat content
-#' from `national_ffc_data`, and scraped totals for gasoline/diesel.
-#'
-#' **Transform:**
-#' - Tidies MOVES3 inputs into long `%` by `vehicle_type` × `year`,
-#' derives `fuel_type` (gasoline/diesel).
-#' - Cleans non road dataset; converts kg → gallons via density
-#' (diesel 0.85, mogas 0.74) and L→gal (3.785).
-#' - **Motor gasoline**: combines MOVES3 shares, national gasoline gallons,
-#' ethanol, non road subtraction, and heat content (MGTCKUS) to compute
-#' TBtu by class and year; applies ethanol displacement factor.
-#' - **Diesel**: combines MOVES3 diesel shares, national diesel gallons,
-#' non road subtraction, and heat content (DMTCKUS) to compute TBtu.
-#' - Builds “top down” and “bottom up” recreational boating gasoline and
-#' chooses the minimum for constraints.
-#' - Allocates non transportation vs. transportation motor gasoline based on
-#' MOVES3 on road and recreational boating totals; creates adjusted
-#' `mogas_adjusted` by meta sector.
-#' - For distillate: adds vessel bunkering (converted to gal), subtracts
-#' biodiesel (BDACB) from total, converts to TBtu with heat content,
-#' and computes bottom up transport vs. non transport splits.
-#'
-#' **Collate/Output:**
-#' - Returns a list with:
-#' - `national_mogas`: sector level adjusted gasoline TBtu by year.
-#' - `national_diesel`: adjusted distillate TBtu by sector/year with
-#' bottom up totals.
-#'
-#' @param moves3 
-#' @param nonroad_consumption Tibble of non road activity by `fuel` and
-#' `equipment_type` with year columns (e.g., `x2019`, `x2020`, `adj2021`).
-#' @param national_ffc_data List produced by [national_ffc_read_eia_data()].
-#' @param fhwa_data List with `gasoline_use_national` and `diesel_use_national`
-#' (thousand gal) by `year`.
-#'
-#' @return List with tibbles `national_mogas` and `national_diesel`.
-#'
-#' @seealso [national_ffc_read_eia_data()], [national_ffc_adjust_data()]
-#'
-#' @examples
-#' \dontrun{
-#' mobiles <- get_mobile_adjustments_data(moves3, nonroad, national, scraped)
-#' dplyr::glimpse(mobiles$national_mogas)
-#' }
+
 
 get_mobile_adjustments_data <- function(moves3_vmt, 
                                         moves3_fuel,
@@ -292,6 +235,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
                                         vessel_bunker_dist_fuel,
                                         eia_heat_content,
                                         us_consumption, 
+                                        nonroad_backcast,
                                         fhwa_data) {
   # Applies to Commercial, Industrial, Transportation
   
@@ -314,18 +258,9 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   
   moves <- moves3_vmt %>%
     janitor::clean_names() %>%
-    # pivot_longer(
-    #   cols = starts_with("x"),
-    #   values_to = "vmt_percent", names_to = "year"
-    # ) %>%
     rename(vmt_percent = value) %>%
     left_join(
       moves3_fuel %>%
-        # janitor::clean_names() %>%
-        # pivot_longer(
-        #   cols = starts_with("x"),
-        #   values_to = "fuel_use_percent", names_to = "year"
-        # ),
         rename(fuel_use_percent = value), 
       by = c("vehicle_type", "year")
     ) %>%
@@ -341,8 +276,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
         ) ~ "diesel"
       )
     )
-  
-  
   
   ## EIA Mogas------------------------------------------------------------
   
@@ -363,33 +296,55 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   mogas_density <- 0.74
   
   nonroad <- misc_tra_data %>%
-    # # values are already in gallons
-    # # Remove natural gas fuel
-    # filter(fuel != "cng") %>%
-    # # reclassify 2- and 4-stroke as gasoline
-    # mutate(fuel = if_else(
-    #   fuel %in% c("4 stroke", "2 stroke"),
-    #   "motor gasoline",
-    #   fuel), 
-    #   nonroad_value = if_else(fuel == "diesel",
-    #                           value / diesel_density / 3.785,
-    #                           value / mogas_density / 3.785)) %>%
-    # group_by(equipment, fuel, year) %>%
-    # summarize(nonroad_value = sum(nonroad_value)) %>%
-    # ungroup()
     filter(source == "mogas_nonroad_total")
   
-  mogas <- moves %>%
-    filter(fuel_type == "gasoline") %>%
-    left_join(fhwa_data$gasoline_use_national, by = "year") %>%
+  # Calculate total onroad gas use by year 
+  onroad_gasoline <- fhwa_data$gasoline_use_national %>%
+    left_join(nonroad_backcast %>% 
+                mutate(
+                  nonroad_mogas = backcast_nonroad_lg_mogas +
+                    backcast_nonroad_rec_mogas), 
+              by = "year") %>%
+    # Subtract backcast nonroad use (1990-2014 only)
+    mutate(adj_fhwa_mogas_gal = gasoline_use_gal * 1000 - nonroad_mogas) %>%
+    right_join(moves %>% filter(fuel_type == "gasoline"), 
+               by = "year") %>%
+    # calculate gas use by vehicle class and convert to barrels
+    mutate(onroad_mogas_use_gal = adj_fhwa_mogas_gal * fuel_use_percent) %>%
+    # join with heat content data
     left_join(
       eia_heat_content %>%
         filter(msn == "MGTCKUS") %>%
         select(year, heat_content),
-      by = "year"
-    ) %>%
-    left_join(ethanol_tra, by = "year") %>%
-    left_join(misc_tra_data %>%
+      by = "year") %>%
+    # Calculate qbtu per barrel
+    mutate(onroad_mogas_qbtu = (onroad_mogas_use_gal / 
+                                  42 * heat_content) / 10^9) %>%
+    # join w ethanol data
+    left_join(ethanol_tra %>% 
+                select(year, ethanol), by = "year") %>%
+    # get subtotal before ethanol adjustment
+    mutate(onroad_mogas_qbtu_all_vehicles = sum(onroad_mogas_qbtu), 
+           .by = year) %>%
+    # calculate  ethanol adjusted mogas total for all vehicles, method 1
+    mutate(onroad_mogas_qbtu_all_vehicles_no_ethanol = 
+             onroad_mogas_qbtu_all_vehicles - (ethanol / 1000)) %>%
+    # calculate  ethanol adjusted mogas for each vehicle class
+    mutate(onroad_mogas_qbtu_no_ethanol = 
+             (onroad_mogas_qbtu_all_vehicles_no_ethanol /
+             onroad_mogas_qbtu_all_vehicles)  * 
+             onroad_mogas_qbtu) 
+  
+  
+  # START HERE
+  total_onroad_mogas <- onroad_gasoline %>%
+    group_by(year) %>%
+    summarize(mogas_adjusted = max(onroad_mogas_qbtu_all_vehicles_no_ethanol)) %>%
+  ungroup()
+  # START HERE
+  
+  
+      left_join(misc_tra_data %>%
                 filter(source == "mogas_rec_boats"),
               by = "year") %>%
     mutate(mogas_use = fuel_use_percent * (
@@ -404,7 +359,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   
   diesel <- moves %>%
     filter(fuel_type == "diesel") %>%
-    # left_join(fhwa_data$diesel_use_by_class, by = "year") %>%
     left_join(fhwa_data$diesel_use_national, by = "year") %>%
     left_join(
       eia_heat_content %>%
@@ -458,16 +412,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # Recreational boat motor gasoline total is the smaller of 1) rec boat gas
   # calculated by the bottom-up method, or 2) total non-road motor gasoline
   
-  # nonroad_2_stroke_boats <- misc_tra_data %>%
-  #   filter(fuel == "2 stroke", equipment == "recreational marine") %>%
-  #   group_by(year) %>%
-  #   summarize(two_stroke_boats = sum(value, na.rm = TRUE))
-  # 
-  # nonroad_4_stroke_boats <- nonroad_consumption %>%
-  #   filter(fuel == "4 stroke", equipment == "recreational marine") %>%
-  #   group_by(year) %>%
-  #   summarize(four_stroke_boats = sum(value, na.rm = TRUE))
-  
   # First compute rec boat mogas by the bottom-up method
   rec_boat_mogas_bottom_up <- eia_heat_content %>%
     # Motor gasoline only
@@ -475,12 +419,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     select(year, heat_content) %>%
     left_join(misc_tra_data %>% filter(source == "mogas_rec_boats")) %>%
     rename(rec_boat_mogas_bottom_up = value)
-    # Join with rec boats consumption data
-    # left_join(nonroad_2_stroke_boats, by = "year") %>%
-    # left_join(nonroad_4_stroke_boats, by = "year") %>%
-    # mutate(rec_boat_mogas_bottom_up = heat_content *
-    #          ((two_stroke_boats +
-    #              four_stroke_boats) / 42) / 10^9)
   
   # Rec boat motor gas is the lower of two values
   rec_boat_mogas <- rec_boat_mogas_top_down %>%
@@ -499,11 +437,11 @@ get_mobile_adjustments_data <- function(moves3_vmt,
       mogas %>%
         # Only a few columns are needed now
         select(
-          year, gasoline_use_gal,
-          ethanol,
-          onroad_mogas_incl_ethanol
-        ),
-      by = "year"
+          year, tbtu_adjusted,
+          tbtu
+        ) %>%
+        mutate(sector_description = "transportation sector"),
+      by = c("year", "sector_description")
     ) %>%
     # Create 'meta sector' to differentiate transport from non-transport
     mutate(meta_sector = case_when(
@@ -513,18 +451,18 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     )) %>%
     # Non-trans mogas total = total non-trans mogas - on-road - rec boats
     mutate(remaining_mogas = case_when(
-      meta_sector == "non-trans" ~ sum(mogas_ethanol_adjusted) -
-        (onroad_mogas_excl_ethanol_v2 + rec_boat_mogas),
-      .default = mogas_ethanol_adjusted
+      meta_sector == "non-trans" ~ sum(tbtu_adjusted) -
+        (rec_boat_mogas),
+      .default = tbtu_adjusted
     ), .by = year) %>%
     mutate(
       mogas_adjusted = case_when(
         # Com or ind = remaining mogas value * EIA mogas / sum of ind + com mogas
         meta_sector == "non-trans" ~
-          remaining_mogas * mogas_ethanol_adjusted / sum(mogas_ethanol_adjusted),
+          remaining_mogas * tbtu_adjusted / sum(tbtu_adjusted),
         # Transportation = on-road total + rec boat total
         meta_sector == "trans" ~
-          onroad_mogas_excl_ethanol_v1 + rec_boat_mogas
+          tbtu_adjusted + rec_boat_mogas
       ),
       .by = c(year, meta_sector)
     )
@@ -545,12 +483,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   
   ## Rail Fuel Data------------------------------------------------------
   
-  # From weird rail sources...awaiting data access.
   
-  # dist_fuel_rail <- sum(
-  #   dist_fuel_rail_i, dist_fuel_rail_ii_iii,
-  #   dist_fuel_commuter, dist_fuel_amtrak
-  # )
   
   ## Biodiesel-------------------------------------------------------------
   
@@ -563,17 +496,8 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     # Convert to millions of gallons. Convert NAs to zero
     mutate(biodiesel = if_else(is.na(biodiesel), 0, biodiesel * 42 * 1000))
   
-  
-  ## FHWA Dist Fuel by Vehicle Class---------------------------------------
-  
-  # FWHA Source: FHWA Annual Highway Statistics, Table VM-1.
-  # https://www.fhwa.dot.gov/policyinformation/statistics.cfm
-  
-  
-  # dist_fuel_by_class
-  # NEED TO READ THIS TERRIBLE DATA FROM TERRIBLE FHWA SITE
-  
-  ## EIA Deisel Fuel---------------------------------------------------------
+
+  ## EIA Diesel Fuel---------------------------------------------------------
   
   # For each: com, ind, res, and tra
   
@@ -591,8 +515,6 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   # Total dist fuel = cars, rails, and vessels minus biodiesel
   dist_fuel_excl_biodiesel <- dist_fuel_vessel %>%
     select(year, value) %>%
-    # bind_rows(dist_fuel_by_class) %>%
-    # bind_rows(dist_fuel_rail) %>%
     dplyr::bind_rows(biodiesel) %>%
     group_by(year) %>%
     summarize(total_dist_fuel = sum(

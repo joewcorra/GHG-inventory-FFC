@@ -1,10 +1,10 @@
 file: moves3_fuel.rds
-file_size: 1784
-pin_hash: 122118d09befe1dc
+file_size: 2752
+pin_hash: 001f86bda15f5711
 type: rds
 title: 'moves3_fuel: a pinned 297 x 3 data frame'
 description: ~
 tags: ~
 urls: ~
-created: 20251016T185158Z
+created: 20251020T163852Z
 api_version: 1
