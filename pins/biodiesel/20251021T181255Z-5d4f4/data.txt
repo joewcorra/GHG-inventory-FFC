@@ -1,0 +1,10 @@
+file: biodiesel.rds
+file_size: 426
+pin_hash: 5d4f489dd5b42efe
+type: rds
+title: 'biodiesel: a pinned 33 x 2 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251021T181255Z
+api_version: 1
