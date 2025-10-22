@@ -110,6 +110,12 @@ list(
     pin_read(board, "biodiesel")
   ),
   
+  # Biodiesel for mobile calcs
+  tar_target(
+    rail_diesel,
+    pin_read(board, "rail_diesel")
+  ),
+  
   # Backcast nonroad data for mobile
   tar_target(
     nonroad_backcast,
@@ -238,6 +244,7 @@ list(
   #     eia_heat_content,
   #     us_consumption,
   #     biodiesel, 
+  #     rail_diesel,
   #     nonroad_backcast, 
   #     fhwa_data
   #   )

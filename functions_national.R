@@ -178,7 +178,7 @@ get_heat_content <- function() {
     
   eia_api_vessel_bunker <- paste0(
     "https://api.eia.gov/v2/petroleum/cons/821usea/data/?frequency=annual",
-    "&data[0]=value&facets[duoarea][]=NUS&facets[process][]=VAB&start=1990&end=",
+    "&data[0]=value&facets[duoarea][]=NUS&facets[process][]=VAB&start=1989&end=",
     latest_year,
     "&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000",
     "&api_key=", key
@@ -236,8 +236,10 @@ get_mobile_adjustments_data <- function(moves3_vmt,
                                         eia_heat_content,
                                         us_consumption, 
                                         biodiesel,
+                                        rail_diesel,
                                         nonroad_backcast,
                                         fhwa_data) {
+  
   # Applies to Commercial, Industrial, Transportation
   
   # Motor Gasoline------------------------------------------------------------
@@ -260,7 +262,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
         ) ~ "gasoline",
         vehicle_type %in% c(
           "lddv", "lddt",
-          "hddt", "lddb"
+          "hddt", "lddb", "hddb"
         ) ~ "diesel"
       )
     )
@@ -362,155 +364,116 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     # Get industrial + commercial (non-transport) total by year
     mutate(remaining_mogas_nontrans = sum(mogas_ethanol_adjusted) / 10^6, 
            .by = year) %>%
+    select(-value) %>%
+    # make data wider for final calcs--1 row per year w/ all 3 sectors
+    pivot_wider(names_from = sector_description, 
+                values_from = mogas_ethanol_adjusted) %>%
+    janitor::clean_names() %>%
     # Get industrial + commercial adjusted mogas totals
     mutate(mogas_ind = remaining_total_mogas * 
-             (mogas_ethanol_adjusted / 10^6) / remaining_mogas_nontrans, 
+             industrial_sector / remaining_mogas_nontrans, 
            mogas_com = remaining_total_mogas * 
-             (mogas_ethanol_adjusted / 10^6) / remaining_mogas_nontrans, 
-           mogas_tra = mogas_adjusted + mogas_rec_boats_adjusted)
+             commercial_sector / remaining_mogas_nontrans, 
+           mogas_tra = (mogas_adjusted + mogas_rec_boats_adjusted) * 1000) %>%
+    # group by year and retain only non-NA rows
+    select(-commercial_sector, -industrial_sector) %>%
+    group_by(year) %>%
+    summarize(mogas_com = max(mogas_com, na.rm = TRUE), 
+              mogas_ind = max(mogas_ind, na.rm = TRUE), 
+              mogas_tra = max(mogas_tra, na.rm = TRUE)) %>%
+    ungroup()
           
+  
   
   # Distillate (Diesel) Fuel Adjustments--------------------------
   
+  ## Vessel Fuel Data-----------------------------------------------
+
+  # vEIA essel_bunker_dist_fuel
+  # Data needed for vessel fuel and rail
+  vessel_diesel <- vessel_bunker_dist_fuel %>%
+    # Dist fuel only
+    filter(str_detect(eia_description, "istillate")) %>%
+    # Convert units
+    mutate(value = value * 1000)
   
-  diesel <- moves %>%
+  ## Calculate Diesel Consumption------------------------------------
+  
+  # Start with MOVES model diesel fuel consumption
+  adjusted_diesel <- moves %>%
     filter(fuel_type == "diesel") %>%
+    # join with FHWA fuel consumption data
     left_join(fhwa_data$diesel_use_national, by = "year") %>%
+    # calculate diesel comsumption by vehicle class
+    mutate(diesel_use_by_class = fuel_use_percent * diesel_use_gal * 1000) %>%
+    # Retain only necessaey columns for the following row bind
+    select(year, class = vehicle_type, diesel_use_by_class) %>%
+    # Joni with rail diesel consumption
+    bind_rows(rail_diesel %>%
+                # Sum all rail classes by year
+                group_by(year) %>%
+                summarize(diesel_use_by_class = sum(diesel_consumption)) %>%
+                ungroup() %>%
+                # create vehicle class for all rail types
+                mutate(class = "locomotives")) %>%
+    # Join with marine diesel consumption 
+    bind_rows(vessel_diesel %>%
+                select(year, diesel_use_by_class = value) %>%
+                # create vehicle class for vessels
+                mutate(class = "ships and boats")) %>%
+    # Calculate subtotal and add to every row
+    mutate(subtotal_diesel_use = sum(diesel_use_by_class), .by = year) %>%
+  # Joni with biodiesel data
+  left_join(biodiesel, by = "year") %>%
+    # Adjust subtotal for biodiesel use 
+    mutate(subtotal_diesel_use_adjusted = subtotal_diesel_use - 
+             biodiesel, 
+           # adjust each fuel class for biodiesel use and convert to barrels
+           diesel_use_by_class_adjusted = ((diesel_use_by_class / 
+                                             subtotal_diesel_use) * 
+             subtotal_diesel_use_adjusted) / 42) %>%
+    # join with heat content data
     left_join(
       eia_heat_content %>%
         filter(msn == "DMTCKUS") %>%
         select(year, heat_content),
-      by = "year"
-    ) %>%
-    left_join(misc_tra_data %>%
-                filter(source %in% c("diesel_rec_boats", 
-                                     "diesel_rail", 
-                                     "diesel_marine_com", 
-                                     "diesel_marine_mil")) %>%
-                group_by(year) %>%
-                summarize(diesel_nonroad_consumption_total = sum(value)) %>%
-                ungroup(),
-              by = "year") %>%
-    mutate(diesel_use = fuel_use_percent * (
-      diesel_use_gal * 1000 - diesel_nonroad_consumption_total),
-      tbtu = (diesel_use / 42 * heat_content) / 10^9
-    ) %>%
-    mutate(tbtu_sum = sum(tbtu), .by = year)
-  
-  ## Vessel Fuel Data-----------------------------------------------
-  
-  # Retrieved from EIA
-  
-  # vessel_bunker_dist_fuel
-  # Data needed for vessel fuel and rail
-  dist_fuel_vessel <- vessel_bunker_dist_fuel %>%
-    # Dist fuel only
-    filter(str_detect(eia_description, "istillate")) %>%
-    # Convert units to million gallons
-    mutate(value = value * 1000)
-  
-  ## Rail Fuel Data------------------------------------------------------
-  
-  
+      by = "year")%>%
+    # calculate heat content and convert to qbtu
+    mutate(diesel_consumption_tbtu = (diesel_use_by_class_adjusted * 
+                                        heat_content) / 10^6)
+   
+  national_diesel <- adjusted_diesel %>%
+  # Summarize by year
+    group_by(year) %>%
+    summarize(diesel_tra = sum(diesel_consumption_tbtu)) %>%
+    ungroup()
+    
   
   ## EIA Diesel Fuel---------------------------------------------------------
   
-  # For each: com, ind, res, and tra
+  # # For each: com, ind, res, and tra
+  # 
+  # us_consumption_dist_fuel <- us_consumption %>%
+  #   filter(msn %in% c("DFRCB", "DFICB", "DFCCB", "DFACB")) %>%
+  #   mutate(meta_sector = case_when(
+  #     sector_description == "commercial sector" ~ "non-trans",
+  #     sector_description == "industrial sector" ~ "non-trans",
+  #     sector_description == "residential sector" ~ "non-trans",
+  #     sector_description == "transportation sector" ~ "trans"
+  #   ))
   
-  us_consumption_dist_fuel <- us_consumption %>%
-    filter(msn %in% c("DFRCB", "DFICB", "DFCCB", "DFACB")) %>%
-    mutate(meta_sector = case_when(
-      sector_description == "commercial sector" ~ "non-trans",
-      sector_description == "industrial sector" ~ "non-trans",
-      sector_description == "residential sector" ~ "non-trans",
-      sector_description == "transportation sector" ~ "trans"
-    ))
   
-  ## Perform Diesel Adjustments-----------------------------------
-  
-  # Total dist fuel = cars, rails, and vessels minus biodiesel
-  dist_fuel_excl_biodiesel <- dist_fuel_vessel %>%
-    select(year, value) %>%
-    dplyr::bind_rows(biodiesel) %>%
-    group_by(year) %>%
-    summarize(total_dist_fuel = sum(
-      value,
-      na.rm = TRUE
-    ) - sum(
-      biodiesel,
-      na.rm = TRUE
-    )) %>%
-    ungroup() %>%
-    # Join with heat content data for distillate fuel
-    left_join(eia_heat_content %>%
-                # Distillate fuel only
-                filter(str_detect(eia_description, "istillate")), by = "year") %>%
-    # Convert to barrels and multiply by heat content to get mmbtu
-    mutate(
-      total_dist_fuel = (total_dist_fuel / 42) * heat_content,
-      bottom_up_trans = total_dist_fuel / 1000
-    )
-  
-  national_diesel <- us_consumption_dist_fuel %>%
-    left_join(dist_fuel_excl_biodiesel %>%
-                select(year, bottom_up_trans), by = "year") %>%
-    mutate(
-      bottom_up_nontrans = sum(value, na.rm = TRUE) - bottom_up_trans,
-      .by = c(year, meta_sector)
-    ) %>%
-    mutate(
-      bottom_up_total = sum(value, na.rm = TRUE) - bottom_up_trans,
-      .by = c(year)
-    ) %>%
-    mutate(
-      adjusted_value = ((value * 10^6) / (sum(
-        value,
-        na.rm = TRUE
-      ) * bottom_up_total)) / 10^3,
-      .by = c(year)
-    )
-  
-  # Aggregate------------------------------------------------
+## Aggregate Data--------------------------
   
   mobile_adjustments <- lst(national_mogas, national_diesel)
   
   return(mobile_adjustments)
+  
 }
 
 # NATIONAL IBF DATA---------------------------------------------
-#' Prepare misc. national adjustments (NEU/IPPU and special factors)
-#'
-#' @description Converts a corrections sheet to a long/wide tidy frame of
-#' year specific adjustment factors (e.g., Eastman, Dakota SNG, IPPU coal/gas).
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#'
-#' **Transform:**
-#' - Cleans names; coerces numeric; pivots long to `year`/`value`;
-#' parses year; pivots wide to individual factor columns.
-#'
-#' **Collate/Output:**
-#' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
-#' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
-#'
-#' @param ippu_corrections List with element `corrections` (data frame).
-#'
-#' @return Tibble of per year adjustment factors (one row per year).
-#'
-#' @seealso [national_ffc_adjust_data()]
-#'
-#' @examples
-#' \dontrun{
-#' misc_adj <- get_ippu_adjustments_data(ippu_corrections)
-#' }
 
-get_ibf_adjustments_data <- function(national_ffc_data,
+get_ibf_adjustments_data <- function(international_bunker_fuels, 
                                      fhwa_data) {
   # Fuel Densities----------------------------------------------
   

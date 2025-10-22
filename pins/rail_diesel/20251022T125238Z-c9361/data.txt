@@ -1,0 +1,10 @@
+file: rail_diesel.rds
+file_size: 1090
+pin_hash: c9361b22a7a2e567
+type: rds
+title: 'rail_diesel: a pinned 132 x 3 data frame'
+description: ~
+tags: ~
+urls: ~
+created: 20251022T125238Z
+api_version: 1
