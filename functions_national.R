@@ -241,7 +241,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
                                         fhwa_data) {
   
   # Applies to Commercial, Industrial, Transportation
-  
+  us_consumption <- us_consumption %>% mutate(msn = str_to_upper(msn))
   # Motor Gasoline------------------------------------------------------------
  
    ## MOVES Data---------------------------------------------------------
@@ -471,102 +471,8 @@ get_mobile_adjustments_data <- function(moves3_vmt,
   
 }
 
-# NATIONAL IBF DATA---------------------------------------------
-
-get_ibf_adjustments_data <- function(international_bunker_fuels, 
-                                     fhwa_data) {
-  # Fuel Densities----------------------------------------------
-  
-  # These are fixed (I think)
-  
-  fuels <- tibble(
-    fuel = c(
-      "jet fuel", "JP8", "JP5", "JP4", "JAA", "JA1", "JAB",
-      "distillate fuel", "commerce marine",
-      "military marine", "residual fuel",
-      "aviation gasoline", "intermediate fuel oil (IFO)"
-    ),
-    fuel_density = c(
-      3.002, 3.04, 3.08, 2.90, 3.08, 3.04, NA, NA,
-      3.1916, 3.18, 3.575, 2.72, 3.81
-    )
-  )
-  
-  # TEMPORARY!!!!!!!!!!!!!!------------------------------------
-  tra_temp <- readxl::read_excel("data/misc_tra_data_temporary.xlsx", 
-                                 sheet = 1) %>%
-    filter(str_detect(source,"marine|jet")) %>%
-    pivot_longer(cols = !source, names_to = "year", values_to = "ibf_value")
-  
-  ibf_jet_fuel_adj <- tra_temp %>%
-    filter(str_detect(source, "jet")) %>%
-    group_by(year) %>%
-    summarize(ibf_value = sum(ibf_value, na.rm = TRUE)) %>%
-    ungroup()
-  
-  ibf_marine_residual_fuel_adj <- tra_temp %>%
-    filter(source == "resid_marine_com") %>%
-    select(-source)
-  
-  ibf_marine_dist_fuel_adj <- tra_temp %>%
-    filter(source %in%
-             c("diesel_marine_mil", "diesel_marine_com")) %>%
-    group_by(year) %>%
-    summarize(ibf_value = sum(ibf_value, na.rm = TRUE)) %>%
-    ungroup()
-  
-  
-  # IBF Adjustments---------------------------------------------
-  
-  
-  # jet_fuel_consumption <- jet_fuel_civilian + jet_fuel_military
-  
-  # jet_fuel_heat_content <- 5.670
-  
-  # Aviation jet fuel (tbtu) = intl comm aviation (hard coded number in Transport workbook) +
-  # military aircraft (hidden worksheet)
-  
-  # Marine residual fuel = ??? (hidden worksheet)
-  
-  # Marine distillate fuel = ??? (hidden worksheet)
-  
-  # Aggregate---------------------------------------------
-  
-  ibf_adjustments <- lst(
-    ibf_jet_fuel_adj, ibf_marine_residual_fuel_adj,
-    ibf_marine_dist_fuel_adj)
-  
-  return(ibf_adjustments)
-}
 
 # NATIONAL DATA, MISC.----------------------------------------
-#' Prepare misc. national adjustments (NEU/IPPU and special factors)
-#'
-#' @description Converts a corrections sheet to a long/wide tidy frame of
-#' year specific adjustment factors (e.g., Eastman, Dakota SNG, IPPU coal/gas).
-#'
-#'@importFrom dplyr mutate select filter across case_when if_else left_join distinct rename
-#' @importFrom tidyr pivot_longer
-#'
-#' @details
-#' **Retrieval:**
-#' - Consumes `ippu_corrections$corrections` (wide with `xYYYY` columns).
-#'
-#' **Transform:**
-#' - Cleans names; coerces numeric; pivots long to `year`/`value`;
-#' parses year; pivots wide to individual factor columns.
-#'
-#' **Collate/Output:**
-#' - Tibble where each column is an adjustment factor (e.g., `eastman_adj`,
-#' `dakota_adj`, `coking_coal_adj`, `is_natgas_adj`, `cb_residual_adj`, etc.).
-#'
-#' @param ippu_corrections List with element `corrections` (data frame).
-#'
-#' @return Tibble of per year adjustment factors (one row per year).
-#'
-#' @seealso [national_ffc_adjust_data()]
-
-#' }
 
 get_ippu_adjustments_data <- function(ippu_corrections) {
   
@@ -582,60 +488,21 @@ get_ippu_adjustments_data <- function(ippu_corrections) {
 
 
 # NATIONAL DATA ADJUSTMENTS----------------------------
-#' Compute national adjusted fossil fuel consumption by sector/source
-#'
-#' @description Applies NEU, IPPU, IBF, and mobile re allocations to national
-#' EIA consumption; returns sector/source TBtu adjusted for reporting.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - Consumes standardized `us_consumption` plus
-#' `mobile_adjustments` (mogas/diesel), `ibf_adjustments`, and
-#' per year `ippu_adjustments`.
-#'
-#' **Transform:**
-#' - Residential/Commercial/Electric: passes through (with note that separate
-#' mogas/DF adjustments may apply elsewhere), creates `adjusted_value = value`.
-#' - Industrial: subtracts special factors (Eastman, Dakota SNG, IPPU coking coal,
-#' iron & steel for coal/diesel, blast furnace/coke oven/biogas/ammonia for gas);
-#' sets NEU 100% categories (asphalt, misc products, naphtha, other oil,
-#' special naphtha, waxes) to zero adjusted energy; carries through others.
-#' - Transportation: subtracts IBF for residual/distillate/jet; carries through
-#' other fuels; keeps “combined lpg” where applicable.
-#'
-#' **Collate/Output:**
-#' - Single tibble with `sector_description`, `source_description`, `year`,
-#' original `value`, and `adjusted_value` (TBtu).
-#'
-#' @param national_ffc_data List from [national_ffc_read_eia_data()].
-#' @param mobile_adjustments List from [get_mobile_adjustments_data()] 
-#' @param ibf_adjustments List from [get_ibf_adjustments_data()].
-#' @param ippu_adjustments Tibble from [get_ippu_adjustments_data()].
-#'
-#' @return Tibble of adjusted national consumption by sector/source/year.
-#'
-#' @seealso [national_ffc_read_eia_data()], [get_mobile_adjustments_data()],
-#' [get_ibf_adjustments_data()], [get_ippu_adjustments_data()],
-#' [national_ffc_calculate_emissions()]
-#'
-#' @examples
-#' \dontrun{
-#' adj <- national_ffc_adjust_data(national, mobiles, ibf, misc_adj)
-#' dplyr::count(adj, sector_description, source_description)
-#' }
+
 
 national_ffc_adjust_data <- function(
     us_consumption,
     mobile_adjustments,
-    ibf_adjustments,
+    international_bunker_fuels,
     ippu_adjustments
 ) {
   # Collate National consumption data-------------------------------------
+  
+  us_consumption <- us_consumption %>% 
+    mutate(msn = str_to_upper(msn))
+  
+  international_bunker_fuels <- international_bunker_fuels %>% 
+    rename(ibf_value = value)
   
   # ## Residential, Commercial, & Electric Power----------------------------
   #
@@ -837,13 +704,17 @@ national_ffc_adjust_data <- function(
     # Distillate Fuel (IBF adjustment, mogas/df adjustment)
     distillate_fuel = us_consumption %>%
       filter(msn == "DFACB") %>%
-      left_join(ibf_adjustments$ibf_marine_dist_fuel_adj),
+      left_join(international_bunker_fuels%>% 
+                  filter(gas_mode_and_fuel_type == "marine distillate fuel oil"), 
+                by = "year"),
     
     # Jet Fuel (IBF adjustment)
     jet_fuel = us_consumption %>%
       filter(msn == "JFACB") %>%
-      left_join(ibf_adjustments$ibf_jet_fuel_adj),
-    
+      left_join(international_bunker_fuels %>% 
+                  filter(gas_mode_and_fuel_type == "marine residual fuel oil"), 
+                by = "year"),
+  
     # LPG (Propane) AKA HGL
     lpg = us_consumption %>%
       filter(msn == "HLACB"),
@@ -855,7 +726,9 @@ national_ffc_adjust_data <- function(
     # Residual Fuel (IBF adjustment)
     residual_fuel = us_consumption %>%
       filter(msn == "RFACB") %>%
-      left_join(ibf_adjustments$ibf_marine_residual_fuel_adj)
+      left_join(international_bunker_fuels %>% 
+                  filter(gas_mode_and_fuel_type == "marine residual fuel oil"), 
+                by = "year")
   ) %>%
     # Collapse list into a single data frame
     purrr::list_rbind() %>%
@@ -866,52 +739,17 @@ national_ffc_adjust_data <- function(
   
   # Aggregate------------------------------------------------------
   
-  national_ffc_adjusted <- lst(us_res_com_ele, us_ind, us_tra) %>%
+  national_ffc_adjusted <- lst(us_res_com_ele, 
+                               select(us_ind, year:adjusted_value), 
+                               select(us_tra, 
+                                      -gas_mode_and_fuel_type, 
+                                      -ibf_value)) %>%
     dplyr::bind_rows()
-  
-  # # TEMPORARY. FOR 2023 INV (5/8/2025) ONLY
-  # national_ffc_adjusted <- read_csv("data/temporary_national_inv_data.csv") %>%
-  #   pivot_longer(cols = !c(sector, source), names_to = "year") %>%
-  #   rename(source_description = source,
-  #          sector_description = sector,
-  #          adjusted_value = value)
   
 }
 
 # NATIONAL CO2 EMISSIONS------------------------------------
-' Calculate national CO2 emissions from adjusted energy use
-#'
-#' @description Joins adjusted TBtu with carbon factors and computes
-#' CO2 emissions (MMT) using 44/12 molecular ratio.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - Consumes `national_ffc_adjusted` from [national_ffc_adjust_data()].
-#' - Consumes `carbon_coefficients$carbon_factors` and `carbon_ratio`.
-#'
-#' **Transform:**
-#' - Computes `mmt_co2 = adjusted_value * (carbon_factor / 1000) * carbon_ratio`.
-#'
-#' **Collate/Output:**
-#' - Tibble of emissions by sector/source/year with `mmt_co2`.
-#'
-#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
-#' @param carbon_coefficients List with `carbon_factors` (per fuel/year) and
-#' scalar `carbon_ratio` (44/12).
-#'
-#' @return Tibble with CO2 emissions (MMT) per sector/source/year.
-#'
-#' @seealso [national_ffc_adjust_data()]
-#'
-#' @examples
-#' \dontrun{
-#' co2_nat <- national_ffc_calculate_emissions(adj, carbon_coeffs)
-#' }
+
 
 national_ffc_calculate_emissions <- function(national_ffc_adjusted,
                                              carbon_coefficients) {
@@ -928,32 +766,7 @@ national_ffc_calculate_emissions <- function(national_ffc_adjusted,
 }
 
 # NATIONAL FIGURES--------------------------------------
-#' Build national ggplot2 figures for FFC
-#'
-#' @description Placeholder that returns `NULL` until figures are implemented.
-#'
-#'#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#' @import ggplot2
 
-#' @details
-#' **Retrieval/Transform:** Not yet implemented.
-#'
-#' **Collate/Output:**
-#' - Returns `NULL`. Intended to assemble a list of ggplot objects based on
-#' adjusted consumption and emissions.
-#'
-#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
-#' @param carbon_emissions_national Tibble from [national_ffc_calculate_emissions()].
-#'
-#' @return `NULL` (placeholder).
-#'
-#' @seealso [national_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#'
-#' @examples
-#' NULL
 
 national_ffc_ggplot_figures <- function(national_ffc_adjusted,
                                         carbon_emissions_national) {
@@ -964,38 +777,6 @@ national_ffc_ggplot_figures <- function(national_ffc_adjusted,
 }
 
 # NATIONAL TABLES----------------------------------------------
-#' Produce national GT tables for FFC
-#'
-#' @description Returns a list of formatted `gt` tables.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#' @import gt
-#'
-#' @details
-#' **Retrieval:**
-#' - Consumes adjusted national energy and CO2 tables (not yet wired in demo).
-#'
-#' **Transform:**
-#' - Demonstrates table header, styling, stub configuration, grand totals, and
-#' footnotes that match report style.
-#'
-#' **Collate/Output:**
-#' - Returns a named list `national_ffc_tables` of `gt` objects for report export.
-#'
-#' @param national_ffc_adjusted Tibble from [national_ffc_adjust_data()].
-#' @param carbon_emissions_national Tibble from [national_ffc_calculate_emissions()].
-#'
-#' @return Named list of `gt` tables.
-#'
-#' @seealso [gt::gt()]
-#'
-#' @examples
-#' \dontrun{
-#' tabs <- national_ffc_gt_tables(adj, co2_nat)
-#' }
 
 national_ffc_gt_tables <- function(national_ffc_adjusted,
                                    carbon_emissions_national) {

@@ -6,7 +6,7 @@ library(targets)
 library(visNetwork)
 library(tarchetypes)
 
-# remotes::install_github("joewcorra/tanager-data-harmonize")
+remotes::install_github("joewcorra/syrinx")
 
 targets::tar_option_set(
   error = "null",
@@ -17,7 +17,7 @@ targets::tar_option_set(
     "jsonlite", "knitr", "labelled", "openxlsx",
     "pdftools", "quarto", "reactable", "readxl", "roxygen2", "rvest",
     "showtext", "tictoc", "tidyverse",
-    "tanagerharmonize"
+    "syrinx"
   )
 )
 
@@ -61,14 +61,14 @@ list(
     data_dictionary_values,
     read.csv(file = system.file("extdata",
                                        "data_dictionary_values.csv", 
-                                       package = "tanagerharmonize"))
+                                       package = "syrinx"))
   ),
   
   tar_target(
     data_dictionary_variables,
     read.csv(file = system.file("extdata", 
                                        "data_dictionary_variables.csv", 
-                                       package = "tanagerharmonize"))
+                                       package = "syrinx"))
   ),
   
   ### National--------------------------------------------
@@ -81,11 +81,6 @@ list(
     moves3_vmt,
     pin_read(board, "moves3_vmt")
   ),
-  
-  # tar_target(
-  #   nonroad_consumption,
-  #   pin_read(board, "nonroad_consumption")
-  # ),
   
   tar_target(
     ippu_corrections,
@@ -233,28 +228,19 @@ list(
   ),
 
   # Mobile is in-work
-  # tar_target(
-  #   mobile_adjustments,
-  #   get_mobile_adjustments_data(
-  #     moves3_vmt,
-  #     moves3_fuel,
-  #     national_ffc_data,
-  #     ethanol_tra,
-  #     vessel_bunker_dist_fuel,
-  #     eia_heat_content,
-  #     us_consumption,
-  #     biodiesel, 
-  #     rail_diesel,
-  #     nonroad_backcast, 
-  #     fhwa_data
-  #   )
-  # ),
-
-  # IBF is in-work
   tar_target(
-    ibf_adjustments,
-    get_ibf_adjustments_data(
+    mobile_adjustments,
+    get_mobile_adjustments_data(
+      moves3_vmt,
+      moves3_fuel,
+      misc_tra_data,
+      ethanol_tra,
+      vessel_bunker_dist_fuel,
+      eia_heat_content,
       us_consumption,
+      biodiesel,
+      rail_diesel,
+      nonroad_backcast,
       fhwa_data
     )
   ),
@@ -264,16 +250,13 @@ list(
     get_ippu_adjustments_data(ippu_corrections)
   ),
 
-  
   tar_target(
     national_ffc_adjusted,
-  read.csv("data/temporary_national_inv_data.csv")
-      # usconsumption, 
-      # general_data,
-      # mobile_adjustments,
-      # ibf_adjustments,
-      # ippu_adjustments
-    
+    national_ffc_adjust_data(
+      us_consumption,
+      mobile_adjustments,
+      international_bunker_fuels,
+      ippu_adjustments)
   ),
 
   tar_target(

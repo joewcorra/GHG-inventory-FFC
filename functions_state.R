@@ -25,28 +25,8 @@ scale_to_national <- function(data,
 
 
 # STATE CONSUMPTION DATA-------------------------------------------
-#'
-#' @description This function retrieves state-by-state fossil fuel consumption data from the U.S. Energy Information Administration (EIA)'s State Energy Data System (SEDS).
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename
-#' @importFrom tibble lst
-#' **Retrieval:**
-#' - Downloads annual fossil fuel consumption data from EIA API for all U.S. states.
-#' - Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
-#' - Defines a nested function, `get_state_results()`, to query the EIA API for annual energy data by state and year.
-#' - Downloads either the entire time series and save to CSV, or loads an existing CSV and downloads only the most recent year of the time series.
-#' - Measures the time taken for this operation.
-#' - Uses the `general_data` object to identify the correct variable names and sector mappings.
-#' **Transform:**
-#' - Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
-#' - Applies naming harmonization so sectors, fuels, and years align with GHGI data dictionary.
-#' - Removes any duplicate rows that might have been added when new annual data was appended.
-#' - Filters the dataset to include only fossil fuel energy sources relevant to GHGI reporting.
-#' - Aggregates hydrocarbon gas liquids (HGLs) data.
-#' **Collate/Output:**
-#' - `seds`: tibble; used by
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @return Tibble with columns:
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+
+
 state_ffc_get_seds_data <- function(msn_lookup, msn_eia, data_dictionary_values) {
   # Access SEDS data via EIA API
   
