@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software in a scientific publication, please cite it using the metadata below."
+title: "GHG-inventory-FFC"
+version: "0.1.0"
+authors:
+  - family-names: "Corra"
+    given-names: "Joseph"
+    orcid: "https://orcid.org/0000-0002-2654-9849"
+date-released: "2025-01-01"
+repository-code: "https://github.com/joewcorra/GHG-inventory-FFC"
+abstract: >
+  ['An R-based toolkit for compiling and analyzing greenhouse gas emissions data from fossil fuel combustion
+  using reproducible methods and modular workflows.']
+license: "MIT"
+keywords:
+  - inventory
+  - open-source
+  - scientific-computing
+  - reproducibility
+  - emissions
+  - energy
+  - climate
