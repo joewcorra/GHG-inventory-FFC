@@ -37,12 +37,12 @@ get_carbon_factors <- function(carbon_factors_variable,
   
   # Read in variable carbon factors data from FFC excel workbook
   carbon_factors_variable <- carbon_factors_variable %>%
-    tanagerharmonize::pre_clean() %>%
+    syrinx::pre_clean() %>%
     rename(source_description = fuel_type) 
   
   # Read in carbon factors data from FFC excel workbook
   carbon_factors <- carbon_factors_fixed %>%
-    tanagerharmonize::pre_clean() %>%
+    syrinx::pre_clean() %>%
     select(source_description = fuel_type, carbon_coefficient) %>%
     filter(
       # NA = not applicable, NC = not calculated. Remove all NA & NC
@@ -73,7 +73,7 @@ get_carbon_factors <- function(carbon_factors_variable,
     filter(!is.na(carbon_factor))
   
   neu_storage <- neu_storage %>%
-    tanagerharmonize::pre_clean() %>%
+    syrinx::pre_clean() %>%
     rename(sector_description = sector,
            source_description = source, 
            storage_factor = value)
@@ -294,7 +294,7 @@ scrape_fhwa_data <- function(data_dictionary_values) {
 standardize_ffc <- function (data, msn_eia) {
 
   standardized_data <- data %>%
-    tanagerharmonize::pre_clean()
+    syrinx::pre_clean()
 
   if ("sector_description" %in% colnames(standardized_data)) {
     # Make 'year' a factor
