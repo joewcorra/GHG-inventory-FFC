@@ -30,8 +30,8 @@ scale_to_national <- function(data,
 state_ffc_get_seds_data <- function(msn_lookup, msn_eia, data_dictionary_values) {
   # Access SEDS data via EIA API
   
-  # # API key generated 11/22/23
-  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+  # # API key, generate your own
+  key <- " "
   
   # Get most recent year
   latest_year <- lubridate::year(Sys.Date()) - 2
