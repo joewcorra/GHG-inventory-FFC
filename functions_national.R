@@ -4,8 +4,8 @@
   # Function to read data from EIA API, 1 year at a time
   get_national_results <- function(msn_lookup, msn_eia, lpg_national) {
     
-    # API key generated 11/22/23
-    key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+    # API ke, generate your own
+    key <- " "
     
     # Change to match most recent available year (current year minus two)
     latest_year <- lubridate::year(Sys.Date()) - 2
