@@ -138,7 +138,7 @@ get_territories_data <- function() {
   # API Key----------------------------------------------------------------
   
   # API key generated 11/22/23
-  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+  key <- " "
   
   
   # Retrieve Territories FF Consumption from EIA---------------------------

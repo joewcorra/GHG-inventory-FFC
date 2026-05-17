@@ -137,7 +137,7 @@
 get_heat_content <- function() {
   
   # API key generated 11/22/23
-  key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+  key <- " "
   
   # Change to match most recent available year (current year minus two)
   latest_year <- lubridate::year(Sys.Date()) - 2
@@ -171,7 +171,7 @@ get_heat_content <- function() {
   get_vessel_bunker <- function() {
     
     # API key generated 11/22/23
-    key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+    key <- " "
     
     # Change to match most recent available year (current year minus two)
     latest_year <- lubridate::year(Sys.Date()) - 2
@@ -202,7 +202,7 @@ get_heat_content <- function() {
  get_ethanol_tra <- function() {
    
    # API key generated 11/22/23
-   key <- "IF71xvc7rkBDFvzekErsoZx99OC7cKNVvcKEUBDm"
+   key <- " "
    
   eia_api_ethanol <- paste0(
     "https://api.eia.gov/v2/total-energy/data/?frequency",

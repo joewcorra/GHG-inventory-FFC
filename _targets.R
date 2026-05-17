@@ -196,7 +196,7 @@ list(
   ### National-----------------------------------------------
   tar_target(
     us_consumption,
-    get_national_results(msn_lookup, msn_eia, lpg_national) |>
+    get_national_results(msn_lookup, msn_eia, lpg_national) %>%
       standardize_ffc(msn_eia),
     # Pull data only if it's a month old
     cue = tar_cue_age(name = us_consumption, 
@@ -273,7 +273,7 @@ list(
   #   seds,
   #   state_ffc_get_seds_data(msn_lookup,
   #                           msn_eia, 
-  #                           data_dictionary_values) |>
+  #                           data_dictionary_values) %>%
   #     standardize_ffc(msn_eia),
   #   # Pull data only if it's a month old
   #   cue = tar_cue_age(name = seds, 
@@ -282,7 +282,7 @@ list(
 
   tar_target(
     territories,
-    get_territories_data() |>
+    get_territories_data() %>%
       # Standardize ff_territories only 
       purrr::modify_at("ff_territories", ~standardize_ffc(., msn_eia)),
     # Pull data only if it's a month old
