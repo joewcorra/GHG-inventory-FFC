@@ -1,0 +1,73 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+ethanol_tra|stem|4a3e287d6063af2b|aff449dbc279e9d3|3d87975a91738f3f|-765326932||t20376.8172701347s|s641b|641|rds|local|vector|||6.89||
+msn_lookup|stem|214c84b1b6a88d2a|da94250448151a19|6bb8712f9ceba86a|1712107406||t20376.8172856769s|s248b|248|rds|local|vector|||0||
+data_dictionary_values|stem|679b1e9ab180ad01|e5ae11c064a811ae|2c530c1562a7fbd1|1661966819||t20376.8172915299s|s8519b|8519|rds|local|vector|||0||
+eia_heat_content|stem|32ab1f2237a4572f|079495e5899eb7da|db7645526e04fc5f|980284762||t20376.8173678744s|s979b|979|rds|local|vector|||6.23||
+data_dictionary_variables|stem|d2c621f78021d4fe|ce7bfcc060398319|2c530c1562a7fbd1|-1821343638||t20376.8173716074s|s466b|466|rds|local|vector|||0||
+territories|stem|23aebf98b404ee8c|694630ebc7289220|5b77592eb676dee2|-93468696||t20377.5696147626s|s12975b|12975|rds|local|vector|||10.43||
+carbon_coefficients|stem|0797e3936ce83c8e|48603b33ae537304|d2a4945255667e92|105289143||t20377.6163275617s|s3792b|3792|rds|local|vector|||0.11||
+us_consumption|stem|65a82d2633e3739a|39898f9d8ee8bc07|d8def40f657c020c|-837765560||t20377.6305282368s|s12328b|12328|rds|local|vector|||339.64|There was 1 warning in `mutate()`. ℹ In argument: `value = readr::parse_number(value)`. Caused by warning: ! 1379 parsing failures. row col expected        actual  17  -- a number Not Available  18  -- a number Not Available  19  -- a number Not Available  20  -- a number Not Available  30  -- a number Not Available ... ... ........ ............. See problems(...) for more details.|
+ippu_adjustments|stem|9144755402b4daff|4d65eab2d0b4c102|c8955b829168a646|378289838||t20377.6409177135s|s4760b|4760|rds|local|vector|||0.03||
+ippu_corrections|stem|443d93fc9c832a2b|464d2168fd28588d|e73f2366e84bbb74|1702252022||t20377.7953268183s|s4917b|4917|rds|local|vector|||1.24||
+misc_tra_data|stem|e30d657e829379ec|6667bc1078819272|e73f2366e84bbb74|-1344066586||t20377.7953296366s|s1670b|1670|rds|local|vector|||0.03||
+foks_diesel|stem|fc4b92aefb838f33|6414b1289bffc983|e73f2366e84bbb74|-1452415347||t20377.7953323506s|s10727b|10727|rds|local|vector|||0.06||
+msn_eia|stem|16b24d3a0b0d2f5a|4314b575d152e47d|e73f2366e84bbb74|-1318528459||t20377.7953349476s|s6072b|6072|rds|local|vector|||0.05||
+ippu_dist_petrochemical|stem|5e09f1390aef4d68|dfc429e7203d5f6c|e73f2366e84bbb74|-1084567426||t20377.795336961s|s4653b|4653|rds|local|vector|||0.05||
+foks_residual|stem|c7641ad876758ac5|b1818a21e8375ac7|e73f2366e84bbb74|-2062576977||t20377.7953385931s|s7910b|7910|rds|local|vector|||0.02||
+moves3_fuel|stem|2a82d5cfa34a369b|5604bb8bce2d93e7|e73f2366e84bbb74|-1325510521||t20377.7953407768s|s1791b|1791|rds|local|vector|||0.02||
+carbon_factors_fixed|stem|2cee13f86f98f285|23ad830831ab059c|e73f2366e84bbb74|-587218515||t20377.7953429815s|s1177b|1177|rds|local|vector|||0.05||
+feedstock_export_adjustments|stem|71eea463d13711a0|34387869f12ac897|e73f2366e84bbb74|187020048||t20377.7953452247s|s1879b|1879|rds|local|vector|||0.05||
+international_bunker_fuels|stem|e7541ce7cfda4ff2|a4572a8270245211|e73f2366e84bbb74|-501248492||t20377.7953471649s|s1307b|1307|rds|local|vector|||0.03||
+carbon_factors_variable|stem|a1276891b479e001|9ecf87c9101b3643|e73f2366e84bbb74|-904866179||t20377.7953493585s|s2924b|2924|rds|local|vector|||0.03||
+non_energy_use|stem|c2c98b919bd7561f|0077e4fb3f2d597f|e73f2366e84bbb74|99846989||t20377.7953538788s|s4494b|4494|rds|local|vector|||0.03||
+neu_storage|stem|22d0d9f3327d191c|5f674e562be94989|e73f2366e84bbb74|-851936884||t20377.7953562423s|s1138b|1138|rds|local|vector|||0.05||
+lpg_national|stem|69fd45cbee87aeb1|1f98aeba324ba797|e73f2366e84bbb74|179176406||t20377.7953585805s|s2564b|2564|rds|local|vector|||0.06||
+ippu_dist_ammonia|stem|2ac907267494bffb|ac932f1b446cd460|e73f2366e84bbb74|2125415688||t20377.7953610792s|s6195b|6195|rds|local|vector|||0.06||
+api_seds|stem|623dfdc4b31ecbb4|b9b6ee3540d5c77f|e73f2366e84bbb74|-2033430772||t20377.7953701366s|s904324b|904324|rds|local|vector|||0.25||
+ippu_dist_iron_and_steel|stem|54980befefc164c9|9414c840add2b423|e73f2366e84bbb74|-1269027891||t20377.7953727876s|s9683b|9683|rds|local|vector|||0.04||
+ippu_dist_carbon_black|stem|46ace2eb9a3a64ef|8ee302dd8d8c5f23|e73f2366e84bbb74|723401580||t20377.7953751898s|s3335b|3335|rds|local|vector|||0.08||
+moves3_vmt|stem|2a82d5cfa34a369b|2f28a6bb06b16f8f|e73f2366e84bbb74|1658521347||t20377.795377097s|s1791b|1791|rds|local|vector|||0.02||
+nonroad_consumption|stem|error|6407c514d203c95e|e73f2366e84bbb74|1702494273||t20378.5637185868s||0|null|local|vector|||1.22||Can't find pin called 'nonroad_consumption' ℹ Use `pin_list()` to see all available pins in this board
+fhwa_data|stem|1a12983b86f1e798|fa850e70ab6d08c2|b17bb1ee68fee5d1|-66675472||t20378.5637303204s|s28113b|28113|rds|local|vector|||0.89||
+get_ibf_adjustments_data|function|3ea9106f4a57d1d1
+nonroad_backcast|stem|238c17de5352f47d|96ea404ef2041e35|e73f2366e84bbb74|384979351||t20383.5864312453s|s704b|704|rds|local|vector|||5.83||
+vessel_bunker_dist_fuel|stem|9ba8cc0cffbd7830|1a38efa51cc44d12|40c633e05f092135|647643569||t20383.5864432333s|s723b|723|rds|local|vector|||0.81||
+biodiesel|stem|dc6c378bd71fbaf0|f00e4093d7bad7e0|e73f2366e84bbb74|-1002336963||t20383.5864457359s|s436b|436|rds|local|vector|||0.05||
+rail_diesel|stem|480de33d8aa04ef3|ac913f4453751b10|e73f2366e84bbb74|436614082||t20383.5864485712s|s1097b|1097|rds|local|vector|||0.06||
+ibf_adjustments|stem|error|f0601ab2f8899a56|f520ade60b747a56|522055729||t20383.5864535909s||0|null|local|vector|||0.04||`path` does not exist: 'data/misc_tra_data_temporary.xlsx'
+mobile_adjustments|stem|23e00014c9c5d5b6|1f7ec208058084f6|4097b69a3b8aefcc|-1268954875||t20384.580025637s|s1430b|1430|rds|local|vector|||0.96|There were 3 warnings in `summarize()`. The first warning was: ℹ In argument: `mogas_com = max(mogas_com, na.rm = TRUE)`. ℹ In group 34: `year = '2023'`. Caused by warning in `max()`: ! no non-missing arguments to max; returning -Inf ℹ Run `dplyr::last_dplyr_warnings()` to see the 2 remaining warnings.|
+national_ffc_adjusted|stem|a2b9be9e652be721|dfb7050c43d34ef1|4bce3c0b14f7f054|-1047096426||t20384.5970903602s|s15279b|15279|rds|local|vector|||0.13||
+scrape_fhwa_data|function|ce5f74743a82266c
+state_ffc_get_adjustments_data|function|2bcbe7dfb4333e60
+state_ffc_gt_tables|function|3b3756b472ed2381
+get_vessel_bunker|function|0aad641ac63fce55
+write_to_invdb|function|1eb82ebb11546409
+get_carbon_factors|function|2be6495a7a385737
+national_ffc_adjust_data|function|4574f40917d6533b
+lookup_msn|function|e82f03789184eec7
+scale_to_national|function|6afa1d327ee5a1ef
+get_heat_content|function|d035f10bbcb0abef
+state_neu_calculate_emissions|function|d2d1043e1d3950b0
+state_ffc_calculate_emissions|function|94730cdc7374422c
+national_ffc_gt_tables|function|0e7bd0d1b2371387
+state_ffc_ggplot_figures|function|3bb8e244eaaf5800
+board|object|ade5e96fb8bd1c95
+get_ippu_adjustments_data|function|bd5b61bbf11de5fb
+get_territories_data|function|e106e4520a69432b
+standardize_ffc|function|cb0726bcc69c5564
+write_ffc_activity|function|63c5906bc89ccd04
+national_ffc_ggplot_figures|function|78077549a027ea1c
+get_mobile_adjustments_data|function|9ea746113d26dcea
+get_ethanol_tra|function|1fba45b003446697
+national_ffc_calculate_emissions|function|e576c93d2cca3e07
+territories_ffc_adjust_data|function|115393380f98cfb3
+get_national_results|function|718ccd60ade26d62
+state_ffc_get_seds_data|function|147d9a02d0317411
+state_ffc_adjust_data|function|7094baee0bc3ea69
+carbon_emissions_territories|stem|error|0db506751e92ab78|a3f26b6eb59fd0fd|-1769375559||t20384.6074345266s||0|null|local|vector|||0.03||Can't select columns that don't exist. ✖ Column `dataFlagDescription` doesn't exist.
+state_adjustments|stem|error|942f05f1cbec0250|e66b5ce136a11640|-732639473||t20384.6074370761s||0|null|local|vector|||0.06||`cols` must select at least one column.
+carbon_emissions_national|stem|error|4f5dab248607174a|040f20883d418fcb|-1227727186||t20384.6074392572s||0|null|local|vector|||0.02||unused argument (general_data)
+state_ffc_adjusted|stem|error|406a2895810b7f8f|2b2d4cb92e8c8df6|330731237||t20384.607443142s||0|null|local|vector|||0.18||object 'seds' not found
+carbon_emissions_state_neu|stem|error|1d430fbde263ccfb|219f8e47952b7e28|-823146068||t20384.6074454321s||0|null|local|vector|||0.07||no applicable method for 'left_join' applied to an object of class 'NULL'
+carbon_emissions_state_ffc|stem|error|336440e7320f69af|81ba1ebb1c618e40|-586886340||t20384.6074476393s||0|null|local|vector|||0.03||no applicable method for 'mutate' applied to an object of class 'NULL'
+invdb|stem|error|9c6aca154ff18369|18ef9dd077f827a5|-296605585||t20384.6074499062s||0|null|local|vector|||0.05||no applicable method for 'mutate' applied to an object of class 'NULL'

@@ -1,0 +1,339 @@
+msn,eia_description,unit,source_code,sector_code,source_description,sector_description
+ABICB,aviation gasoline blending components consumed by the industrial sector,billion btu,AB,IC,aviation gasoline blending components,industrial sector
+ARICB,asphalt and road oil consumed by the industrial sector,billion btu,AR,IC,asphalt and road oil,industrial sector
+ARTCB,asphalt and road oil total consumption,billion btu,AR,TC,asphalt and road oil,total consumption of all energy-consuming sectors
+ARTXB,asphalt and road oil total end-use consumption,billion btu,AR,TX,asphalt and road oil,total end-use consumption
+AVACB,aviation gasoline consumed by the transportation sector,billion btu,AV,AC,aviation gasoline,transportation sector
+AVTCB,aviation gasoline total consumption,billion btu,AV,TC,aviation gasoline,total consumption of all energy-consuming sectors
+AVTXB,aviation gasoline total end-use consumption,billion btu,AV,TX,aviation gasoline,total end-use consumption
+B1ABB,renewable diesel refinery and blender net inputs portion to the transportation sector,billion btu,B1,AB,renewable diesel,aviation gasoline blending components consumed by the industrial sector
+B1ACB,renewable diesel consumed by the transportation sector,billion btu,B1,AC,renewable diesel,transportation sector
+B1AUB,renewable diesel product supplied portion to the transportation sector,billion btu,B1,AU,renewable diesel,NA
+B1PRB,renewable diesel production,billion btu,B1,PR,renewable diesel,primary energy production
+B1RIB,renewable diesel refinery and blender net inputs,billion btu,B1,RI,renewable diesel,NA
+B1TCB,renewable diesel total consumption,billion btu,B1,TC,renewable diesel,total consumption of all energy-consuming sectors
+BDABB,biodiesel refinery and blender net inputs portion to the transportation sector,billion btu,BD,AB,biodiesel,aviation gasoline blending components consumed by the industrial sector
+BDACB,biodiesel consumed by the transportation sector,billion btu,BD,AC,biodiesel,transportation sector
+BDAUB,biodiesel product supplied portion to the transportation sector,billion btu,BD,AU,biodiesel,NA
+BDCBB,biodiesel refinery and blender net inputs portion to the commercial sector,billion btu,BD,CB,biodiesel,NA
+BDCCB,biodiesel consumed by the commercial sector,billion btu,BD,CC,biodiesel,commercial sector
+BDCUB,biodiesel product supplied portion to the commercial sector,billion btu,BD,CU,biodiesel,NA
+BDEIB,biodiesel consumed by the electric power sector,billion btu,BD,EI,biodiesel,electric power sector (consumption)
+BDEUB,biodiesel product supplied portion to the electric power sector,billion btu,BD,EU,biodiesel,NA
+BDFDB,"biodiesel production (total biomass inputs as feedstock), including liquids and losses & co-products",billion btu,BD,FD,biodiesel,feedstocks
+BDLCB,energy losses and co-products from the production of biodiesel,billion btu,BD,LC,biodiesel,losses and co-products (biofuels)
+BDRBB,biodiesel refinery and blender net inputs portion to the residential sector,billion btu,BD,RB,biodiesel,NA
+BDRCB,biodiesel consumed by the residential sector,billion btu,BD,RC,biodiesel,residential sector
+BDRIB,biodiesel total refinery and blender net inputs,billion btu,BD,RI,biodiesel,NA
+BDRUB,biodiesel product supplied portion to the residential sector,billion btu,BD,RU,biodiesel,NA
+BDSAB,"adjusted total biodiesel consumption blended with distillate fuel oil, portion to the transportation sector (2009 through 2011 only)",billion btu,BD,SA,biodiesel,NA
+BDSUB,biodiesel product supplied,billion btu,BD,SU,biodiesel,product supplied
+BDTCB,biodiesel total consumption,billion btu,BD,TC,biodiesel,total consumption of all energy-consuming sectors
+BDTXB,biodiesel total end-use consumption,billion btu,BD,TX,biodiesel,total end-use consumption
+BDXUB,biodiesel product supplied portion to the end-use sectors,billion btu,BD,XU,biodiesel,NA
+BFLCB,energy losses and co-products from the production of biofuels,billion btu,BF,LC,biofuels,losses and co-products (biofuels)
+BFPRB,"biofuels production (total biomass inputs as feedstock), including liquids and losses & co-products",billion btu,BF,PR,biofuels,primary energy production
+BFTCB,biofuels total consumption,billion btu,BF,TC,biofuels,total consumption of all energy-consuming sectors
+BMTCB,biomass total consumption,billion btu,BM,TC,NA,total consumption of all energy-consuming sectors
+BOABB,other biofuels refinery and blender net inputs portion to the transportation sector for the united states,billion btu,BO,AB,other biofuels,aviation gasoline blending components consumed by the industrial sector
+BOACB,other biofuels consumed by the transportation sector for the united states,billion btu,BO,AC,other biofuels,transportation sector
+BOAUB,other biofuels product supplied portion to the transportation sector for the united states,billion btu,BO,AU,other biofuels,NA
+BOPRB,other biofuels total production for the united states,billion btu,BO,PR,other biofuels,primary energy production
+BORIB,other biofuels refinery and blender net inputs for the united states,billion btu,BO,RI,other biofuels,NA
+BOTCB,other biofuels total consumption for the united states,billion btu,BO,TC,other biofuels,total consumption of all energy-consuming sectors
+BQICB,normal butane consumed by the industrial sector,billion btu,BQ,IC,normal butane,industrial sector
+BQTCB,normal butane total consumption,billion btu,BQ,TC,normal butane,total consumption of all energy-consuming sectors
+BXSUB,total biofuels (excluding fuel ethanol) product supplied,billion btu,BX,SU,total biofuels (excluding fuel ethanol),product supplied
+BYICB,butylene from refineries consumed by the industrial sector,billion btu,BY,IC,butylene,industrial sector
+BYTCB,butylene from refineries total consumption,billion btu,BY,TC,butylene,total consumption of all energy-consuming sectors
+CCEXB,coal coke exported from the united states,billion btu,CC,EX,coal coke,exports
+CCIMB,coal coke imported into the united states,billion btu,CC,IM,coal coke,imports
+CCNIB,coal coke net imports into the united states,billion btu,CC,NI,coal coke,net imports
+CLACB,coal consumed by the transportation sector,billion btu,CL,AC,coal,transportation sector
+CLCCB,coal consumed by the commercial sector,billion btu,CL,CC,coal,commercial sector
+CLEIB,coal consumed by the electric power sector,billion btu,CL,EI,coal,electric power sector (consumption)
+CLICB,coal consumed by the industrial sector,billion btu,CL,IC,coal,industrial sector
+CLISB,coal consumed by the industrial sector excluding refinery fuel,billion btu,CL,IS,coal,industrial sector adjusted consumption
+CLKCB,coal consumed at coke plants (coking coal),billion btu,CL,KC,coal,coke plants (coal only)
+CLOCB,coal consumed by industrial users other than coke plants,billion btu,CL,OC,coal,"industrial consumption, excluding coke plants"
+CLOSB,coal consumed by the industrial sector other than coke plants excluding refinery fuel,billion btu,CL,OS,coal,NA
+CLPRB,coal production,billion btu,CL,PR,coal,primary energy production
+CLRCB,coal consumed by the residential sector,billion btu,CL,RC,coal,residential sector
+CLRFB,coal consumed as refinery fuel,billion btu,CL,RF,coal,refinery fuel
+CLSCB,coal total consumption adjusted for process fuel,billion btu,CL,SC,coal,"total adjusted consumption, all sectors"
+CLTCB,coal total consumption,billion btu,CL,TC,coal,total consumption of all energy-consuming sectors
+CLTXB,coal total end-use consumption,billion btu,CL,TX,coal,total end-use consumption
+COICB,crude oil consumed by the industrial sector,billion btu,CO,IC,crude oil,industrial sector
+DAACB,"distillate fuel oil, biodiesel, and renewable diesel consumed by the transportation sector",billion btu,DA,AC,NA,transportation sector
+DACCB,"distillate fuel oil, biodiesel, and renewable diesel consumed by the commercial sector",billion btu,DA,CC,NA,commercial sector
+DAEIB,"distillate fuel oil, biodiesel, and renewable diesel consumed by the electric power sector",billion btu,DA,EI,NA,electric power sector (consumption)
+DAICB,"distillate fuel oil, biodiesel, and renewable diesel consumed by the industrial sector",billion btu,DA,IC,NA,industrial sector
+DARCB,"distillate fuel oil, biodiesel, and renewable diesel consumed by the residential sector",billion btu,DA,RC,NA,residential sector
+DATCB,"total distillate fuel oil, biodiesel, and renewable diesel consumption",billion btu,DA,TC,NA,total consumption of all energy-consuming sectors
+DFACB,distillate fuel oil consumed by the transportation sector,billion btu,DF,AC,distillate fuel oil,transportation sector
+DFASB,distillate fuel oil consumed by the transportation sector including biofuels product supplied,billion btu,DF,AS,distillate fuel oil,transportation sector adjusted consumption
+DFCCB,distillate fuel oil consumed by the commercial sector,billion btu,DF,CC,distillate fuel oil,commercial sector
+DFCSB,distillate fuel oil consumed by the commercial sector including biofuels product supplied,billion btu,DF,CS,distillate fuel oil,commercial sector adjusted consumption
+DFEIB,distillate fuel oil consumed by the electric power sector,billion btu,DF,EI,distillate fuel oil,electric power sector (consumption)
+DFICB,distillate fuel oil consumed by the industrial sector,billion btu,DF,IC,distillate fuel oil,industrial sector
+DFISB,distillate fuel oil consumed by the industrial sector excluding refinery fuel,billion btu,DF,IS,distillate fuel oil,industrial sector adjusted consumption
+DFRCB,distillate fuel oil consumed by the residential sector,billion btu,DF,RC,distillate fuel oil,residential sector
+DFRFB,distillate fuel oil consumed as refinery fuel,billion btu,DF,RF,distillate fuel oil,refinery fuel
+DFRSB,distillate fuel oil consumed by the residential sector including biofuels product supplied,billion btu,DF,RS,distillate fuel oil,residential sector adjusted consumption
+DFSCB,distillate fuel oil total consumption adjusted for process fuel,billion btu,DF,SC,distillate fuel oil,"total adjusted consumption, all sectors"
+DFTCB,distillate fuel oil total consumption,billion btu,DF,TC,distillate fuel oil,total consumption of all energy-consuming sectors
+DFTXB,distillate fuel oil total end-use consumption,billion btu,DF,TX,distillate fuel oil,total end-use consumption
+DKEIB,distillate fuel oil (including kerosene-type jet fuel before 2001) consumed by the electric power sector,billion btu,DK,EI,distillate fuel oil,electric power sector (consumption)
+DMACB,"distillate fuel oil, excluding biodiesel and renewable diesel, consumed by the transportation sector",billion btu,DM,AC,NA,transportation sector
+DMCCB,"distillate fuel oil, excluding biofuels, consumed by the commercial sector",billion btu,DM,CC,NA,commercial sector
+DMEIB,"distillate fuel oil, excluding biofuels, consumed by the electric power sector",billion btu,DM,EI,NA,electric power sector (consumption)
+DMICB,"distillate fuel oil, excluding biofuels, consumed by the industrial sector",billion btu,DM,IC,NA,industrial sector
+DMRCB,"distillate fuel oil, excluding biofuels, consumed by the residential sector",billion btu,DM,RC,NA,residential sector
+DMTCB,"distillate fuel oil, excluding biodiesel and renewable diesel, total consumption",billion btu,DM,TC,NA,total consumption of all energy-consuming sectors
+ELEXB,electricity exported from the united states,billion btu,EL,EX,electricity,exports
+ELIMB,electricity imported into the united states,billion btu,EL,IM,electricity,imports
+ELISB,net interstate flow of electricity and associated losses (negative indicates flow out of state),billion btu,EL,IS,electricity,industrial sector adjusted consumption
+ELNIB,net imports of electricity into the united states,billion btu,EL,NI,electricity,net imports
+EMACB,"fuel ethanol, excluding denaturant, consumed by the transportation sector",billion btu,EM,AC,"fuel ethanol, excluding denaturant",transportation sector
+EMCCB,"fuel ethanol, excluding denaturant, consumed by the commercial sector",billion btu,EM,CC,"fuel ethanol, excluding denaturant",commercial sector
+EMFDB,"fuel ethanol production (total biomass inputs as feedstock), including liquids and losses & co-products",billion btu,EM,FD,"fuel ethanol, excluding denaturant",feedstocks
+EMICB,"fuel ethanol, excluding denaturant, consumed by the industrial sector",billion btu,EM,IC,"fuel ethanol, excluding denaturant",industrial sector
+EMLCB,energy losses and co-products from the production of fuel ethanol,billion btu,EM,LC,"fuel ethanol, excluding denaturant",losses and co-products (biofuels)
+EMTCB,"fuel ethanol, excluding denaturant, total consumption",billion btu,EM,TC,"fuel ethanol, excluding denaturant",total consumption of all energy-consuming sectors
+EQICB,ethane consumed by the industrial sector,billion btu,EQ,IC,ethane,industrial sector
+EQTCB,ethane total consumption,billion btu,EQ,TC,ethane,total consumption of all energy-consuming sectors
+ESACB,electricity consumed by (sales to ultimate customers in) the transportation sector,billion btu,ES,AC,electricity sales,transportation sector
+ESCCB,electricity consumed by (sales to ultimate customers in) the commercial sector,billion btu,ES,CC,electricity sales,commercial sector
+ESICB,electricity consumed by (sales to ultimate customers in) the industrial sector,billion btu,ES,IC,electricity sales,industrial sector
+ESISB,electricity sales to the industrial sector excluding refinery use,billion btu,ES,IS,electricity sales,industrial sector adjusted consumption
+ESRCB,electricity consumed by (sales to ultimate customers in) the residential sector,billion btu,ES,RC,electricity sales,residential sector
+ESRFB,electricity consumed by refineries,billion btu,ES,RF,electricity sales,refinery fuel
+ESSCB,electricity total consumption adjusted for process fuel,billion btu,ES,SC,electricity sales,"total adjusted consumption, all sectors"
+ESTCB,electricity total consumption (electricity sales to ultimate customers),billion btu,ES,TC,electricity sales,total consumption of all energy-consuming sectors
+ESTXB,electricity total end-use consumption (electricity sales to ultimate customers),billion btu,ES,TX,electricity sales,total end-use consumption
+EYICB,ethylene from refineries consumed by the industrial sector,billion btu,EY,IC,ethylene,industrial sector
+EYTCB,ethylene from refineries total consumption,billion btu,EY,TC,ethylene,total consumption of all energy-consuming sectors
+FFTCB,fossil fuels total consumption,billion btu,FF,TC,NA,total consumption of all energy-consuming sectors
+FNICB,"petrochemical feedstocks, naphtha less than 401° f, consumed by the industrial sector",billion btu,FN,IC,"petrochemical feedstocks, naphtha less than 401 degrees F",industrial sector
+FOICB,"petrochemical feedstocks, other oils equal to or greater than 401° f, consumed by the industrial sector",billion btu,FO,IC,"petrochemical feedstocks, other oils equal to or greater than 401 degrees F",industrial sector
+FSICB,"petrochemical feedstocks, still gas, consumed by the industrial sector (through 1985)",billion btu,FS,IC,"petrochemical feedstocks, still gas",industrial sector
+GECCB,geothermal energy consumed by the commercial sector,billion btu,GE,CC,geothermal energy,commercial sector
+GEEGB,geothermal energy consumed for electricity generation by the electric power sector,billion btu,GE,EG,geothermal energy,electric power sector (generation)
+GEICB,geothermal energy consumed by the industrial sector,billion btu,GE,IC,geothermal energy,industrial sector
+GERCB,geothermal energy consumed by the residential sector,billion btu,GE,RC,geothermal energy,residential sector
+GETCB,geothermal energy total consumption,billion btu,GE,TC,geothermal energy,total consumption of all energy-consuming sectors
+GETXB,geothermal energy total end-use consumption,billion btu,GE,TX,geothermal energy,total end-use consumption
+HLACB,hydrocarbon gas liquids consumed by the transportation sector,billion btu,HL,AC,hydrocarbon gas liquids,transportation sector
+HLCCB,hydrocarbon gas liquids consumed by the commercial sector,billion btu,HL,CC,hydrocarbon gas liquids,commercial sector
+HLICB,hydrocarbon gas liquids consumed by the industrial sector,billion btu,HL,IC,hydrocarbon gas liquids,industrial sector
+HLISB,hydrocarbon gas liquids consumed by the industrial sector adjusted for processed fuel,billion btu,HL,IS,hydrocarbon gas liquids,industrial sector adjusted consumption
+HLRCB,hydrocarbon gas liquids consumed by the residential sector,billion btu,HL,RC,hydrocarbon gas liquids,residential sector
+HLRFB,hydrocarbon gas liquids consumed as refinery fuel and intermediate products,billion btu,HL,RF,hydrocarbon gas liquids,refinery fuel
+HLSCB,hydrocarbon gas liquids total consumption adjusted for processed fuel,billion btu,HL,SC,hydrocarbon gas liquids,"total adjusted consumption, all sectors"
+HLTCB,hydrocarbon gas liquids total consumption,billion btu,HL,TC,hydrocarbon gas liquids,total consumption of all energy-consuming sectors
+HLTXB,hydrocarbon gas liquids total end-use consumption,billion btu,HL,TX,hydrocarbon gas liquids,total end-use consumption
+HYCCB,hydropower consumed by the commercial sector,billion btu,HY,CC,NA,commercial sector
+HYEGB,hydropower consumed for electricity generation by the electric power sector,billion btu,HY,EG,NA,electric power sector (generation)
+HYICB,hydropower consumed by the industrial sector,billion btu,HY,IC,NA,industrial sector
+HYTCB,hydropower total consumption,billion btu,HY,TC,NA,total consumption of all energy-consuming sectors
+HYTXB,hydropower energy total end-use consumption,billion btu,HY,TX,NA,total end-use consumption
+IQICB,isobutane consumed by the industrial sector,billion btu,IQ,IC,isobutane,industrial sector
+IQTCB,isobutane total consumption,billion btu,IQ,TC,isobutane,total consumption of all energy-consuming sectors
+IYICB,isobutylene from refineries consumed by the industrial sector,billion btu,IY,IC,isobutylene,industrial sector
+IYTCB,isobutylene from refineries total consumption,billion btu,IY,TC,isobutylene,total consumption of all energy-consuming sectors
+JFACB,jet fuel consumed by the transportation sector,billion btu,JF,AC,jet fuel,transportation sector
+JFTCB,jet fuel total consumption,billion btu,JF,TC,jet fuel,total consumption of all energy-consuming sectors
+JFTXB,jet fuel total end-use consumption,billion btu,JF,TX,jet fuel,total end-use consumption
+KSCCB,kerosene consumed by the commercial sector,billion btu,KS,CC,kerosene,commercial sector
+KSICB,kerosene consumed by the industrial sector,billion btu,KS,IC,kerosene,industrial sector
+KSRCB,kerosene consumed by the residential sector,billion btu,KS,RC,kerosene,residential sector
+KSTCB,kerosene total consumption,billion btu,KS,TC,kerosene,total consumption of all energy-consuming sectors
+KSTXB,kerosene total end-use consumption,billion btu,KS,TX,kerosene,total end-use consumption
+LOACB,the transportation sector's share of electrical system energy losses,billion btu,LO,AC,NA,transportation sector
+LOCCB,the commercial sector's share of electrical system energy losses,billion btu,LO,CC,NA,commercial sector
+LOICB,the industrial sector's share of electrical system energy losses,billion btu,LO,IC,NA,industrial sector
+LORCB,the residential sector's share of electrical system energy losses,billion btu,LO,RC,NA,residential sector
+LOTCB,total electrical system energy losses,billion btu,LO,TC,NA,total consumption of all energy-consuming sectors
+LOTXB,total electrical system energy losses allocated to the end-use sectors,billion btu,LO,TX,NA,total end-use consumption
+LUACB,lubricants consumed by the transportation sector,billion btu,LU,AC,lubricants,transportation sector
+LUICB,lubricants consumed by the industrial sector,billion btu,LU,IC,lubricants,industrial sector
+LUTCB,lubricants total consumption,billion btu,LU,TC,lubricants,total consumption of all energy-consuming sectors
+LUTXB,lubricants total end-use consumption,billion btu,LU,TX,lubricants,total end-use consumption
+MBICB,motor gasoline blending components consumed by the industrial sector,billion btu,MB,IC,motor gasoline blending components,industrial sector
+MGACB,motor gasoline consumed by the transportation sector,billion btu,MG,AC,motor gasoline,transportation sector
+MGCCB,motor gasoline consumed by the commercial sector,billion btu,MG,CC,motor gasoline,commercial sector
+MGICB,motor gasoline consumed by the industrial sector,billion btu,MG,IC,motor gasoline,industrial sector
+MGTCB,motor gasoline total consumption,billion btu,MG,TC,motor gasoline,total consumption of all energy-consuming sectors
+MGTXB,motor gasoline total end-use consumption,billion btu,MG,TX,motor gasoline,total end-use consumption
+MMACB,"motor gasoline, excluding fuel ethanol, consumed by the transportation sector",billion btu,MM,AC,NA,transportation sector
+MMCCB,"motor gasoline, excluding fuel ethanol, consumed by the commercial sector",billion btu,MM,CC,NA,commercial sector
+MMICB,"motor gasoline, excluding fuel ethanol, consumed by the industrial sector",billion btu,MM,IC,NA,industrial sector
+MMTCB,"motor gasoline, excluding fuel ethanol, total consumption",billion btu,MM,TC,NA,total consumption of all energy-consuming sectors
+MSICB,miscellaneous petroleum products consumed by the industrial sector,billion btu,MS,IC,miscellaneous petroleum products,industrial sector
+NAICB,natural gasoline consumed by the industrial sector (through 1983),billion btu,NA,IC,NA,industrial sector
+NCPRB,noncombustible renewable energy production,billion btu,NC,PR,NA,primary energy production
+NGACB,natural gas consumed by the transportation sector,billion btu,NG,AC,"natural gas, including supplemental gaseous fuels",transportation sector
+NGASB,natural gas consumed by the transportation sector adjusted for process fuel,billion btu,NG,AS,"natural gas, including supplemental gaseous fuels",transportation sector adjusted consumption
+NGCCB,"natural gas delivered to the commercial sector, used as consumption (including supplemental gaseous fuels)",billion btu,NG,CC,"natural gas, including supplemental gaseous fuels",commercial sector
+NGEIB,natural gas consumed by the electric power sector (including supplemental gaseous fuels),billion btu,NG,EI,"natural gas, including supplemental gaseous fuels",electric power sector (consumption)
+NGICB,natural gas consumed by the industrial sector (including supplemental gaseous fuels),billion btu,NG,IC,"natural gas, including supplemental gaseous fuels",industrial sector
+NGISB,natural gas consumed by the industrial sector excluding refinery fuel,billion btu,NG,IS,"natural gas, including supplemental gaseous fuels",industrial sector adjusted consumption
+NGLPB,natural gas consumed as lease and plant fuel,billion btu,NG,LP,"natural gas, including supplemental gaseous fuels",lease and plant fuel
+NGMPB,natural gas marketed production,billion btu,NG,MP,"natural gas, including supplemental gaseous fuels",marketed production
+NGPZB,natural gas for pipeline and distribution use,billion btu,NG,PZ,"natural gas, including supplemental gaseous fuels",pipeline and distribution use
+NGRCB,"natural gas delivered to the residential sector, used as consumption (including supplemental gaseous fuels)",billion btu,NG,RC,"natural gas, including supplemental gaseous fuels",residential sector
+NGRFB,natural gas consumed as refinery fuel,billion btu,NG,RF,"natural gas, including supplemental gaseous fuels",refinery fuel
+NGSCB,natural gas total consumption adjusted for process fuel,billion btu,NG,SC,"natural gas, including supplemental gaseous fuels","total adjusted consumption, all sectors"
+NGTCB,natural gas total consumption (including supplemental gaseous fuels),billion btu,NG,TC,"natural gas, including supplemental gaseous fuels",total consumption of all energy-consuming sectors
+NGTXB,natural gas total end-use consumption (including supplemental gaseous fuels),billion btu,NG,TX,"natural gas, including supplemental gaseous fuels",total end-use consumption
+NNTCB,natural gas total consumption (excluding supplemental gaseous fuels),billion btu,NN,TC,"natural gas, excluding supplemental gaseous fuels",total consumption of all energy-consuming sectors
+NUEGB,nuclear energy consumed for electricity generation by the electric power sector,billion btu,NU,EG,nuclear electric power,electric power sector (generation)
+NUETB,"nuclear energy consumed for electricity generation, total",billion btu,NU,ET,nuclear electric power,total cost of electricity generation (nuclear only)
+OHICB,other hydrocarbon gas liquids (other than propane) consumed by the industrial sector,billion btu,OH,IC,other hydrocarbon gas liquids,industrial sector
+OMTCB,"other petroleum products consumption, excluding biofuels",billion btu,OM,TC,NA,total consumption of all energy-consuming sectors
+OPACB,other petroleum products consumed by the transportation sector,billion btu,OP,AC,other petroleum products,transportation sector
+OPCCB,other petroleum products consumed by the commercial sector,billion btu,OP,CC,other petroleum products,commercial sector
+OPEIB,other petroleum products consumed by the electric power sector,billion btu,OP,EI,other petroleum products,electric power sector (consumption)
+OPICB,other petroleum products consumed by the industrial sector,billion btu,OP,IC,other petroleum products,industrial sector
+OPISB,other petroleum products consumed by the industrial sector excluding refinery fuel and intermediate products,billion btu,OP,IS,other petroleum products,industrial sector adjusted consumption
+OPRCB,other petroleum products consumed by the residential sector,billion btu,OP,RC,other petroleum products,residential sector
+OPSCB,other petroleum products total consumption adjusted for refinery fuel and intermediate products,billion btu,OP,SC,other petroleum products,"total adjusted consumption, all sectors"
+OPTCB,other petroleum products total consumption,billion btu,OP,TC,other petroleum products,total consumption of all energy-consuming sectors
+OPTXB,other petroleum products total end-use consumption,billion btu,OP,TX,other petroleum products,total end-use consumption
+P1ICB,"asphalt and road oil, kerosene, lubricants, petroleum coke, and ""other petroleum products"" consumed by the industrial sector",billion btu,P1,IC,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and other petroleum products",industrial sector
+P1ISB,"asphalt and road oil, kerosene, lubricants, petroleum coke, and ""other petroleum products"" consumed by the industrial sector excluding refinery fuel and intermediate products",billion btu,P1,IS,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and other petroleum products",industrial sector adjusted consumption
+P1SCB,"asphalt and road oil, kerosene, lubricants, petroleum coke, and ""other petroleum products"" total consumption adjusted for process fuel and intermediate products",billion btu,P1,SC,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and other petroleum products","total adjusted consumption, all sectors"
+P1TCB,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and ""other petroleum products"" total consumption",billion btu,P1,TC,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and other petroleum products",total consumption of all energy-consuming sectors
+P1TXB,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and ""other petroleum products"" total end-use consumption",billion btu,P1,TX,"asphalt and road oil, aviation gasoline, kerosene, lubricants, petroleum coke, and other petroleum products",total end-use consumption
+P5RFB,other petroleum products consumed as refinery fuel and intermediate products,billion btu,P5,RF,other intermediate products (petroleum only),refinery fuel
+PAACB,all petroleum products consumed by the transportation sector,billion btu,PA,AC,all petroleum products,transportation sector
+PAASB,all petroleum products consumed by the transportation sector excluding other biofuels product supplied for the united states,billion btu,PA,AS,all petroleum products,transportation sector adjusted consumption
+PACCB,all petroleum products consumed by the commercial sector,billion btu,PA,CC,all petroleum products,commercial sector
+PAEIB,all petroleum products consumed by the electric power sector,billion btu,PA,EI,all petroleum products,electric power sector (consumption)
+PAICB,all petroleum products consumed by the industrial sector,billion btu,PA,IC,all petroleum products,industrial sector
+PAISB,all petroleum products consumed by the industrial sector excluding process fuel and intermediate products,billion btu,PA,IS,all petroleum products,industrial sector adjusted consumption
+PAPRB,crude oil production (including lease condensate),billion btu,PA,PR,all petroleum products,primary energy production
+PARCB,all petroleum products consumed by the residential sector,billion btu,PA,RC,all petroleum products,residential sector
+PASCB,all petroleum products total consumption adjusted for process fuel and intermediate products,billion btu,PA,SC,all petroleum products,"total adjusted consumption, all sectors"
+PATCB,all petroleum products total consumption,billion btu,PA,TC,all petroleum products,total consumption of all energy-consuming sectors
+PATXB,all petroleum products total end-use consumption,billion btu,PA,TX,all petroleum products,total end-use consumption
+PCCCB,petroleum coke consumed by the commercial sector,billion btu,PC,CC,petroleum coke,commercial sector
+PCEIB,petroleum coke consumed by the electric power sector,billion btu,PC,EI,petroleum coke,electric power sector (consumption)
+PCICB,petroleum coke consumed in the industrial sector,billion btu,PC,IC,petroleum coke,industrial sector
+PCISB,petroleum coke consumed by the industrial sector excluding refinery fuel,billion btu,PC,IS,petroleum coke,industrial sector adjusted consumption
+PCRFB,petroleum coke consumed as refinery fuel,billion btu,PC,RF,petroleum coke,refinery fuel
+PCSCB,petroleum coke total consumption adjusted for process fuel,billion btu,PC,SC,petroleum coke,"total adjusted consumption, all sectors"
+PCTCB,petroleum coke total consumption,billion btu,PC,TC,petroleum coke,total consumption of all energy-consuming sectors
+PCTXB,petroleum coke total end-use consumption,billion btu,PC,TX,petroleum coke,total end-use consumption
+PEASB,"primary energy consumed by the transportation sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,PE,AS,primary energy,transportation sector adjusted consumption
+PECSB,"primary energy consumed by the commercial sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,PE,CS,primary energy,commercial sector adjusted consumption
+PEISB,"primary energy consumed by the industrial sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,PE,IS,primary energy,industrial sector adjusted consumption
+PERSB,"primary energy consumed by the residential sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,PE,RS,primary energy,residential sector adjusted consumption
+PESCB,"primary energy total consumption, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,PE,SC,primary energy,"total adjusted consumption, all sectors"
+PLICB,plant condensate consumed by the industrial sector (through 1983),billion btu,PL,IC,NA,industrial sector
+PMACB,"all petroleum products, excluding biofuels, consumed by the transportation sector",billion btu,PM,AC,NA,transportation sector
+PMCCB,"all petroleum products, excluding biofuels, consumed by the commercial sector",billion btu,PM,CC,NA,commercial sector
+PMEIB,"all petroleum products, excluding biofuels, consumed by the electric power sector",billion btu,PM,EI,NA,electric power sector (consumption)
+PMICB,"all petroleum products, excluding biofuels, consumed by the industrial sector",billion btu,PM,IC,NA,industrial sector
+PMRCB,"all petroleum products, excluding biofuels, consumed by the residential sector",billion btu,PM,RC,NA,residential sector
+PMTCB,"all petroleum products, excluding biofuels, total consumption",billion btu,PM,TC,NA,total consumption of all energy-consuming sectors
+PPICB,natural gasoline (pentanes plus) consumed by the industrial sector,billion btu,PP,IC,pentanes plus,industrial sector
+PPTCB,natural gasoline (pentanes plus) total consumption,billion btu,PP,TC,pentanes plus,total consumption of all energy-consuming sectors
+PQACB,propane consumed by the transportation sector,billion btu,PQ,AC,propane,transportation sector
+PQCCB,propane consumed by the commercial sector,billion btu,PQ,CC,propane,commercial sector
+PQICB,propane consumed by the industrial sector,billion btu,PQ,IC,propane,industrial sector
+PQISB,propane consumed in the industrial sector excluding refinery fuel,billion btu,PQ,IS,propane,industrial sector adjusted consumption
+PQRCB,propane consumed by the residential sector,billion btu,PQ,RC,propane,residential sector
+PQRFB,propane consumed as refinery fuel,billion btu,PQ,RF,propane,refinery fuel
+PQSCB,propane total consumption adjusted for process fuel,billion btu,PQ,SC,propane,"total adjusted consumption, all sectors"
+PQTCB,propane total consumption,billion btu,PQ,TC,propane,total consumption of all energy-consuming sectors
+PQTXB,propane total end-use consumption,billion btu,PQ,TX,propane,total end-use consumption
+PYICB,propylene from refineries consumed by the industrial sector,billion btu,PY,IC,propylene,industrial sector
+PYTCB,propylene from refineries total consumption,billion btu,PY,TC,propylene,total consumption of all energy-consuming sectors
+REACB,renewable energy sources consumed by the transportation sector,billion btu,RE,AC,NA,transportation sector
+RECCB,renewable energy sources consumed by the commercial sector,billion btu,RE,CC,NA,commercial sector
+REEIB,renewable energy sources consumed by the electric power sector,billion btu,RE,EI,NA,electric power sector (consumption)
+REICB,renewable energy sources consumed by the industrial sector,billion btu,RE,IC,NA,industrial sector
+REPRB,renewable energy production,billion btu,RE,PR,NA,primary energy production
+RERCB,renewable energy sources consumed by the residential sector,billion btu,RE,RC,NA,residential sector
+RETCB,renewable energy total consumption,billion btu,RE,TC,NA,total consumption of all energy-consuming sectors
+RFACB,residual fuel oil consumed by the transportation sector,billion btu,RF,AC,residual fuel oil,transportation sector
+RFCCB,residual fuel oil consumed by the commercial sector,billion btu,RF,CC,residual fuel oil,commercial sector
+RFEIB,residual fuel oil consumed by the electric power sector,billion btu,RF,EI,residual fuel oil,electric power sector (consumption)
+RFICB,residual fuel oil consumed by the industrial sector,billion btu,RF,IC,residual fuel oil,industrial sector
+RFISB,residual fuel oil consumed by the industrial sector excluding refinery fuel,billion btu,RF,IS,residual fuel oil,industrial sector adjusted consumption
+RFRFB,residual fuel oil consumed as refinery fuel,billion btu,RF,RF,residual fuel oil,refinery fuel
+RFSCB,residential fuel oil total consumption excluding process fuel,billion btu,RF,SC,residual fuel oil,"total adjusted consumption, all sectors"
+RFTCB,residual fuel oil total consumption,billion btu,RF,TC,residual fuel oil,total consumption of all energy-consuming sectors
+RFTXB,residual fuel oil total end-use consumption,billion btu,RF,TX,residual fuel oil,total end-use consumption
+SFCCB,supplemental gaseous fuels consumed by the commercial sector,billion btu,SF,CC,supplemental gaseous fuels,commercial sector
+SFEIB,supplemental gaseous fuels consumed by the electric power sector,billion btu,SF,EI,supplemental gaseous fuels,electric power sector (consumption)
+SFINB,supplemental gaseous fuels consumed by the industrial sector,billion btu,SF,IN,supplemental gaseous fuels,industrial sector (supplemental gaseous fuels)
+SFRCB,supplemental gaseous fuels consumed by the residential sector,billion btu,SF,RC,supplemental gaseous fuels,residential sector
+SFTCB,supplemental gaseous fuels total consumption,billion btu,SF,TC,supplemental gaseous fuels,total consumption of all energy-consuming sectors
+SGICB,still gas consumed by the industrial sector,billion btu,SG,IC,still gas,industrial sector
+SNICB,special naphthas consumed by the industrial sector,billion btu,SN,IC,special naphtha,industrial sector
+SOCCB,solar energy consumed by the commercial sector,billion btu,SO,CC,NA,commercial sector
+SOEGB,solar energy consumed for electricity generation by the electric power sector,billion btu,SO,EG,NA,electric power sector (generation)
+SOICB,solar energy consumed by the industrial sector,billion btu,SO,IC,NA,industrial sector
+SORCB,solar energy consumed by the residential sector,billion btu,SO,RC,NA,residential sector
+SOTCB,solar energy total consumption,billion btu,SO,TC,NA,total consumption of all energy-consuming sectors
+SOTXB,solar energy total end-use consumption,billion btu,SO,TX,NA,total end-use consumption
+TEACB,total energy consumption in the transportation sector,billion btu,TE,AC,total energy,transportation sector
+TECCB,total energy consumption in the commercial sector,billion btu,TE,CC,total energy,commercial sector
+TEEIB,total energy consumption in the electric power sector plus net imports of electricity into the united states,billion btu,TE,EI,total energy,electric power sector (consumption)
+TEICB,total energy consumption in the industrial sector,billion btu,TE,IC,total energy,industrial sector
+TEPFB,total energy used as process fuel and other consumption that has no direct fuel costs,billion btu,TE,PF,total energy,process fuel
+TEPRB,total primary energy production,billion btu,TE,PR,total energy,primary energy production
+TERCB,total energy consumption in the residential sector,billion btu,TE,RC,total energy,residential sector
+TERFB,total energy used as refinery fuel and intermediate products,billion btu,TE,RF,total energy,refinery fuel
+TETCB,total energy consumption,billion btu,TE,TC,total energy,total consumption of all energy-consuming sectors
+TETXB,total end-use sector energy consumption,billion btu,TE,TX,total energy,total end-use consumption
+TNACB,end-use energy consumption in the transportation sector,billion btu,TN,AC,end-use energy consumption,transportation sector
+TNASB,"total net energy consumed by the transportation sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,TN,AS,end-use energy consumption,transportation sector adjusted consumption
+TNCCB,end-use energy consumption in the commercial sector,billion btu,TN,CC,end-use energy consumption,commercial sector
+TNCSB,"total net energy consumed by the commercial sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,TN,CS,end-use energy consumption,commercial sector adjusted consumption
+TNICB,end-use energy consumption in the industrial sector,billion btu,TN,IC,end-use energy consumption,industrial sector
+TNISB,"total net energy consumed by the industrial sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,TN,IS,end-use energy consumption,industrial sector adjusted consumption
+TNRCB,end-use energy consumption in the residential sector,billion btu,TN,RC,end-use energy consumption,residential sector
+TNRSB,"total net energy consumed by the residential sector, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,TN,RS,end-use energy consumption,residential sector adjusted consumption
+TNSCB,"total net energy consumption, adjusted for process fuel, intermediate products, and fuels with no direct cost",billion btu,TN,SC,end-use energy consumption,"total adjusted consumption, all sectors"
+TNTCB,total end-use energy consumption,billion btu,TN,TC,end-use energy consumption,total consumption of all energy-consuming sectors
+UOICB,unfinished oils consumed by the industrial sector,billion btu,UO,IC,unfinished oils,industrial sector
+USICB,unfractionated streams consumed by the industrial sector (through 1983),billion btu,US,IC,NA,industrial sector
+WDCCB,wood energy consumed by the commercial sector,billion btu,WD,CC,wood,commercial sector
+WDEIB,wood consumed by the electric power sector,billion btu,WD,EI,wood,electric power sector (consumption)
+WDEXB,densified biomass exports (available for 2016 forward),billion btu,WD,EX,wood,exports
+WDICB,wood energy consumed by the industrial sector,billion btu,WD,IC,wood,industrial sector
+WDPRB,wood energy production,billion btu,WD,PR,wood,primary energy production
+WDRCB,wood energy consumed by the residential sector,billion btu,WD,RC,wood,residential sector
+WDRSB,wood energy consumed in the residential sector at a cost,billion btu,WD,RS,wood,residential sector adjusted consumption
+WDRXB,wood energy consumed in the residential sector at no cost,billion btu,WD,RX,wood,NA
+WDTCB,wood energy total consumption,billion btu,WD,TC,wood,total consumption of all energy-consuming sectors
+WSCCB,waste energy consumed by the commercial sector,billion btu,WS,CC,NA,commercial sector
+WSEIB,waste consumed by the electric power sector,billion btu,WS,EI,NA,electric power sector (consumption)
+WSICB,waste energy consumed by the industrial sector,billion btu,WS,IC,NA,industrial sector
+WSTCB,waste energy total consumption,billion btu,WS,TC,NA,total consumption of all energy-consuming sectors
+WWCCB,wood and waste consumed in the commercial sector,billion btu,WW,CC,wood and waste,commercial sector
+WWCSB,wood and waste energy consumed in the commercial sector at a cost,billion btu,WW,CS,wood and waste,commercial sector adjusted consumption
+WWCXB,wood and waste energy consumed in the commercial sector at no cost,billion btu,WW,CX,wood and waste,NA
+WWEIB,wood and waste consumed by the electric power sector,billion btu,WW,EI,wood and waste,electric power sector (consumption)
+WWICB,wood and waste consumed in the industrial sector,billion btu,WW,IC,wood and waste,industrial sector
+WWISB,wood and waste energy consumed in the industrial sector at a cost,billion btu,WW,IS,wood and waste,industrial sector adjusted consumption
+WWIXB,wood and waste energy consumed in the industrial sector at no cost,billion btu,WW,IX,wood and waste,NA
+WWPRB,wood and waste energy production,billion btu,WW,PR,wood and waste,primary energy production
+WWSCB,"wood and waste energy total consumption, adjusted for fuels with no direct cost",billion btu,WW,SC,wood and waste,"total adjusted consumption, all sectors"
+WWTCB,wood and waste total consumption,billion btu,WW,TC,wood and waste,total consumption of all energy-consuming sectors
+WWTXB,wood and waste total end-use consumption,billion btu,WW,TX,wood and waste,total end-use consumption
+WXICB,waxes consumed by the industrial sector,billion btu,WX,IC,waxes,industrial sector
+WYCCB,wind energy consumed by the commercial sector,billion btu,WY,CC,NA,commercial sector
+WYEGB,wind energy consumed for electricity generation by the electric power sector,billion btu,WY,EG,NA,electric power sector (generation)
+WYICB,wind energy consumed by the industrial sector,billion btu,WY,IC,NA,industrial sector
+WYTCB,wind energy total consumption,billion btu,WY,TC,NA,total consumption of all energy-consuming sectors
+WYTXB,wind energy total end-use consumption,billion btu,WY,TX,NA,total end-use consumption
+WZEIB,"waste, excluding biodiesel, consumed by the electric power sector",billion btu,WZ,EI,NA,electric power sector (consumption)
+WZTCB,"waste, excluding biodiesel, total consumption",billion btu,WZ,TC,NA,total consumption of all energy-consuming sectors
+NNCCB,NA,NA,NN,CC,natural gas consumed by the commercial sector (excluding supplemental gaseous fuels),commercial sector
+NNEIB,NA,NA,NN,EI,natural gas consumed by the electric power sector (excluding supplemental gaseous fuels),electric power sector (generation)
+NNICB,NA,NA,NN,IC,natural gas consumed by the industrial sector (excluding supplemental gaseous fuels),industrial sector
+NNRCB,NA,NA,NN,RC,natural gas consumed by the residential sector (excluding supplemental gaseous fuels),residential sector

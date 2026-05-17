@@ -1,0 +1,51 @@
+fuel_type,heat_content,carbon_coefficient,fraction_oxidized,fraction_neu_sequestered
+Coal,(MMBtu/Ston),,,
+Residential Coal,variable,variable,1,
+Commercial Coal,variable,variable,1,
+Coking Coal,variable,variable,1,0.1
+Industrial Other Coal,variable,variable,1,
+Net Coke Imports,variable,27.85,1,
+Transportation Coal,NC,NC,NC,
+Electric Power Coal,variable,variable,1,
+U.S. Territory Coal Imports (Bit.),22.3,25.14,1,
+Natural Gas,(Btu/ft^3),,,
+Natural Gas,variable,variable,1,
+NG for Nitrogenous Fertilizers,,14.47,,0
+NG for Other Non-fuel Uses,,14.47,,variable
+Flare Gas,,14.92,1,
+Petroleum,(MMBtu/barrel),,,
+Asphalt & Road Oil,6.636,20.553181,1,0.995608522
+Aviation Gasoline,5.048,18.85535225,1,
+Distillate Fuel Oil,variable,variable,1,0.5
+Jet Fuel,5.67,variable,1,
+Kerosene,5.67,19.96410456,1,
+Jet Fuel & Kerosene (Territories),5.67,19.33,1,
+LPG,3.841,variable,1,
+HGL (Energy Use),3.867,variable,1,
+HGL (non-energy use),variable,variable,,variable
+Lubricants,6.065,20.19935547,1,0.0918
+Motor Gasoline,variable,variable,1,
+Motor Gasoline (Territories),variable,19.22,1,
+Residual Fuel Oil,6.287,20.48,1,0.5
+Special Naphtha,5.248,19.73738914,1,variable
+Other Petroleum,,,,
+AvGas Blend Components,,18.87,1,
+Crude Oil,5.8,variable,1,
+MoGas Blend Components,,variable,1,
+Miscellaneous Petroleum Products,5.796,variable,1,0
+Misc. Products (Territories),5.8,20,1,0.1
+Naphtha,5.248,18.55064935,1,variable
+Other Oils,5.825,20.17,1,variable
+Pentanes Plus,4.638,18.24,1,variable
+Petrochemical Feedstocks,5.248-5.825,19.37,1,variable
+Petroleum Coke,6.024,27.84770011,1,0.3
+Natural Gasoline,4.62,18.24,1,
+Plant Condensate,5.418,19.41,1,
+Still Gas,6,18.19545455,1,
+Still Gas (non-energy),6,17.51,-,variable
+Unfinished Oils,5.825,variable,1,
+Unfractionated Stream,5.418,19.41,1,
+Waxes,5.537,19.79575418,1,0.57825
+Geothermal Energy,,2.697465842,1,
+Special Factor for Utility Sector Residual Fuel,6.287,21.29,1,0.5
+Motor Gasoline (Light-Duty Vehicles),,,1,
