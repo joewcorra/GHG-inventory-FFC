@@ -1,12 +1,7 @@
-# Targets Pipeline Setup----------------------
-
-# Load packages
 library(pins)
 library(targets)
 library(visNetwork)
 library(tarchetypes)
-
-remotes::install_github("joewcorra/syrinx")
 
 targets::tar_option_set(
   error = "null",
@@ -22,15 +17,12 @@ targets::tar_option_set(
 )
 
 
-# Source custom functions for FFC data
 source("functions_national.R")
 source("functions_state.R")
 source("functions_both.R")
 
-# Define the pins board for data retrieval
 board <- board_folder("pins", versioned = TRUE)
 
-# Define the Pipeline-------------------------------------------
 
 list(
   
@@ -87,31 +79,26 @@ list(
     pin_read(board, "ippu_corrections")
   ),
   
-  # LPG national data is temporary until we can retrieve
   tar_target(
     lpg_national,
     pin_read(board, "lpg_national")
   ),
-  
-  # misc transportation data is temporary until we can retrieve
+
   tar_target(
     misc_tra_data,
     pin_read(board, "misc_tra_data")
   ),
-  
-  # Biodiesel for mobile calcs
+
   tar_target(
     biodiesel,
     pin_read(board, "biodiesel")
   ),
-  
-  # Biodiesel for mobile calcs
+
   tar_target(
     rail_diesel,
     pin_read(board, "rail_diesel")
   ),
-  
-  # Backcast nonroad data for mobile
+
   tar_target(
     nonroad_backcast,
     pin_read(board, "nonroad_backcast")
@@ -163,14 +150,13 @@ list(
     pin_read(board, "feedstock_export_adjustments")
   ),
   
-  # temporary
   tar_target(
     api_seds,
     pin_read(board, "api_seds")
   ),
-  
+
   ## Data Transformation-------------------------------------------
-  
+
   ### Both national and state---------------------------------
   tar_target(
     msn_lookup,
@@ -263,8 +249,7 @@ list(
     carbon_emissions_national,
     national_ffc_calculate_emissions(
       national_ffc_adjusted,
-      carbon_coefficients,
-      general_data
+      carbon_coefficients
     )
   ),
 
@@ -283,10 +268,8 @@ list(
   tar_target(
     territories,
     get_territories_data() %>%
-      # Standardize ff_territories only 
       purrr::modify_at("ff_territories", ~standardize_ffc(., msn_eia)),
-    # Pull data only if it's a month old
-    cue = tar_cue_age(name = territories, 
+    cue = tar_cue_age(name = territories,
                       age = as.difftime(90, units = "days"))
   ),
 
@@ -311,15 +294,14 @@ list(
     carbon_emissions_territories,
     territories_ffc_adjust_data(
       carbon_coefficients,
-      territories,
-      general_data
+      territories
     )
   ),
 
   tar_target(
     state_ffc_adjusted,
     state_ffc_adjust_data(
-      seds,
+      api_seds,
       state_adjustments,
       fhwa_data
     )
@@ -330,7 +312,6 @@ list(
     state_neu_calculate_emissions(
       state_ffc_adjusted,
       carbon_coefficients,
-      general_data,
       state_adjustments
     )),
 
@@ -339,121 +320,18 @@ list(
     state_ffc_calculate_emissions(
       state_ffc_adjusted,
       carbon_coefficients,
-      general_data,
       state_adjustments
     )),
-
-  #   ## Figures, Tables, and Quarto Reports--------------------------------
-  #
-  #   ### National-------------------------------------------------
-  #   # tar_target(
-  #   #   national_ffc_figures,
-  #   #   national_ffc_ggplot_figures(
-  #   #     national_ffc_adjusted,
-  #   #     carbon_emissions_national
-  #   #   )
-  #   # ),
-  #   #
-  #   # tar_target(saved_national_ffc_figures,
-  #   #   {
-  #   #     saveRDS(national_ffc_figures,
-  #   #       file = "saved_national_ffc_figures.rds"
-  #   #     )
-  #   #     "saved_national_ffc_figures.rds"
-  #   #   },
-  #   #   format = "file"
-  #   # ),
-  #   #
-  #   # tar_target(
-  #   #   national_ffc_tables,
-  #   #   national_ffc_gt_tables(national_ffc_adjusted,
-  #   #                          carbon_emissions_national)
-  #   # ),
-  #   #
-  #   # tar_target(saved_national_ffc_tables,
-  #   #   {
-  #   #     saveRDS(national_ffc_tables,
-  #   #       file = "saved_national_ffc_tables.rds"
-  #   #     )
-  #   #     "saved_national_ffc_tables.rds"
-  #   #   },
-  #   # ),
-  #   #
-  #   # ### State--------------------------------------------
-  #   # tar_target(
-  #   #   state_ffc_figures,
-  #   #   state_ffc_ggplot_figures(
-  #   #     state_ffc_adjusted$seds_all_adjusted,
-  #   #     state_ffc_adjusted$seds_ind_adjusted,
-  #   #     state_adjustments,
-  #   #     carbon_emissions_state_ffc
-  #   #   )
-  #   # ),
-  #   #
-  #   # tar_target(saved_state_ffc_figures,
-  #   #   {
-  #   #     saveRDS(state_ffc_figures, file = "saved_state_ffc_figures.rds")
-  #   #     "saved_state_ffc_figures.rds"
-  #   #   },
-  #   #   format = "file"
-  #   # ),
-  #   #
-  #   # tar_target(
-  #   #   state_ffc_tables,
-  #   #   state_ffc_gt_tables(state_ffc_adjusted$seds_all_adjusted,
-  #   #                       carbon_emissions_state_ffc)
-  #   # ),
-  #   #
-  #   # tar_target(saved_state_ffc_tables,
-  #   #   {
-  #   #     saveRDS(state_ffc_tables, file = "saved_state_ffc_tables.rds")
-  #   #     "saved_state_ffc_tables.rds"
-  #   #   },
-  #   #   format = "file"
-  #   # ),
-  #
-  #   ## InvDB Output-------------------------------
 
   tar_target(
     invdb,
     write_to_invdb(
-      # carbon_emissions_national,
       carbon_emissions_territories,
       carbon_emissions_state_ffc,
       carbon_emissions_state_neu)
   )
 
-  #   ## National--------------------------------------------
-  #   tar_quarto(
-  #     national_ffc_final_report,
-  #     path = "national_ffc_final_report.qmd",
-  #     extra_files = c("saved_national_ffc_tables.rds",
-  #                     "saved_national_ffc_figures.rds")
-  #   ),
-  #
-  # ## State----------------------------------------------
-  #   tar_quarto(
-  #     state_ffc_final_report,
-  #     path = "state_ffc_final_report.qmd",
-  #     extra_files = c("saved_state_ffc_tables.rds",
-  #                     "saved_state_ffc_figures.rds")
-  #   )
-  # )
-
 )
-# Run the pipeline (only executes targets that require updating)
-# targets::tar_make()
-
-
-# Create visualization of targets network
-# targets::tar_visnetwork()
-
-# Load a cached target into global environment
-# targets::tar_read()
-# blahblah <- tar_read(seds_ind_adjusted) # use any target name
-
-# Check for problems
-# targets::tar_manifest()
 
 
 

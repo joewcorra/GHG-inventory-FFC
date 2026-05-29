@@ -1,41 +1,29 @@
 
 # National Consumption Data-------------------------
 
-  # Function to read data from EIA API, 1 year at a time
-  get_national_results <- function(msn_lookup, msn_eia, lpg_national) {
-    
-    # API ke, generate your own
-    key <- " "
-    
-    # Change to match most recent available year (current year minus two)
-    latest_year <- lubridate::year(Sys.Date()) - 2
-    
-    # For now, to avoid exceeding the 5000-row data limit, we will pull
-    # only one year and state per query. This requires n=51*years API queries.
-    get_api_data <- function(year) {
-      
-      results <- paste0(
+get_national_results <- function(msn_lookup, msn_eia, lpg_national) {
+
+  key <- " "
+  latest_year <- lubridate::year(Sys.Date()) - 2
+
+  # Pulls one year per query to stay under the 5000-row EIA API limit
+  get_api_data <- function(year) {
+    results <- paste0(
       "https://api.eia.gov/v2/total-energy/data/?frequency",
       "=annual&data[0]=value&start=", year,
       "&end=", year, "&sort[0][column]=period&sort[0][direction]",
-      "=desc&offset=0&length=5000&api_key=", key) %>% # our API key is required
-      httr::GET() %>% # retrieve page from url
-      httr::content("raw") %>% # extract content as a raw vector
-      rawToChar() %>% # convert to character data
-      jsonlite::fromJSON() # convert from JSON to R object
-    }
-    
-  ## Read National Data-----------------------------------------------
-  
+      "=desc&offset=0&length=5000&api_key=", key) %>%
+      httr::GET() %>%
+      httr::content("raw") %>%
+      rawToChar() %>%
+      jsonlite::fromJSON()
+  }
+
   tictoc::tic()
-  api_results <- expand_grid(
-    year = 1990:latest_year) %>%
+  api_results <- expand_grid(year = 1990:latest_year) %>%
     purrr::pmap(function(year) get_api_data(year))
   tictoc::toc()
-  
-  ## Collate National Data-------------------------------------------
-  
-  # Extract national consumption data from API results
+
   us_consumption_all <- api_results %>%
     purrr::map(\(.x) purrr::pluck(.x, "response", "data")) %>%
     purrr::list_rbind() %>%
@@ -46,7 +34,6 @@
            value = readr::parse_number(value),
            msn = str_sub(msn, 1, 5))
   
-  # Collate national data (not including industrial coal)
   us_consumption <- us_consumption_all %>%
     filter(unit == "trillion btu",
            msn %in% msn_lookup,
@@ -56,7 +43,6 @@
     # Remove any duplicates caused by appending new annual data
     distinct()
   
-  # Collate industrial coal data, calculate and append
   us_ind_coal <- us_consumption_all %>%
     filter(str_sub(msn, 3, 4) %in% c("KC", "OC")) %>%
     mutate(source_description = if_else(str_sub(msn, 3, 4) == "KC",
@@ -66,44 +52,12 @@
     ungroup() %>%
     mutate(sector_description = "industrial sector")
   
-  # Append ind coal data to us_consumption
   us_consumption <- us_consumption %>%
     dplyr::rows_append(us_ind_coal) %>%
-    # Remove total ind coal (replaced by coking and other coal)
     filter(msn != "CLICB")
   
   ## HGL Component Data-----------------------------------------
-  
-  # Also includes pentanes plus
-  eia_api_lpg <- paste0(
-    "https://api.eia.gov/v2/petroleum/cons/psup/data/?frequency=annual&",
-    "data[0]=value&",
-    # "facets[series][]=MPPUPUS1&", # pentanes
-    # "facets[series][]=MUOUPUS1&",  # unfinished oils
-    "facets[series][]=MBIUPUS1&", # isobutane-isobutylene
-    "facets[series][]=MBNUPUS1&", # butane-butylene
-    "facets[series][]=METUPUS1&", # ethane-ethylene
-    "facets[series][]=MPRUPUS1&", # propane-propylene
-    "start=1990&end=", latest_year,
-    "&sort[0][column]=period&sort[0][direction]=desc&",
-    "offset=0&length=5000&api_key=", key
-  ) %>%
-    httr::GET() %>% # retrieve page from url
-    httr::content("raw") %>% # extract content as a raw vector
-    rawToChar() %>% # convert to character data
-    jsonlite::fromJSON() # convert from JSON to R object
-  
-  lpg_components <- purrr::pluck(eia_api_lpg, "response", "data") %>%
-    select(
-      year = period,
-      eia_description = 'series-description', value, unit = units
-    ) %>%
-    # Make value numeric
-    mutate(value = as.numeric(value))
-  
-  # Doing this requires unpublished EIA propane data, as well as
-  # heat content by lpg and disaggregating combined lpgs
-  # For now we will read processed data from csv
+
   lpg_components <- lpg_national %>%
     janitor::clean_names() %>%
     # pivot_longer(cols = !lpg, names_to = "year") %>%
@@ -122,10 +76,8 @@
            sector_description = "industrial sector") %>%
     select(-lpg)
   
-  # Append ind coal data to us_consumption
   us_consumption <- us_consumption %>%
     dplyr::rows_append(lpg_components) %>%
-    # Remove ind HGL (replaced by combined lpg)
     filter(msn != "HLICB")
   
   return(us_consumption)
@@ -136,7 +88,6 @@
   
 get_heat_content <- function() {
   
-  # API key generated 11/22/23
   key <- " "
   
   # Change to match most recent available year (current year minus two)
@@ -198,24 +149,20 @@ get_heat_content <- function() {
   
 } 
 
-  # Ethanol (Transportation) Data----------------------------------
- get_ethanol_tra <- function() {
-   
-   # API key generated 11/22/23
-   key <- " "
-   
+get_ethanol_tra <- function() {
+
+  key <- " "
+  latest_year <- lubridate::year(Sys.Date()) - 2
+
   eia_api_ethanol <- paste0(
-    "https://api.eia.gov/v2/total-energy/data/?frequency",
-    "=annual&data[0]=value&start=1990&end=2022&sort[0][column]",
-    "=period&sort[0][direction]",
-    "https://api.eia.gov/v2/total-energy/data/?frequency",
-    "=annual&data[0]=value&facets[msn][]=EMACBUS&start=1990&end=2023&sort[0]",
-    "[column]=period&sort[0][direction]=desc&offset=0&length=5000&api_key=", key
+    "https://api.eia.gov/v2/total-energy/data/?frequency=annual",
+    "&data[0]=value&facets[msn][]=EMACBUS&start=1990&end=", latest_year,
+    "&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000&api_key=", key
   ) %>%
-    httr::GET() %>% # retrieve page from url
-    httr::content("raw") %>% # extract content as a raw vector
-    rawToChar() %>% # convert to character data
-    jsonlite::fromJSON() # convert from JSON to R object
+    httr::GET() %>%
+    httr::content("raw") %>%
+    rawToChar() %>%
+    jsonlite::fromJSON()
   
   ethanol_tra <- purrr::pluck(eia_api_ethanol, "response", "data") %>%
     mutate(msn = str_sub(msn, 1, 5), value = as.numeric(value)) %>%
@@ -449,21 +396,7 @@ get_mobile_adjustments_data <- function(moves3_vmt,
     ungroup()
     
   
-  ## EIA Diesel Fuel---------------------------------------------------------
-  
-  # # For each: com, ind, res, and tra
-  # 
-  # us_consumption_dist_fuel <- us_consumption %>%
-  #   filter(msn %in% c("DFRCB", "DFICB", "DFCCB", "DFACB")) %>%
-  #   mutate(meta_sector = case_when(
-  #     sector_description == "commercial sector" ~ "non-trans",
-  #     sector_description == "industrial sector" ~ "non-trans",
-  #     sector_description == "residential sector" ~ "non-trans",
-  #     sector_description == "transportation sector" ~ "trans"
-  #   ))
-  
-  
-## Aggregate Data--------------------------
+  ## Aggregate Data--------------------------
   
   mobile_adjustments <- lst(national_mogas, national_diesel)
   
@@ -719,8 +652,7 @@ national_ffc_adjust_data <- function(
     lpg = us_consumption %>%
       filter(msn == "HLACB"),
     
-    # Motor Gasoline (mogas/df adjustment)
-    aviation_gasoline = us_consumption %>%
+    motor_gasoline = us_consumption %>%
       filter(msn == "MGACB"),
     
     # Residual Fuel (IBF adjustment)
@@ -739,13 +671,14 @@ national_ffc_adjust_data <- function(
   
   # Aggregate------------------------------------------------------
   
-  national_ffc_adjusted <- lst(us_res_com_ele, 
-                               select(us_ind, year:adjusted_value), 
-                               select(us_tra, 
-                                      -gas_mode_and_fuel_type, 
+  national_ffc_adjusted <- lst(us_res_com_ele,
+                               select(us_ind, year:adjusted_value),
+                               select(us_tra,
+                                      -gas_mode_and_fuel_type,
                                       -ibf_value)) %>%
     dplyr::bind_rows()
-  
+
+  return(national_ffc_adjusted)
 }
 
 # NATIONAL CO2 EMISSIONS------------------------------------
@@ -781,53 +714,6 @@ national_ffc_ggplot_figures <- function(national_ffc_adjusted,
 national_ffc_gt_tables <- function(national_ffc_adjusted,
                                    carbon_emissions_national) {
   national_ffc_tables <- lst()
-  gt(national_ffc_adjusted,
-     rowname_col = " ") %>%
-    tab_header(title = md(
-      "Table 6-3: CO<sub>2</sub>, CH<sub>4</sub>, and N<sub>2</sub>O Emissions from Energy (MMT CO<sub>2</sub> Eq.)")) %>%
-    tab_stub_indent(
-      rows = everything(),
-      indent = 3) %>%
-    # rows_add(Activity = "Reservoirs", .before = 1) %>%
-    tab_stubhead(label = "Source") %>%
-    opt_vertical_padding(2) %>%
-    cols_align(align = "left") %>%
-    fmt_number(decimals = 1) %>%
-    sub_missing(missing_text = " ") %>%
-    tab_options(
-      heading.border.bottom.style = "solid",
-      heading.border.bottom.color = "black",
-      column_labels.border.bottom.style = "solid",
-      column_labels.border.bottom.color = "black",
-      column_labels.border.bottom.width = 3,
-      stub.text_transform = "capitalize",
-      stub.border.style = "none",
-      grand_summary_row.border.style = "solid",
-      grand_summary_row.border.color = "black",
-      grand_summary_row.border.width = 1) %>%
-    grand_summary_rows(
-      columns = where(is.numeric),
-      fmt = ~ fmt_number(., decimals = 1),
-      fns = list(Total ~ sum(., na.rm = TRUE))) %>%
-    cols_add('TEST1' = '', .after = 'mpg') %>%
-    cols_add('TEST2' = '', .after = 'cyl') %>%
-    cols_label('TEST1' = md('  '),
-               'TEST2' = md('  ')) %>%
-    tab_style(style = cell_text(weight = "bold", color = "black"),
-              locations = list(cells_grand_summary(), cells_stubhead(),
-                               cells_title(), cells_stub_grand_summary(),
-                               cells_row_groups(),
-                               cells_stub(1),
-                               cells_column_labels())) %>%
-    tab_style (style = cell_fill(color = "gray", alpha = 0.5),
-               locations = list(cells_body(c(2, 4)),
-                                cells_grand_summary(c(2, 4)),
-                                cells_column_labels(c(2,4)))) %>%
-    tab_style(style = cell_text(align = "center"),
-              location = list(cells_body(), cells_column_labels(),
-                              cells_grand_summary())) %>%
-    tab_footnote(footnote = "Note: Totals may not sum due to independent rounding.")
-  
   return(national_ffc_tables)
 }
 

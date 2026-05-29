@@ -38,50 +38,34 @@ get_carbon_factors <- function(carbon_factors_variable,
   # Read in variable carbon factors data from FFC excel workbook
   carbon_factors_variable <- carbon_factors_variable %>%
     syrinx::pre_clean() %>%
-    rename(source_description = fuel_type) 
-  
-  # Read in carbon factors data from FFC excel workbook
+    rename(source_description = fuel_type)
+
   carbon_factors <- carbon_factors_fixed %>%
     syrinx::pre_clean() %>%
     select(source_description = fuel_type, carbon_coefficient) %>%
     filter(
-      # NA = not applicable, NC = not calculated. Remove all NA & NC
       !is.na(carbon_coefficient),
       carbon_coefficient != "nc"
     ) %>%
-    # Join with annually variable carbon factor data
     left_join(carbon_factors_variable, by = "source_description") %>%
-    # Copy non-variable factors across all years
     mutate(across(
       starts_with("x"),
       ~ ifelse(carbon_coefficient == "variable", ., carbon_coefficient)
     )) %>%
-    # First factor column no longer needed
     select(-carbon_coefficient) %>%
-    # Pivot longer
-    # pivot_longer(
-    #   cols = starts_with("x"),
-    #   names_to = "year", values_to = "carbon_factor"
-    # ) %>%
-    # Remove x and make values numeric
     mutate(
       year = str_remove(year, "x"),
       carbon_factor = as.numeric(value)
     ) %>%
     select(-value) %>%
-    # Remove rows w/ NA values (these are mostly header rows)
     filter(!is.na(carbon_factor))
   
   neu_storage <- neu_storage %>%
     syrinx::pre_clean() %>%
     rename(sector_description = sector,
-           source_description = source, 
+           source_description = source,
            storage_factor = value)
-  # %>%
-    # pivot_longer(cols = starts_with("x"),
-    #              names_to = "year",
-    #              values_to = "storage_factor")
-    # 
+
   carbon_coefficients <- lst(carbon_factors,
                              carbon_ratio,
                              neu_storage)
@@ -92,193 +76,95 @@ get_carbon_factors <- function(carbon_factors_variable,
 # DATASCRAPING (NATIONAL AND STATE)-----------------------------------------
 
 scrape_fhwa_data <- function(data_dictionary_values) {
-  
-  # Set year to match most recent available year (current year minus two)
+
   latest_year <- year(Sys.Date()) - 2
-  
-  states <- data_dictionary_values %>% 
+
+  states <- data_dictionary_values %>%
     filter(value_variable == "state") %>%
     select(state = value, state_name = value_description)
 
-  # Temporary file storage path
   local_excel_path <- tempfile(fileext = ".xlsx")
-  
-  # URL for gasoline data by state, 1949 to present year
+
   gasoline_url <- paste0(
     "https://www.fhwa.dot.gov/policyinformation/statistics/",
     latest_year, "/xls/mf226.xlsx"
   )
-  # URL for special fuel (diesel) data by state, 1949 to present year
   special_fuel_url <- paste0(
     "https://www.fhwa.dot.gov/policyinformation/statistics/",
     latest_year, "/xls/mf225.xlsx"
   )
   
-  # Retrieve gasoline Excel file data
   GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
-  
-  # Read from temp file
+
   gasoline_distribution <- read_excel(local_excel_path) %>%
     clean_names() %>%
-    # Remove unneeded rows
-    filter(
-      !is.na(state),
-      state != "Total"
-    ) %>%
-    # Make all value columns numeric
+    filter(!is.na(state), state != "Total") %>%
     mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "gasoline_percent"
-    ) %>%
-    # Remove letters from year column
+    pivot_longer(cols = -1, names_to = "year", values_to = "gasoline_percent") %>%
     mutate(
       state = str_squish(state),
       year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
       national_total = sum(gasoline_percent, na.rm = TRUE), .by = year
     ) %>%
-    # Retain only 1990 onward
     filter(year > 1989) %>%
-    # Get gasoline percentage for each state
     mutate(
       gasoline_percent = gasoline_percent / national_total,
-      # Fix the dumb abbreviation for District of Columbia
-      state = if_else(str_detect(state, "Dist"),
-                      "District of Columbia", state
-      )
-    ) %>%
-    rename(state_name = state) %>%
-    # Get state codes
-    left_join(states,
-      by = "state_name"
-    ) %>%
-    # No longer need national total or full state name
-    select(-national_total, -state_name)
-  
-  
-  # Scrape FWHA Fuel Use National FFC
-  # Retrieve gasoline Excel file data
-  GET(gasoline_url, write_disk(local_excel_path, overwrite = TRUE))
-  # Read from temp file
-  
-  gasoline_use_national <- read_excel(local_excel_path) %>%
-    clean_names() %>%
-    # Remove unneeded rows
-    filter(state == "Total") %>%
-    # Make all value columns numeric
-    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "gasoline_use_gal"
-    ) %>%
-    # Remove letters from year column
-    mutate(year = str_remove(year, "[a-z]")) %>%
-    # Retain only 1990 onward
-    filter(year > 1989) %>%
-    select(-state)
-  
-  # URL for table VM-1, diesel fuel by class
-  # NOTE: NOt sure if this is the right data; see issues in Github
-  # Temporary file storage path
-  # local_excel_path <- tempfile(fileext = ".xlsx")
-  #
-  # diesel_url <- paste0(
-  #   "https://www.fhwa.dot.gov/policyinformation/statistics/",
-  #   latest_year, "/xls/vm1.xlsx"
-  # )
-  # # https://www.fhwa.dot.gov/policyinformation/statistics/1998/vm1.cfm
-  # GET(diesel_url, write_disk(local_excel_path, overwrite = TRUE))
-  #
-  # diesel_use_by_class <- read_excel(local_excel_path, skip = 5) %>%
-  #   clean_names() %>%
-  #   # Make all value columns numeric
-  #   mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-  #   # Make data long; i.e., one row per year
-  #   pivot_longer(
-  #     cols = -1, names_to = "year",
-  #     values_to = "gasoline_use_gal"
-  #   ) %>%
-  #   # Retain only year and value
-  #   select(year, gasoline_use_gal) %>%
-  #   # Remove letters from year column
-  #   mutate(year = str_remove(year, "[a-z]"))
-  # # Retain only 1990 onward
-  
-  # Retrieve diesel Excel file data
-  GET(special_fuel_url, write_disk(local_excel_path, overwrite = TRUE))
-  # Read from temp file
-  
-  diesel_distribution <- read_excel(local_excel_path) %>%
-    clean_names() %>%
-    # Remove unneeded rows
-    filter(
-      !is.na(state),
-      state != "Total"
-    ) %>%
-    # Make all value columns numeric
-    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "diesel_percent"
-    ) %>%
-    # Remove letters from year column
-    mutate(
-      state = str_squish(state),
-      year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
-      national_total = sum(diesel_percent, na.rm = TRUE), .by = year
-    ) %>%
-    # Retain only 1990 onward
-    filter(year > 1989) %>%
-    # Get gasoline percentage for each state
-    mutate(
-      diesel_percent = diesel_percent / national_total,
-      # Fix the dumb abbreviation for District of Columbia
+      # "Dist. of Col." abbreviation used in FHWA data
       state = if_else(str_detect(state, "Dist"), "District of Columbia", state)
     ) %>%
     rename(state_name = state) %>%
-    # Get state codes
-    left_join(
-      states, 
-      by = "state_name"
+    left_join(states, by = "state_name") %>%
+    select(-national_total, -state_name)
+  
+
+  gasoline_use_national <- read_excel(local_excel_path) %>%
+    clean_names() %>%
+    filter(state == "Total") %>%
+    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+    pivot_longer(cols = -1, names_to = "year", values_to = "gasoline_use_gal") %>%
+    mutate(year = str_remove(year, "[a-z]")) %>%
+    filter(year > 1989) %>%
+    select(-state)
+
+  GET(special_fuel_url, write_disk(local_excel_path, overwrite = TRUE))
+
+  diesel_distribution <- read_excel(local_excel_path) %>%
+    clean_names() %>%
+    filter(!is.na(state), state != "Total") %>%
+    mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
+    pivot_longer(cols = -1, names_to = "year", values_to = "diesel_percent") %>%
+    mutate(
+      state = str_squish(state),
+      year = str_remove(year, "[a-z]"),
+      national_total = sum(diesel_percent, na.rm = TRUE), .by = year
     ) %>%
-    # No longer need national total or full state name
+    filter(year > 1989) %>%
+    mutate(
+      diesel_percent = diesel_percent / national_total,
+      # "Dist. of Col." abbreviation used in FHWA data
+      state = if_else(str_detect(state, "Dist"), "District of Columbia", state)
+    ) %>%
+    rename(state_name = state) %>%
+    left_join(states, by = "state_name") %>%
     select(-national_total, -state_name) %>%
-    # NOTE: diesel dist value for OR 2018 missing; interpolated instead
+    # OR 2018 missing from source; interpolated
     mutate(diesel_percent = if_else(state == "OR" & year == "2018",
                                     0.0139, diesel_percent))
   
   diesel_use_national <- read_excel(local_excel_path) %>%
     clean_names() %>%
-    # Remove unneeded rows
-    filter(
-      !is.na(state),
-      state != "Total"
-    ) %>%
-    # Make all value columns numeric
+    filter(!is.na(state), state != "Total") %>%
     mutate(across(starts_with("x"), ~ as.numeric(.))) %>%
-    # Make data long; i.e., one row per year
-    pivot_longer(
-      cols = -1, names_to = "year",
-      values_to = "diesel_use_gal"
-    ) %>%
-    # Retain only year and value
+    pivot_longer(cols = -1, names_to = "year", values_to = "diesel_use_gal") %>%
     select(year, diesel_use_gal) %>%
-    # Remove letters from year column
     mutate(year = str_remove(year, "[a-z]")) %>%
-    # Retain only 1990 onward
     filter(year >= 1990) %>%
     group_by(year) %>%
     summarize(diesel_use_gal = sum(diesel_use_gal, na.rm = TRUE)) %>%
     ungroup()
-  
+
   fhwa_data <- lst(
     diesel_distribution,
-    # diesel_use_by_class,
     diesel_use_national,
     gasoline_distribution,
     gasoline_use_national

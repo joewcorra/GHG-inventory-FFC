@@ -113,27 +113,9 @@ state_ffc_get_seds_data <- function(msn_lookup, msn_eia, data_dictionary_values)
 }
 
 # TERRITORIES CONSUMPTION DATA-----------------------------------------
-#'
-#' @description This function retrieves and processes fossil fuel consumption and heat content data for U.S. territories from the U.S. Energy Information Administration (EIA) API, using a process similar to `state_ffc_get_seds_data()`.
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename bind_rows
-#' @importFrom tibble lst
-#' @details
-#' **Retrieval:**
-#' - Downloads annual fossil fuel consumption data from EIA API for all U.S. territories.
-#' - Constructs a URL for the API request, retrieves the data, and processes the JSON response into an R object.
-#' - Downloads PDF of fossil fuel heat content by year from EIA df document extracts data from document.
-#' **Transform:**
-#' - Cleans names, selects relevant columns, and filters the data to include only rows with units in "Billion Btu".
-#' - Applies naming harmonization so sectors, fuels, and years align with GHGI data dictionary.
-#' - Filters the dataset to include only fossil fuel energy sources relevant to GHGI reporting.
-#' - Manually creates time series for Puerto Rico lubricants data (not available from EIA).
-#' - Aggregates hydrocarbon gas liquids (HGLs) from EIA data.
-#' **Collate/Output:**
-#' `territories`: a list containing the following:
-#' `ff_territories`: a tibble
-#' `heat_content_territories`: a tibble
-#' @return
+#' @return List with elements: ff_territories, heat_content_territories
 #' @seealso [state_ffc_get_seds_data()], [territories_ffc_adjust_data()]
+
 get_territories_data <- function() {
   # API Key----------------------------------------------------------------
   
@@ -335,226 +317,85 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
                                            foks_residual, 
                                            feedstock_export_adjustments) {
   
-  # Adjustment factors data from national inventory------------
-  
-  # NOTE: MOGAS AND DIESEL VALUES ARE INCORRECT AT THIS TIME (2/27/2025)
-  # if necessary we can pull calculated diesel/mogas values from national data
+  # NOTE: mogas and diesel values are incorrect as of 2/27/2025
   national_inv_adjustments <- national_ffc_adjusted %>%
     pivot_longer(cols = starts_with("x"), names_to = "year") %>%
-    rename(sector_description = sector, 
-           source_description = source, 
-           national_value = value) 
+    rename(sector_description = sector,
+           source_description = source,
+           national_value = value)
   
   # IBF adjustments data--------------------------------------------
   
-  # Read in IBF data from FFC excel workbook. Only need one line:
   ibf_adjustments <- international_bunker_fuels %>%
     janitor::clean_names() %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(cols = -1, names_to = "year", 
-    #              values_to = "ibf_value") %>%
-    rename(ibf_value = value) %>%
-    # Rename source column
-    rename(source_description = gas_mode_and_fuel_type) %>%
-    # Remove letters from 'year' column and standardize source descriptions
+    rename(ibf_value = value, source_description = gas_mode_and_fuel_type) %>%
     mutate(
       year = str_remove(year, "[a-z]"),
       source_description = str_to_lower(source_description),
       source_description = case_when(
-        # In the IBF worksheet, jet fuel is listed as "aviation jet fuel"
+        # IBF worksheet lists jet fuel as "aviation jet fuel"
         str_detect(source_description, "jet") ~ "jet fuel",
         str_detect(source_description, "distillate") ~ "distillate fuel oil",
         str_detect(source_description, "residual") ~ "residual fuel oil"
       )
     )
-  
-  # NEU data---------------------------------------------------------
-  # Read in NEU data from FFC excel workbook
+
   neu_adjustments <- non_energy_use %>%
     janitor::clean_names() %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -c(1, 2), names_to = "year",
-    #   values_to = "neu_factor"
-    # ) %>%
     rename(neu_factor = value) %>%
-    # Remove letters from year column
     mutate(
       year = str_remove(year, "[a-z]"),
-      # Make source lowercase
-      source_description = str_to_lower(source_description) %>%
-        # Remove extra spaces from source
-        str_squish())
+      source_description = str_to_lower(source_description) %>% str_squish()
+    )
   
   # I & S distributions data--------------------------------------------
   
-  # Read in I & S data from FFC excel workbook
-  is_distribution <- ippu_dist_iron_and_steel %>%
-    janitor::clean_names() %>%
-    # Don't need the national value; we compute it below
-    filter(state != "National") %>%
-    # Keep only state codes and value by year
-    # select(state, starts_with("x")) %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "is_percent"
-    # ) %>%
-    rename(is_percent = value) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
-      national_total = sum(is_percent), .by = year
-    ) %>%
-    # Get I & S percentage for each state
-    mutate(is_percent = is_percent / national_total) %>%
-    # No longer need national total
-    select(-national_total)
+  normalize_ippu_dist <- function(data, pct_col) {
+    data %>%
+      janitor::clean_names() %>%
+      filter(state != "National") %>%
+      rename({{ pct_col }} := value) %>%
+      mutate(
+        year = str_remove(year, "[a-z]"),
+        national_total = sum({{ pct_col }}), .by = year
+      ) %>%
+      mutate({{ pct_col }} := {{ pct_col }} / national_total) %>%
+      select(-national_total)
+  }
+
+  is_distribution              <- normalize_ippu_dist(ippu_dist_iron_and_steel, is_percent)
+  ammonia_distribution         <- normalize_ippu_dist(ippu_dist_ammonia,        ammonia_percent)
+  petrochemicals_distribution  <- normalize_ippu_dist(ippu_dist_petrochemical,  petrochemical_percent)
+  petrochemicals_cb_distribution <- normalize_ippu_dist(ippu_dist_carbon_black, petrochemical_cb_percent)
   
-  # Read in ammonia data from FFC excel workbook
-  ammonia_distribution <- ippu_dist_ammonia %>%
-    janitor::clean_names() %>%
-    # Don't need the national value; we compute it below
-    filter(state != "National") %>%
-    # Keep only state codes and value by year
-    # select(state, starts_with("x")) %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "ammonia_percent"
-    # ) %>%
-    rename(ammonia_percent = value) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
-      national_total = sum(ammonia_percent), .by = year
-    ) %>%
-    # Get ammonia percentage for each state
-    mutate(ammonia_percent = ammonia_percent / national_total) %>%
-    # No longer need national total
-    select(-national_total)
-  
-  # Read in petrochemical carbon black data from FFC excel workbook
-  petrochemicals_distribution <- ippu_dist_petrochemical %>%
-    janitor::clean_names() %>%
-    # Don't need the national value; we compute it below
-    filter(state != "National") %>%
-    # Keep only state codes and value by year
-    # select(state, starts_with("x")) %>%
-    # # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "petrochemical_percent"
-    # ) %>%
-    rename(petrochemical_percent = value) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
-      national_total = sum(petrochemical_percent), .by = year
-    ) %>%
-    # Get petrochemical percentage for each state
-    mutate(
-      petrochemical_percent =
-        petrochemical_percent / national_total
-    ) %>%
-    # No longer need national total
-    select(-national_total)
-  
-  # Read in petrochemical carbon black data from FFC excel workbook
-  petrochemicals_cb_distribution <- ippu_dist_carbon_black %>%
-    janitor::clean_names() %>%
-    # Don't need the national value; we compute it below
-    filter(state != "National") %>%
-    # Keep only state codes and value by year
-    # select(state, starts_with("x")) %>%
-    # # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "petrochemical_cb_percent"
-    # ) %>%
-    rename(petrochemical_cb_percent = value) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]"),
-      # Get national total for each year by insta-grouping
-      national_total = sum(petrochemical_cb_percent), .by = year
-    ) %>%
-    # Get petrochemical percentage for each state
-    mutate(
-      petrochemical_cb_percent =
-        petrochemical_cb_percent / national_total
-    ) %>%
-    # No longer need national total
-    select(-national_total)
-  
-  # Read in diesel fuel data from FOKS excel workbook
+  # FOKS data ends at 2020; extrapolate forward using 2020 values
+  extrapolate_foks <- function(data, latest_year) {
+    base_year <- data %>% filter(year == "2020")
+    bind_rows(
+      data,
+      purrr::map(2021:latest_year, ~ mutate(base_year, year = as.character(.x))) %>%
+        purrr::list_rbind()
+    )
+  }
+
+  latest_year <- lubridate::year(Sys.Date()) - 2
+
   foks_diesel_distribution <- foks_diesel %>%
     janitor::clean_names() %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "diesel_percent"
-    # ) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]") %>%
-        forcats::as_factor())
-  
-  # Append Extrapolated Data for 2021 Onward
-  
-  # FOKS data unavailable after 2020. Extrapolate using 2020 data
-  # 2021 extrapolated data
-  foks_diesel_distribution <- foks_diesel_distribution %>%
-    bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2021")) %>%
-    # 2022 extrapolated data
-    bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2022")) %>%
-    # 2022 extrapolated data
-    bind_rows(foks_diesel_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2023"))
-  
-  # Read in residual fuel data from FOKS excel workbook
+    mutate(year = str_remove(year, "[a-z]") %>% forcats::as_factor()) %>%
+    extrapolate_foks(latest_year)
+
   foks_residual_distribution <- foks_residual %>%
     janitor::clean_names() %>%
-    # Make data long; i.e., one row per year
-    # pivot_longer(
-    #   cols = -1, names_to = "year",
-    #   values_to = "residual_percent"
-    # ) %>%
-    # Remove letters from year column
-    mutate(
-      year = str_remove(year, "[a-z]") %>%
-        forcats::as_factor())
+    mutate(year = str_remove(year, "[a-z]") %>% forcats::as_factor()) %>%
+    extrapolate_foks(latest_year)
   
-  # Append Extrapolated Data for 2021 Onward
-  
-  # FOKS data unavailable after 2020. Extrapolate using 2020 data
-  # 2021 extrapolated data
-  foks_residual_distribution <- foks_residual_distribution %>%
-    bind_rows(foks_residual_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2021")) %>%
-    # 2022 extrapolated data
-    bind_rows(foks_residual_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2022")) %>%
-    bind_rows(foks_residual_distribution %>% filter(year == "2020") %>%
-                mutate(year = "2023"))
-  
-  # TEMPORARY--this will come from national data
   feedstock_export_adjustments <-
     feedstock_export_adjustments %>%
-    # pivot_longer(cols = !source_description,
-    #              names_to = "year",
-    #              values_to = "feedstock_adjustment") %>%
     mutate(
       source_description = str_to_lower(source_description),
-           sector_description = "industrial sector",
-           # year = readr::parse_number(year) %>%
-           #   forcats::as_factor()
-      )
+      sector_description = "industrial sector"
+    )
   
   # Aggregate------------------------------------------------------
   
@@ -576,36 +417,11 @@ state_ffc_get_adjustments_data <- function(national_ffc_adjusted,
 }
 
 # TERRITORIES ADJUSTMENTS AND CO2 EMISSIONS-------------------------------
-#'
-#' @description This function processes fossil fuel consumption data for U.S. territories and calculates carbon emissions based on that consumption.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#' - Joins the two elements of the `territories` list, `ff_territories` and `heat_content_territories`, to get heat content information based on the year fossil fuel energy consumption source.
-#' - Sets a constant storage factor of 0.1 for non-energy use (NEU); this is unique to territories.
-#' - Interpolates missing carbon factors if necessary.
-#' - Calculates carbon emissions in million metric tons of CO2 by multiplying consumption by the appropriate carbon factor.
-#' - Adjusts emissions for other petroleum liquids and lubricants by applying the NEU storage factor.
-#' **Collate/Output:**
-#' `carbon_emissions_territories`: a tibble
-#'
-#' @param carbon_coefficients a list created by `get_carbon_factors()`
-#' @param territories a list created by `get_territories_data`
-#' @return
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+#' @param carbon_coefficients List from `get_carbon_factors()`
+#' @param territories List from `get_territories_data()`
+#' @return Tibble `carbon_emissions_territories`
 territories_ffc_adjust_data <- function(carbon_coefficients,
-                                        territories,
-                                        general_data) {
+                                        territories) {
   
   # Calculcate Consumption-------------------------------------------------
   
@@ -654,66 +470,10 @@ territories_ffc_adjust_data <- function(carbon_coefficients,
 }
 
 # STATE FFC ADJUSTMENTS---------------------------
-#'
-#' @description This function processes and adjusts fossil fuel consumption data for various sectors across U.S. states, incorporating adjustments for non-energy use (NEU) and international bunker fuels (IBF).
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#' - Standardizes the seds data using functions from functions_both.R.
-#' - Sets the consumption values for pentanes plus and unfinished oils to zero to avoid double counting.
-#' - Performs adjustments by sector, collecting the results of each sectors into a list element.
-#' - Adjusts residential sector consumption:
-#' - Processes residential sector data for various energy sources (coal, natural gas, distillate fuel, LPG, and others).
-#' - For coal and natural gas, calculates adjusted values using national inventory adjustment factors and sums of state values.
-#' - Subtracts supplemental natural gas to get net natural gas.
-#' - For LPGs, uses the original values directly as adjusted values.
-#' - Adjusts commercial sector consumption:
-#' - Similar to the residential sector, processes commercial sector data for coal, distillate fuel, natural gas, gasoline, LPG, and other sources.
-#' - Calculates adjusted values using national inventory adjustment factors.
-#' - Subtracts supplemental natural gas to get net natural gas.
-#' - Subtracts ethanol from total motor gasoline to get net gasoline.
-#' - Adjusts industrial sector consumption:
-#' - Processes industrial sector data for various sources, including coking coal, other coal, natural gas, residual fuel, distillate fuel, gasoline, petroleum coke, LPG, and other sources.
-#' - Calculates adjusted values using national inventory adjustment factors.
-#' - Subtracts supplemental natural gas to get net natural gas.
-#' - Subtracts ethanol from total motor gasoline to get net gasoline.
-#' - Applies IPPU adjustment factors to coking coal, other industrial coal, natural gas, diesel fuel, and residual fuel.
-#' - Adjusts transportation sector consumption:
-#' - Processes transportation sector data for distillate fuel, gasoline, lubricants, jet fuel, residual fuel, coal, LPG, aviation gasoline, and natural gas.
-#' - Calculates motor gasoline and diesel consumption using distribution data scraped from FWHA website.
-#' - Calculates consumption of other fuels using SEDS data.
-#' - Calculates adjusted values using national inventory adjustment factors and distribution data.
-#' - Subtracts supplemental natural gas to get net natural gas.
-#' - Adjusts electric power sector consumption:
-#' - Processes electric power sector data for coal, natural gas, geothermal, residual fuel, petroleum coke, and distillate fuel.
-#' - Uses adjustment factors from national data to calculate adjusted values.
-#' - Adjusts IBF consumption:
-#' - Calculates IBF diesel and residual fuel consumption using FOKS distribution data.
-#' - Calculates jet fuel using SEDS data.
-#' - Calculates IBF adjusted values using national data and selects relevant columns for further processing.
-#' - Adjusts NEU consumption:
-#' - Processes NEU data for various sources, including other coal, coking coal, natural gas, distillate fuel, LPG, petroleum coke, still gas, and other NEU sources.
-#' - Calculates NEU adjusted values using NEU adjustment factors and IPPU distribution data.
-#' # Aggregates all adjusted data:
-#' - Aggregates all adjusted data from residential, commercial, industrial, transportation, and electric power sectors.
-#' - Subtracts adjusted NEU and IBF values from the applicable adjusted industrial and transportation values to get the final adjusted energy consumption for those sectors.
-#' **Collate/Output:**
-#'   - `state_ffc_adjusted`, list with three elements:
-#'   - `seds_all_adjusted`, tibble used by
-#'   - `seds_ind_adjusted`, tibble used by
-#'   - `seds_neu_adjusted`, tibble used by
-#'
-#' @param seds Tibble created by `state_ffc_get_seds_data()`
-#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
-#' @return
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
+#' @param seds Tibble from `state_ffc_get_seds_data()`
+#' @param state_adjustments List from `state_ffc_get_adjustments_data()`
+#' @param fhwa_data List from `scrape_fhwa_data()`
+#' @return List with elements: seds_all_adjusted, seds_ind_adjusted, seds_neu_adjusted
 
 state_ffc_adjust_data <- function(seds,
                                   state_adjustments,
@@ -1380,44 +1140,13 @@ state_ffc_adjust_data <- function(seds,
 }
 
 # STATE NEU CO2 EMISSIONS--------------------------------------
-#'
-#' @description This function calculates carbon emissions for non-energy use (NEU) of various fossil fuel sources across U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#' - Begins with the adjusted SEDS consumption data.
-#' - Joins with several datasets: feedstock export adjustments, NEU adjustments, and petrochemical distribution data.
-#' -Replaces any missing values in feedstock exports with zero.
-#' - Calculates the sum of NEU adjusted values for all states and renames petrochemical distribution percentages as feedstock distribution for clarity.
-#' - Processes NEU data for different fossil fuel sources, such as coal, coking coal, natural gas, petroleum coke, hydrocarbon gas liquids (HGL), distillate fuel oil, waxes, still gas, miscellaneous petroleum products, naphtha, special naphtha, other oils, asphalt & road oil, and lubricants.
-#' - For each source, calculates adjusted NEU values by incorporating feedstock adjustments and distribution percentages.Some sources use specific adjustment formulas, such as HGLs and other oils, which include additional factors.
-#' - Calculates carbon emissions:
-#' - Combines all NEU adjusted values into a single data frame.
-#' - Joins with carbon factors ensuring the correct factors are used for NEU sources.
-#' - Calculates carbon emissions in MMT of CO2 by multiplying consumption by the appropriate carbon factor.
-#' - Adjusts the final carbon emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
-#' **Collate/Output:**
-#' `carbon_emissions_state_neu`, a tibble used by
-#'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @param state_ffc_adjusted List created by `state_ffc_adjust_data()`
-#' @param carbon_coefficients List created by `get_carbon_factors()`
-#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
-#' @return Tibble with columns: state, year, sector_description, source_description, value
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+#' @param state_ffc_adjusted List from `state_ffc_adjust_data()`
+#' @param carbon_coefficients List from `get_carbon_factors()`
+#' @param state_adjustments List from `state_ffc_get_adjustments_data()`
+#' @return Tibble `carbon_emissions_state_neu`
+
 state_neu_calculate_emissions <- function(state_ffc_adjusted,
                                           carbon_coefficients,
-                                          general_data,
                                           state_adjustments) {
   
   # NEU: other coal, nat gas, pet coke, diesel, still gas, lpg
@@ -1584,43 +1313,13 @@ state_neu_calculate_emissions <- function(state_ffc_adjusted,
 }
 
 # STATE FFC CO2 EMISSIONS-----------------------------------------
-#'
-#' @description This function calculates carbon emissions for fossil fuel consumption across different sectors in U.S. states. It incorporates adjustments for feedstock exports and applies carbon coefficients to derive emissions.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#' - Begins with the adjusted SEDS consumption data.
-#' - Modifies source descriptions to align with those in the carbon factors dataset by handling specific naming conventions and sector codes.
-#' - Joins with feedstock export adjustments for specific sources.
-#' - Joins with miscellaneous adjustments to include IPPU adjustment factors.
-#' - Updates NEU sources needing feedstock adjustments, ensuring non-negative values.
-#' - Calculates carbon emissions:
-#' - Joins with carbon factors data to get the carbon coefficients for each source.
-#' - Calculates carbon emissions in MMT of CO2 by multiplying consumption by the appropriate carbon factor.
-#' - Calculates specific emissions for NEU sources based on adjusted values and carbon factors, handling specific sources differently.
-#' - Adjusts the final NEU emissions by accounting for storage factors, which reduce emissions based on the proportion of carbon stored rather than emitted.
-#' **Collate/Output:**
-#' `carbon_emissions_state_neu`, a tibble used by
-#'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @param state_ffc_adjusted List created by `state_ffc_adjust_data()`
-#' @param carbon_coefficients List created by `get_carbon_factors()`
-#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
-#' @return Tibble with columns: state, year, sector_description, source_description, value
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+#' @param state_ffc_adjusted List from `state_ffc_adjust_data()`
+#' @param carbon_coefficients List from `get_carbon_factors()`
+#' @param state_adjustments List from `state_ffc_get_adjustments_data()`
+#' @return Tibble `carbon_emissions_state_ffc`
+
 state_ffc_calculate_emissions <- function(state_ffc_adjusted,
                                           carbon_coefficients,
-                                          general_data,
                                           state_adjustments) {
   
   
@@ -1721,34 +1420,12 @@ state_ffc_calculate_emissions <- function(state_ffc_adjusted,
 }
 
 # STATE FIGURES--------------------------------------
-#' @description Creates figures of emissions and consumption data for the Inventory,including State-level Methodology, Chapter 2: Energy.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect str_sub
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#' @import ggplot2
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#'  - Creates color palettes used in ggplot figures.
-#'  - In-work: Reshapes national FFC data
-#'  - Creates several tibbles from input data, selecting and reshaping where necessary to obtain appropriate data formats for plotting.
-#'  - Creates 9 figures (including 2 sub-components) with figure numbers corresponding to those in State-level Methodology, Chapter 2: Energy.
-#' **Collate/Output:**
-#' `state_ffc_figures`, a list used by
-#'
-#' @param seds_all_adjusted Tibble; list element of `state_ffc_adjusted`, created by `state_ffc_adjust_data()`
-#' @param seds_ind_adjusted Tibble; list element of `state_ffc_adjusted`, created by `state_ffc_adjust_data()`
-#' @param state_adjustments List created by `state_ffc_get_adjustments_data()`
-#' @param carbon_emissions_state_ffc Tibble created by `state_ffc_calculate_emissions()`
-#' @return Tibble with columns: state, year, sector_description, source_description, value
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+#' @param seds_all_adjusted Tibble from `state_ffc_adjust_data()`
+#' @param seds_ind_adjusted Tibble from `state_ffc_adjust_data()`
+#' @param state_adjustments List from `state_ffc_get_adjustments_data()`
+#' @param carbon_emissions_state_ffc Tibble from `state_ffc_calculate_emissions()`
+#' @return List `state_ffc_figures`
+
 state_ffc_ggplot_figures <- function(seds_all_adjusted,
                                      seds_ind_adjusted,
                                      state_adjustments,
@@ -1853,7 +1530,7 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
   
   state_vs_national_co2 <-
     lst(
-      states = arbon_emissions_state_ffc %>%
+      states = carbon_emissions_state_ffc %>%
         select(sector_description, year, value = mmt_co2) %>%
         mutate(
           dataname = "state_total",
@@ -2247,30 +1924,10 @@ state_ffc_ggplot_figures <- function(seds_all_adjusted,
 
 
 # STATE TABLES----------------------------------------------
-#' @description Creates tables of emissions and consumption data for the Inventory,including State-level Methodology, Chapter 2: Energy.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom tibble lst
-#' @import gt
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#'  - Creates several gt tables from input data, selecting and reshaping where necessary to obtain appropriate data formats.
-#'  - Creates 4 tables with numbers corresponding to those in State-level Methodology, Chapter 2: Energy.
-#' **Collate/Output:**
-#' `state_ffc_tables`, a list used by
-#'
-#' @param seds_all_adjusted List created by `state_ffc_adjust_data()`
-#' @param carbon_emissions_state_ffc Tibble created by `state_ffc_calculate_emissions()`
-#' @return `state_ffc_tables`, a list used by
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
+#' @param seds_all_adjusted Tibble from `state_ffc_adjust_data()`
+#' @param carbon_emissions_state_ffc Tibble from `state_ffc_calculate_emissions()`
+#' @return List `state_ffc_tables`
+
 state_ffc_gt_tables <- function(seds_all_adjusted,
                                 carbon_emissions_state_ffc) {
   state_ffc_tables <- lst(
@@ -2462,41 +2119,14 @@ state_ffc_gt_tables <- function(seds_all_adjusted,
 
 
 # INVDB--------------------------------------------------
-#' @description This function processes carbon emissions data for U.S. territories and states, organizing it for output to the inventory database (InvDB) in Excel, CSV, and JSON formats.
-#'
-#' @importFrom dplyr mutate select filter across case_when if_else left_join distinct group_by ungroup summarize rename arrange bind_rows
-#' @importFrom stringr str_squish str_remove str_remove_all str_to_lower str_detect
-#' @importFrom tidyr pivot_longer pivot_wider
-#'
-#' @details
-#' **Retrieval:**
-#' - No new data retrieved in this function.
-#' **Transform:**
-#' #' - Processes `carbon_emissions_territories` for FFC sources to create `ffc_territories_invdb`.
-#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
-#' - Processes `carbon_emissions_state_neu` for NEU sources to create `neu_territories_invdb`.
-#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
-#' #' - Processes `carbon_emissions_state_ffc` for NEU sources to create `ffc_territories_invdb`.
-#' - Filters out certain sources and aggregates emissions data by grouping, summing, and pivoting wide by year.
-#' - Adds fields to conform to InvDB formatting requirements.
-#' - Joins all data into a single tibble, `ffc_invdb`.
-#' **Collate/Output:**
-#' - Writes `ffc_invdb` to InvDB Excel template
-#' - Writes `ffc_invdb` to JSON
-#' - Writes `ffc_invdb` to CSV
-#' @param carbon_emissions_territories Tibble created by `territories_ffc_adjust_data()`
-#' @param carbon_emissions_state_ffc Tibble created by `state_neu_calculate_emissions()`
-#' @param carbon_emissions_state_neu Tibble created by `state_ffc_calculate_emissions()`
-#' @return NA (side effects only)
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
-write_to_invdb <- function(
-    # carbon_emissions_national,
-  carbon_emissions_territories,
-  carbon_emissions_state_ffc,
-  carbon_emissions_state_neu) {
+#' @param carbon_emissions_territories Tibble from `territories_ffc_adjust_data()`
+#' @param carbon_emissions_state_ffc Tibble from `state_ffc_calculate_emissions()`
+#' @param carbon_emissions_state_neu Tibble from `state_neu_calculate_emissions()`
+#' @return List with InvDB-formatted tibbles; writes to Excel, JSON, and CSV
+
+write_to_invdb <- function(carbon_emissions_territories,
+                           carbon_emissions_state_ffc,
+                           carbon_emissions_state_neu) {
   
   
   territories_invdb <- carbon_emissions_territories %>%
@@ -2639,29 +2269,14 @@ write_to_invdb <- function(
 
 
 # ACTIVITY DATA--------------------------------------------------
-#' One line summary in plain English
-#'
-#' @description What the function does in business terms (data in, data out).
-#'
-#' #' @importFrom dplyr mutate select filter across case_when if_else left_join distinct rename bind_rows
-#' @importFrom tidyr pivot_longer pivot_wider
-#'
-#' @details
-#' **Retrieval:** where data comes from (APIs/files)
-#' **Transform:** key steps (filters, joins, adjustments)
-#' **Collate/Output:** objects returned and how they're used downstream
-#'
-#' @param general_data List created by `data_setup()` (keys: ghgi_values, variables, etc.)
-#' @return Tibble with columns: state, year, sector_description, source_description, value
-#' @seealso [state_ffc_adjust_data()], [national_ffc_calculate_emissions()]
-#' @examples
-#' # minimal usage example
-#' # state_ffc_get_seds_data(general_data)
-write_ffc_activity <- function(
-    # carbon_emissions_national,
-  carbon_emissions_territories,
-  carbon_emissions_state_ffc,
-  carbon_emissions_state_neu) {
+#' @param carbon_emissions_territories Tibble from `territories_ffc_adjust_data()`
+#' @param carbon_emissions_state_ffc Tibble from `state_ffc_calculate_emissions()`
+#' @param carbon_emissions_state_neu Tibble from `state_neu_calculate_emissions()`
+#' @return List with activity tibbles for InvDB
+
+write_ffc_activity <- function(carbon_emissions_territories,
+                               carbon_emissions_state_ffc,
+                               carbon_emissions_state_neu) {
   
   
   activity_ffc <- carbon_emissions_state_ffc %>%

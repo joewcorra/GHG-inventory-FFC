@@ -4817,30 +4817,6 @@
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
       "Repository": "CRAN"
     },
-    "tanagerharmonize": {
-      "Package": "tanagerharmonize",
-      "Version": "0.0.0.9000",
-      "Source": "GitHub",
-      "Title": "Data Harmonization Tools for Internal Use",
-      "Authors@R": "person(\"First\", \"Last\", , \"first.last@example.com\", role = c(\"aut\", \"cre\"))",
-      "Description": "A set of functions to harmonize and standardize datasets used by the team.",
-      "License": "`use_mit_license()`, `use_gpl3_license()` or friends to pick a license",
-      "Encoding": "UTF-8",
-      "Roxygen": "list(markdown = TRUE)",
-      "RoxygenNote": "7.3.2",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "tanager-data-harmonize",
-      "RemoteUsername": "joewcorra",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "91304748827bb21fcca7d93cce5fff4b298f0f3b",
-      "NeedsCompilation": "no",
-      "Author": "First Last [aut, cre]",
-      "Maintainer": "First Last <first.last@example.com>",
-      "Depends": [
-        "R (>= 4.1.0)"
-      ]
-    },
     "tarchetypes": {
       "Package": "tarchetypes",
       "Version": "0.13.1",
